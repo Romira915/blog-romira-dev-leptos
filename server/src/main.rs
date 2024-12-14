@@ -1,8 +1,7 @@
-#[cfg(feature = "ssr")]
 #[tokio::main]
 async fn main() {
     use axum::Router;
-    use blog_romira_dev::app::*;
+    use blog_romira_dev_app::*;
     use leptos::logging::log;
     use leptos::prelude::*;
     use leptos_axum::{generate_route_list, LeptosRoutes};
@@ -30,9 +29,3 @@ async fn main() {
         .unwrap();
 }
 
-#[cfg(not(feature = "ssr"))]
-pub fn main() {
-    // no client-side main function
-    // unless we want this to work with e.g., Trunk for pure client-side testing
-    // see lib.rs for hydration function instead
-}

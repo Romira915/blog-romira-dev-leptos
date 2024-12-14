@@ -1,0 +1,13 @@
+[package]
+name = "blog-romira-dev-server"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+blog-romira-dev-app = { path = "../app", features = ["ssr"] }
+leptos = { workspace = true, features = ["ssr"] }
+leptos_meta = { workspace = true, features = ["ssr"] }
+leptos_router = { workspace = true, features = ["ssr"] }
+leptos_axum = { workspace = true, features = ["default"] }
+tokio = { workspace = true }
+axum = { workspace = true}

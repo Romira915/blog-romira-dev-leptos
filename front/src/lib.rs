@@ -1,4 +1,4 @@
-pub mod app;
+use blog_romira_dev_app::App;
 
 #[cfg(feature = "hydrate")]
 #[wasm_bindgen::prelude::wasm_bindgen]

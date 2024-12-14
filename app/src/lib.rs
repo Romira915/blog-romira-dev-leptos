@@ -128,7 +128,7 @@ pub fn App() -> impl IntoView {
     }
 }
 
-stylance::import_crate_style!(pub my_style, "src/app.module.scss");
+stylance::import_style!(pub my_style, "app.module.scss");
 
 #[component]
 fn HomePage() -> impl IntoView {
@@ -340,5 +340,5 @@ pub async fn get_comments(id: usize) -> Result<Vec<String>, ServerFnError> {
 
 #[server]
 pub async fn random_number() -> Result<i32, ServerFnError> {
-    Ok(rand::random())
+    Ok(1)
 }

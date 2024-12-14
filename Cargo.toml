@@ -1,50 +1,28 @@
-[package]
-name = "blog-romira-dev"
-version = "0.1.0"
-edition = "2021"
-# std::sync::LazyLock is stabilized in Rust version 1.80.0
-rust-version = "1.80.0"
+[workspace]
+members = ["app", "front", "server"]
+resolver = "2"
 
-[lib]
-crate-type = ["cdylib", "rlib"]
-
-[dependencies]
-leptos_router = { version = "0.7.0", features = ["ssr"] }
+[workspace.dependencies]
+leptos_router = { version = "0.7.0", default-features = false }
 console_error_panic_hook = "0.1.7"
 console_log = "1.0.0"
-leptos = { version = "0.7.0", features = [
-  "hydration",
-] } #"nightly", "hydration"] }
-leptos_meta = { version = "0.7.0", features = ["ssr"] }
-leptos_axum = { version = "0.7.0", optional = true }
+leptos = { version = "0.7.0", default-features = false } #"nightly", "hydration"] }
+leptos_meta = { version = "0.7.0", default-features = false }
+leptos_axum = { version = "0.7.0", default-features = false }
 log = "0.4.22"
 serde = { version = "1.0.216", features = ["derive"] }
 thiserror = "2.0.7"
-axum = { version = "0.7.9", optional = true }
-tower = { version = "0.5.2", optional = true }
-tower-http = { version = "0.6.2", features = ["fs"], optional = true }
+axum = { version = "0.7.9" }
+tower = { version = "0.5.2" }
+tower-http = { version = "0.6.2", features = ["fs"] }
 tokio = { version = "1.42", features = [
-  "rt-multi-thread",
-  "macros",
-  "time",
-], optional = true }
+    "rt-multi-thread",
+    "macros",
+    "time",
+] }
 wasm-bindgen = "0.2.99"
-rand = { version = "0.8.5", optional = true }
-stylance = { version = "0.5.2", features = ["nightly"]}
-
-[features]
-hydrate = ["leptos/hydrate"]
-ssr = [
-  "dep:axum",
-  "dep:tower",
-  "dep:tower-http",
-  "dep:tokio",
-  "leptos/ssr",
-  "leptos_meta/ssr",
-  "dep:leptos_axum",
-  "leptos_router/ssr",
-  "dep:rand",
-]
+rand = { version = "0.8.5" }
+stylance = { version = "0.5.2", features = ["nightly"] }
 
 [profile.release]
 panic = "abort"
@@ -56,11 +34,12 @@ lto = true
 codegen-units = 1
 panic = "abort"
 
-[package.metadata.cargo-all-features]
+[[workspace.metadata.cargo-all-features]]
 denylist = ["axum", "tower", "tower-http", "tokio", "sqlx", "leptos_axum"]
 skip_feature_sets = [["ssr", "hydrate"]]
 
-[package.metadata.leptos]
+[[workspace.metadata.leptos]]
+name = "blog-romira-dev"
 # The name used by wasm-bindgen/cargo-leptos for the JS/WASM bundle. Defaults to the crate name
 output-name = "blog-romira-dev"
 # The site root folder is where cargo-leptos generate all output. WARNING: all content of this folder will be erased on a rebuild. Use it in your server setup.
@@ -91,9 +70,9 @@ watch = true
 # The environment Leptos will run in, usually either "DEV" or "PROD"
 env = "DEV"
 # The features to use when compiling the bin target
-#
+bin-package = "blog-romira-dev-server"
 # Optional. Can be over-ridden with the command line parameter --bin-features
-bin-features = ["ssr"]
+bin-features = []
 
 # If the --no-default-features flag should be used when compiling the bin target
 #
@@ -101,9 +80,9 @@ bin-features = ["ssr"]
 bin-default-features = false
 
 # The features to use when compiling the lib target
-#
+lib-package = "blog-romira-dev-front"
 # Optional. Can be over-ridden with the command line parameter --lib-features
-lib-features = ["hydrate"]
+lib-features = []
 
 # If the --no-default-features flag should be used when compiling the lib target
 #
@@ -111,50 +90,3 @@ lib-features = ["hydrate"]
 lib-default-features = false
 
 lib-profile-release = "wasm-release"
-
-[package.metadata.stylance]
-
-# output_file
-# When set, stylance-cli will bundle all css module files
-# into by concatenating them and put the result in this file.
-# output_file = "./styles/bundle.scss"
-
-# output_dir
-# When set, stylance-cli will create a folder named "stylance" inside
-# the output_dir directory.
-# The stylance folder will be populated with one file per detected css module
-# and one _all.scss file that contains one `@use "file.module-hash.scss";` statement
-# per module file.
-# You can use that file to import all your modules into your main scss project.
-output_dir = "./style/"
-
-# folders
-# folders in which stylance cli will look for css module files.
-# defaults to ["./src/"]
-# folders = ["./src/", "./styles/"]
-
-# extensions
-# files ending with these extensions will be considered to be
-# css modules by stylance cli and will be included in the output
-# bundle
-# defaults to [".module.scss", ".module.css"]
-# extensions = [".module.scss", ".module.css"]
-
-# scss_prelude
-# When generating an scss file stylance-cli will prepend this string
-# Useful to include a @use statement to all scss modules.
-# scss_prelude = '@use "../path/to/prelude" as *;'
-
-# hash_len
-# Controls how long the hash name used in scoped classes should be.
-# It is safe to lower this as much as you want, stylance cli will produce an
-# error if two files end up with colliding hashes.
-# defaults to 7
-# hash_len = 7
-
-# class_name_pattern
-# Controls the shape of the transformed scoped class names.
-# [name] will be replaced with the original class name
-# [hash] will be replaced with the hash of css module file path.
-# defaults to "[name]-[hash]"
-# class_name_pattern = "my-project-[name]-[hash]"

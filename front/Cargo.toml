@@ -1,0 +1,15 @@
+[package]
+name = "blog-romira-dev-front"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+blog-romira-dev-app = { path = "../app", features = ["hydrate"] }
+leptos = { workspace = true, features = ["hydrate"] }
+log = { workspace = true }
+wasm-bindgen = { workspace = true }
+console_log = { workspace = true }
+console_error_panic_hook = { workspace = true }
