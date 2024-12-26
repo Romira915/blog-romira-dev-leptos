@@ -1,0 +1,63 @@
+// Light Mode Colors
+$light-primary: #2196f3;
+$light-secondary: #f50057;
+$light-background: #ffffff;
+$light-surface: #f5f5f5;
+$light-text-primary: #000000;
+$light-text-secondary: #757575;
+$light-accent: #ff9800;
+$light-border: #e0e0e0;
+$light-shadow: rgba(0, 0, 0, 0.1);
+
+// Dark Mode Colors
+$dark-primary: #713FFF;
+$dark-secondary: #ba000d;
+$dark-background: #121212;
+$dark-surface: #1e1e1e;
+$dark-text-primary: #ffffff;
+$dark-text-secondary: #bdbdbd;
+$dark-accent: #ff9800;
+$dark-border: #333333;
+$dark-shadow: rgba(0, 0, 0, 0.7);
+
+// Mixins for Color Themes
+@mixin theme-light {
+  --primary: #{$light-primary};
+  --secondary: #{$light-secondary};
+  --background: #{$light-background};
+  --surface: #{$light-surface};
+  --text-primary: #{$light-text-primary};
+  --text-secondary: #{$light-text-secondary};
+  --accent: #{$light-accent};
+  --border: #{$light-border};
+  --shadow: #{$light-shadow};
+}
+
+@mixin theme-dark {
+  --primary: #{$dark-primary};
+  --secondary: #{$dark-secondary};
+  --background: #{$dark-background};
+  --surface: #{$dark-surface};
+  --text-primary: #{$dark-text-primary};
+  --text-secondary: #{$dark-text-secondary};
+  --accent: #{$dark-accent};
+  --border: #{$dark-border};
+  --shadow: #{$dark-shadow};
+}
+
+// Applying Themes
+:root {
+  @include theme-light; // Default theme
+}
+
+// Automatically applying dark theme based on user's system preference
+@media (prefers-color-scheme: dark) {
+  :root {
+    @include theme-dark;
+  }
+}
+
+// Override styles if the user manually selects the dark theme using a data-attribute
+[data-theme="dark"] {
+  @include theme-dark;
+}

@@ -8,11 +8,15 @@ edition = "2024"
 [dependencies]
 leptos = { workspace = true }
 leptos_meta = { workspace = true }
-leptos_router = { workspace = true, features = ["ssr"] }
+leptos_router = { workspace = true }
+leptos-use = { workspace = true }
 serde = { workspace = true }
 thiserror = { workspace = true }
 stylance = { workspace = true }
 tokio = { workspace = true, optional = true }
+reqwest = { workspace = true }
+tracing = { workspace = true }
+chrono = { workspace = true }
 
 [features]
 hydrate = ["leptos/hydrate"]
@@ -20,8 +24,13 @@ ssr = [
     "leptos/ssr",
     "leptos_meta/ssr",
     "leptos_router/ssr",
+    "leptos-use/ssr",
     "tokio",
 ]
+
+[package.metadata.cargo-all-features]
+denylist = ["axum", "tower", "tower-http", "tokio", "leptos_axum"]
+skip_feature_sets = [["csr", "ssr"], ["csr", "hydrate"], ["ssr", "hydrate"]]
 
 [package.metadata.stylance]
 # output_file

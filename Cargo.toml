@@ -9,6 +9,7 @@ console_log = "1.0.0"
 leptos = { version = "0.7.0", default-features = false } #"nightly", "hydration"] }
 leptos_meta = { version = "0.7.0", default-features = false }
 leptos_axum = { version = "0.7.0", default-features = false }
+leptos-use = { version = "0.15.0" }
 log = "0.4.22"
 serde = { version = "1.0.216", features = ["derive"] }
 thiserror = "2.0.7"
@@ -23,6 +24,13 @@ tokio = { version = "1.42", features = [
 wasm-bindgen = "0.2.99"
 rand = { version = "0.8.5" }
 stylance = { version = "0.5.2", features = ["nightly"] }
+reqwest = "0.12.9"
+easy_init_newrelic_opentelemetry = "0.3.0"
+tracing = "0.1.41"
+time = "0.3.37"
+tracing-wasm = "0.2.1"
+chrono = { version = "0.4.39", features = ["serde"] }
+dotenv = "0.15.0"
 
 [profile.release]
 panic = "abort"

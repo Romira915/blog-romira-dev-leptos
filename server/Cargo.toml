@@ -10,4 +10,10 @@ leptos_meta = { workspace = true, features = ["ssr"] }
 leptos_router = { workspace = true, features = ["ssr"] }
 leptos_axum = { workspace = true, features = ["default"] }
 tokio = { workspace = true }
-axum = { workspace = true}
+axum = { workspace = true }
+easy_init_newrelic_opentelemetry = { workspace = true }
+time = { workspace = true }
+tower = { workspace = true }
+tower-http = { workspace = true, features = ["trace"] }
+tracing = { workspace = true }
+dotenv = { workspace = true }

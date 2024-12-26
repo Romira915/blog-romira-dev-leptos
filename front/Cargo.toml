@@ -13,3 +13,4 @@ log = { workspace = true }
 wasm-bindgen = { workspace = true }
 console_log = { workspace = true }
 console_error_panic_hook = { workspace = true }
+tracing-wasm = { workspace = true }
