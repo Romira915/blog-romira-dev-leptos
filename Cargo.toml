@@ -31,6 +31,7 @@ time = "0.3.37"
 tracing-wasm = "0.2.1"
 chrono = { version = "0.4.39", features = ["serde"] }
 dotenv = "0.15.0"
+envy = "0.4.2"
 
 [profile.release]
 panic = "abort"

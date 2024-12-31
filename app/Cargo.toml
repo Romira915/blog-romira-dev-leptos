@@ -14,9 +14,10 @@ serde = { workspace = true }
 thiserror = { workspace = true }
 stylance = { workspace = true }
 tokio = { workspace = true, optional = true }
-reqwest = { workspace = true }
+reqwest = { workspace = true, features = ["json"] }
 tracing = { workspace = true }
 chrono = { workspace = true }
+envy = { workspace = true, optional = true }
 
 [features]
 hydrate = ["leptos/hydrate"]
@@ -26,6 +27,7 @@ ssr = [
     "leptos_router/ssr",
     "leptos-use/ssr",
     "tokio",
+    "envy",
 ]
 
 [package.metadata.cargo-all-features]

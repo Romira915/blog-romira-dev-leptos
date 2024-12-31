@@ -1,3 +1,1 @@
-pub(crate) mod NewtArticle;
-
-use serde::{Deserialize, Serialize};
+pub(crate) mod newt_article;

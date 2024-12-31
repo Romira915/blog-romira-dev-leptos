@@ -2,6 +2,15 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct NewtArticleCollection {
+    pub(crate) skip: u32,
+    pub(crate) limit: u32,
+    pub(crate) total: u32,
+    pub(crate) items: Vec<NewtArticle>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
 pub(crate) struct NewtArticle {
     #[serde(rename = "_id")]
     pub(crate) id: String,

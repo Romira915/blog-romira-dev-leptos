@@ -15,11 +15,11 @@ use tracing::Span;
 #[tokio::main]
 async fn main() {
     dotenv::dotenv().ok();
-    
+
     easy_init_newrelic_opentelemetry::NewRelicSubscriberInitializer::default()
         .newrelic_service_name("blog-romira-dev")
         .host_name("localhost")
-        .newrelic_license_key("YOUR_LICENSE_KEY")
+        .newrelic_license_key(&SERVER_CONFIG.new_relic_license_key)
         .timestamps_offset(offset!(+09:00:00))
         .init()
         .expect("Failed to initialize NewRelic");
