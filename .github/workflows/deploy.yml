@@ -61,6 +61,7 @@ jobs:
           ln -sf ${PWD}/target/aarch64-unknown-linux-gnu/release/blog-romira-dev-server ${PWD}/target/release/blog-romira-dev-server
           stylance ./app
           cargo leptos build --release --bin-cargo-args="--target=aarch64-unknown-linux-gnu"
+          cp target/release/hash.txt target/aarch64-unknown-linux-gnu/release/hash.txt
 
       - uses: actions/cache/save@v3
         id: cache-save-cargo
@@ -68,19 +69,13 @@ jobs:
           path: ${{ env.CACHE_PATH }}
           key: ${{ runner.os }}-cargo-build-${{ hashFiles('**/Cargo.lock') }}-${{ hashFiles('**/*.rs') }}
 
-      # 不要説
-      #      - name: Zip Artifact
-      #        run: |
-      #          tar -czvf blog-romira-dev-server.tar.gz -C target/aarch64-unknown-linux-gnu/release blog-romira-dev-server hash.txt
-      #          tar -czvf site.tar.gz -C target site
-
       - name: Upload blog-romira-dev-server
         uses: actions/upload-artifact@v4
         with:
           name: blog-romira-dev-server
           path: |
             target/aarch64-unknown-linux-gnu/release/blog-romira-dev-server
-            target/release/hash.txt
+            target/aarch64-unknown-linux-gnu/release/hash.txt
 
       - name: Upload site
         uses: actions/upload-artifact@v4
