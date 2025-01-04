@@ -14,7 +14,7 @@ serde = { workspace = true }
 thiserror = { workspace = true }
 stylance = { workspace = true }
 tokio = { workspace = true, optional = true }
-reqwest = { workspace = true, features = ["json"] }
+reqwest = { workspace = true }
 tracing = { workspace = true }
 chrono = { workspace = true }
 envy = { workspace = true, optional = true }

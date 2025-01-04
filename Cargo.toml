@@ -23,7 +23,7 @@ tokio = { version = "1.42", features = [
 ] }
 wasm-bindgen = "0.2.99"
 stylance = { version = "0.5.2", features = ["nightly"] }
-reqwest = "0.12.9"
+reqwest = { version = "0.12.9", default-features = false, features = ["json", "rustls-tls"] }
 easy_init_newrelic_opentelemetry = "0.3.0"
 tracing = "0.1.41"
 time = "0.3.37"

@@ -46,12 +46,15 @@ jobs:
 
       - name: Build
         env:
-          CARGO_BUILD_TARGET: aarch64-unknown-linux-gnu
           ASSETS_ROOT: https://cdn.blog.romira.dev
           LEPTOS_HASH_FILES: true
+        # build後、leptosがバイナリの差分を確認しているが、アーキテクチャを考慮せず、/target/release/以下のバイナリを参照しているため、暫定対応としてシンボリックリンクを張る
+        # TODO: leptosにPRを送る
         run: |
+          mkdir -p target/aarch64-unknown-linux-gnu/release 
+          ln -sf ${PWD}/target/aarch64-unknown-linux-gnu/release/blog-romira-dev-server ${PWD}/target/release/blog-romira-dev-server
           stylance ./app
-          cargo leptos build --release
+          cargo leptos build --release --bin-cargo-args="--target=aarch64-unknown-linux-gnu"
 
       - uses: actions/cache/save@v3
         id: cache-save-cargo
@@ -59,7 +62,114 @@ jobs:
           path: ${{ env.CACHE_PATH }}
           key: ${{ runner.os }}-cargo-build-${{ hashFiles('**/Cargo.lock') }}-${{ hashFiles('**/*.rs') }}
 
-      - uses: actions/upload-artifact@v4
+      # 不要説
+      - name: Zip Artifact
+        run: |
+          tar -czvf blog-romira-dev-server.tar.gz -C target/aarch64-unknown-linux-gnu/release blog-romira-dev-server hash.txt
+          tar -czvf site.tar.gz -C target site
+
+      - name: Upload blog-romira-dev-server
+        uses: actions/upload-artifact@v4
         with:
           name: blog-romira-dev-server
-          path: target/aarch64-unknown-linux-gnu/release/blog-romira-dev-server
+          path: |
+            target/aarch64-unknown-linux-gnu/release/blog-romira-dev-server
+            target/aarch64-unknown-linux-gnu/release/hash.txt
+
+      - name: Upload site
+        uses: actions/upload-artifact@v4
+        with:
+          name: site
+          path: target/site
+
+#  create-release-tag:
+#    runs-on: ubuntu-24.04
+#    needs: build
+#    outputs:
+#      release_tag: ${{ steps.tag_version.outputs.new_tag }}
+#
+#    steps:
+#      - uses: actions/checkout@v4
+#
+#      - uses: actions/download-artifact@v4
+#        with:
+#          name: blog-romira-dev-server
+#          path: /tmp/blog-romira-dev-server/
+#
+#      - name: Package Artifact
+#        run: tar -czvf /tmp/discord_bot_client.tar.gz -C /tmp discord_bot_client
+#
+#      - name: Bump version and push tag
+#        uses: mathieudutour/github-tag-action@v6.2
+#        id: tag_version
+#        with:
+#          github_token: ${{ secrets.GITHUB_TOKEN }}
+#
+#      - name: Create Release
+#        id: create_release
+#        uses: actions/create-release@v1
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+#        with:
+#          tag_name: ${{ steps.tag_version.outputs.new_tag }}
+#          release_name: Release ${{ steps.tag_version.outputs.new_tag }}
+#          body: ${{ steps.tag_version.outputs.changelog }}
+#          draft: false
+#          prerelease: false
+#
+#      - name: Upload Release Asset
+#        id: upload-release-asset
+#        uses: actions/upload-release-asset@v1
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#        with:
+#          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+#          asset_path: /tmp/discord_bot_client.tar.gz
+#          asset_name: discord_bot_client.tar.gz
+#          asset_content_type: application/gzip
+#
+#      - name: Set tag output
+#        run: echo "tag_name=${{ steps.tag_version.outputs.new_tag }}" >> $GITHUB_ENV
+#
+#    deploy-to-discord-bot-client:
+#      runs-on: ubuntu-latest
+#      needs: create-release-tag
+#      permissions:
+#        id-token: write
+#        contents: read
+#
+#      env:
+#        AWS_REGION: ap-northeast-1
+#        AWS_ROLE_TO_ASSUME: arn:aws:iam::616657986447:role/romira_service_manage_bot_v2_github_actions_deploy_role
+#        INSTANCE_ID: mi-0c7195454110abb6d
+#        SOURCE_FILE_PATH: Cargo.toml
+#        DESTINATION_FILE_PATH: /home/romira/Cargo.toml
+#
+#      steps:
+#        - uses: aws-actions/configure-aws-credentials@v4
+#          with:
+#            aws-region: ${{ env.AWS_REGION }}
+#            role-to-assume: ${{ env.AWS_ROLE_TO_ASSUME }}
+#
+#        - name: deploy to wakaba
+#          run: |
+#            COMMANDS="
+#              curl -L -o /tmp/discord_bot_client.tar.gz 'https://github.com/${{ github.repository }}/releases/download/${{ needs.create-release-tag.outputs.release_tag }}/discord_bot_client.tar.gz' &&
+#              tar -xzvf /tmp/discord_bot_client.tar.gz -C /tmp &&
+#              sudo rsync -a --delete /tmp/discord_bot_client/ /usr/local/mgpf_discord_bot_client_v2/bin/ &&
+#              sudo chmod 755 /usr/local/mgpf_discord_bot_client_v2/bin/discord_bot_client &&
+#              sudo systemctl restart mgpf-discord-bot-client-v2.service
+#            "
+#            COMMANDS=$(echo $COMMANDS | tr '\n' ' ')
+#
+#            COMMAND_ID=$(aws ssm send-command --instance-ids ${{ env.INSTANCE_ID }} \
+#              --document-name "AWS-RunShellScript" \
+#              --parameters "{\"commands\":[\"$COMMANDS\"]}" \
+#              --region $AWS_REGION \
+#              --query "Command.CommandId" \
+#              --output text)
+#
+#            sleep 5  # コマンドが実行されるまで待つ
+#            aws ssm list-command-invocations --command-id "$COMMAND_ID" --details
+#
+#            INVOCATIONS=$(aws ssm list-command-invocations --command-id "$COMMAND_ID" --details)
