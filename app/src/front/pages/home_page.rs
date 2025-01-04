@@ -24,7 +24,7 @@ pub(crate) fn HomePage() -> impl IntoView {
 
     view! {
         <HomePageMeta/>
-        <h1>"HomePage"</h1>
+        <h1>"HomePage 変更テスト"</h1>
         <p>"This is the home page."</p>
         <Suspense fallback=|| "Loading...">
         {move || {
