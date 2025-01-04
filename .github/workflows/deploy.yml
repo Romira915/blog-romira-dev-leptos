@@ -49,7 +49,9 @@ jobs:
           CARGO_BUILD_TARGET: aarch64-unknown-linux-gnu
           ASSETS_ROOT: https://cdn.blog.romira.dev
           LEPTOS_HASH_FILES: true
-        run: cargo leptos build --release
+        run: |
+          stylance ./app
+          cargo leptos build --release
 
       - uses: actions/cache/save@v3
         id: cache-save-cargo
