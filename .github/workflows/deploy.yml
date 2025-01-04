@@ -57,12 +57,10 @@ jobs:
         # build後、leptosがバイナリの差分を確認しているが、アーキテクチャを考慮せず、/target/release/以下のバイナリを参照しているため、暫定対応としてシンボリックリンクを張る
         # TODO: leptosにPRを送る
         run: |
-          cat target/release/hash.txt target/aarch64-unknown-linux-gnu/release/hash.txt
           mkdir -p target/aarch64-unknown-linux-gnu/release target/release
           ln -sf ${PWD}/target/aarch64-unknown-linux-gnu/release/blog-romira-dev-server ${PWD}/target/release/blog-romira-dev-server
           stylance ./app
           cargo leptos build --release --bin-cargo-args="--target=aarch64-unknown-linux-gnu"
-          cat target/release/hash.txt target/aarch64-unknown-linux-gnu/release/hash.txt
           cp target/release/hash.txt target/aarch64-unknown-linux-gnu/release/hash.txt
 
       - uses: actions/cache/save@v3
