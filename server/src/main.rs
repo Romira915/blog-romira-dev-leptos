@@ -1,13 +1,13 @@
+use axum::Router;
 use axum::extract::MatchedPath;
 use axum::http::Request;
-use axum::Router;
 use blog_romira_dev_app::*;
 use leptos::logging::log;
 use leptos::prelude::*;
-use leptos_axum::{generate_route_list, LeptosRoutes};
+use leptos_axum::{LeptosRoutes, generate_route_list};
 use time::macros::offset;
-use tower::layer::util::{Identity, Stack};
 use tower::ServiceBuilder;
+use tower::layer::util::{Identity, Stack};
 use tower_http::classify::{ServerErrorsAsFailures, SharedClassifier};
 use tower_http::trace::{MakeSpan, TraceLayer};
 use tracing::Span;

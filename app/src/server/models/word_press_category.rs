@@ -14,7 +14,6 @@ pub(crate) struct Category {
     pub(crate) _links: crate::server::models::word_press_article::Links,
 }
 
-
 #[derive(Debug, Default, Clone, Deserialize, Serialize, PartialEq)]
 pub(crate) struct Links {
     #[serde(rename = "self")]

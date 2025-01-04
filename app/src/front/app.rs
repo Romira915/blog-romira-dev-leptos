@@ -2,8 +2,8 @@ use crate::front::components::header::Header;
 use crate::front::pages::home_page::HomePage;
 use leptos::config::LeptosOptions;
 use leptos::prelude::*;
-use leptos::{component, view, IntoView};
-use leptos_meta::{provide_meta_context, HashedStylesheet, Link, Meta, MetaTags, Stylesheet};
+use leptos::{IntoView, component, view};
+use leptos_meta::{HashedStylesheet, Link, Meta, MetaTags, Stylesheet, provide_meta_context};
 use leptos_router::components::{Route, Router, Routes};
 use leptos_router::{SsrMode, StaticSegment};
 

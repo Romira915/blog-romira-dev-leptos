@@ -1,8 +1,8 @@
+use crate::SERVER_CONFIG;
 use crate::constants::{NEWT_BASE_URL, NEWT_CDN_BASE_URL};
 use crate::error::NewtArticleServiceError;
 use crate::server::models::newt_article::{NewtArticle, NewtArticleCollection};
 use crate::server::services::NewtArticleService;
-use crate::SERVER_CONFIG;
 use leptos::prelude::*;
 use leptos_meta::{Meta, Title};
 
