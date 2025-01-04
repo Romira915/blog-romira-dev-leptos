@@ -44,17 +44,17 @@ jobs:
           cargo install cargo-leptos
           cargo install stylance-cli
 
-      #      - name: Build
-      #        env:
-      #          ASSETS_ROOT: https://cdn.blog.romira.dev
-      #          LEPTOS_HASH_FILES: true
-      #        # build後、leptosがバイナリの差分を確認しているが、アーキテクチャを考慮せず、/target/release/以下のバイナリを参照しているため、暫定対応としてシンボリックリンクを張る
-      #        # TODO: leptosにPRを送る
-      #        run: |
-      #          mkdir -p target/aarch64-unknown-linux-gnu/release target/release
-      #          ln -sf ${PWD}/target/aarch64-unknown-linux-gnu/release/blog-romira-dev-server ${PWD}/target/release/blog-romira-dev-server
-      #          stylance ./app
-      #          cargo leptos build --release --bin-cargo-args="--target=aarch64-unknown-linux-gnu"
+      - name: Build
+        env:
+          ASSETS_ROOT: https://cdn.blog.romira.dev
+          LEPTOS_HASH_FILES: true
+        # build後、leptosがバイナリの差分を確認しているが、アーキテクチャを考慮せず、/target/release/以下のバイナリを参照しているため、暫定対応としてシンボリックリンクを張る
+        # TODO: leptosにPRを送る
+        run: |
+          mkdir -p target/aarch64-unknown-linux-gnu/release target/release
+          ln -sf ${PWD}/target/aarch64-unknown-linux-gnu/release/blog-romira-dev-server ${PWD}/target/release/blog-romira-dev-server
+          stylance ./app
+          cargo leptos build --release --bin-cargo-args="--target=aarch64-unknown-linux-gnu"
 
       - uses: actions/cache/save@v3
         id: cache-save-cargo
