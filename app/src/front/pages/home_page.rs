@@ -1,6 +1,7 @@
-use crate::error::HomePageError;
+use crate::constants::{NEWT_BASE_URL, NEWT_CDN_BASE_URL};
+use crate::error::NewtArticleServiceError;
 use crate::server::models::newt_article::{NewtArticle, NewtArticleCollection};
-use crate::server::services::get_newt_articles;
+use crate::server::services::NewtArticleService;
 use crate::SERVER_CONFIG;
 use leptos::prelude::*;
 use leptos_meta::{Meta, Title};
@@ -64,7 +65,8 @@ pub(crate) async fn get_number() -> Result<i32, ServerFnError> {
 #[server]
 pub(crate) async fn get_newt_articles_handler() -> Result<NewtArticleCollection, ServerFnError> {
     tracing::info!("get_newt_articles");
-    let articles = get_newt_articles(reqwest::Client::new(), false).await;
+    let service = NewtArticleService::new(reqwest::Client::new(), NEWT_CDN_BASE_URL, NEWT_BASE_URL);
+    let articles = service.get_newt_articles(false).await;
     let articles = match articles {
         Ok(articles) => articles,
         Err(err) => {

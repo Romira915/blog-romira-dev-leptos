@@ -1,7 +1,7 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Default, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct NewtArticleCollection {
     pub(crate) skip: u32,
@@ -10,7 +10,7 @@ pub struct NewtArticleCollection {
     pub(crate) items: Vec<NewtArticle>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Default, PartialEq)]
 pub(crate) struct NewtArticle {
     #[serde(rename = "_id")]
     pub(crate) id: String,
@@ -25,7 +25,7 @@ pub(crate) struct NewtArticle {
     pub(crate) categories: Option<Vec<Category>>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Default, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct Category {
     #[serde(rename = "_id")]
@@ -36,7 +36,7 @@ pub(crate) struct Category {
     pub(crate) slug: String,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Default, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct AuthorInArticle {
     #[serde(rename = "_id")]
@@ -49,7 +49,7 @@ pub(crate) struct AuthorInArticle {
     pub(crate) biography: Option<String>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Default, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct Meta {
     pub(crate) title: String,
@@ -57,7 +57,7 @@ pub(crate) struct Meta {
     pub(crate) og_image: Option<Image>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Default, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct Image {
     #[serde(rename = "_id")]
@@ -70,7 +70,7 @@ pub(crate) struct Image {
     pub(crate) height: Option<u32>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Default, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct Sys {
     pub(crate) created_at: DateTime<Utc>,
@@ -78,7 +78,7 @@ pub(crate) struct Sys {
     pub(crate) raw: Raw,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Default, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct Raw {
     pub(crate) created_at: DateTime<Utc>,

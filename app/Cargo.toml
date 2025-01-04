@@ -18,6 +18,11 @@ reqwest = { workspace = true, features = ["json"] }
 tracing = { workspace = true }
 chrono = { workspace = true }
 envy = { workspace = true, optional = true }
+serde_json = { workspace = true }
+dotenv = { workspace = true, optional = true }
+
+[dev-dependencies]
+mockito = { workspace = true }
 
 [features]
 hydrate = ["leptos/hydrate"]
@@ -27,6 +32,7 @@ ssr = [
     "leptos_router/ssr",
     "leptos-use/ssr",
     "tokio",
+    "dotenv",
     "envy",
 ]
 

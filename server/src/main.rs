@@ -14,8 +14,6 @@ use tracing::Span;
 
 #[tokio::main]
 async fn main() {
-    dotenv::dotenv().ok();
-
     easy_init_newrelic_opentelemetry::NewRelicSubscriberInitializer::default()
         .newrelic_service_name("blog-romira-dev")
         .host_name("localhost")
