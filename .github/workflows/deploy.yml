@@ -44,10 +44,10 @@ jobs:
             cargo install wasm-bindgen-cli
           fi
           if ! command -v cargo-leptos &> /dev/null; then
-          cargo install cargo-leptos
+            cargo install cargo-leptos
           fi
           if ! command -v stylance &> /dev/null; then
-          cargo install stylance-cli
+            cargo install stylance-cli
           fi
 
       - name: Build
@@ -68,25 +68,25 @@ jobs:
           path: ${{ env.CACHE_PATH }}
           key: ${{ runner.os }}-cargo-build-${{ hashFiles('**/Cargo.lock') }}-${{ hashFiles('**/*.rs') }}
 
-#      # 不要説
-#      - name: Zip Artifact
-#        run: |
-#          tar -czvf blog-romira-dev-server.tar.gz -C target/aarch64-unknown-linux-gnu/release blog-romira-dev-server hash.txt
-#          tar -czvf site.tar.gz -C target site
-#
-#      - name: Upload blog-romira-dev-server
-#        uses: actions/upload-artifact@v4
-#        with:
-#          name: blog-romira-dev-server
-#          path: |
-#            target/aarch64-unknown-linux-gnu/release/blog-romira-dev-server
-#            target/aarch64-unknown-linux-gnu/release/hash.txt
-#
-#      - name: Upload site
-#        uses: actions/upload-artifact@v4
-#        with:
-#          name: site
-#          path: target/site
+      # 不要説
+      - name: Zip Artifact
+        run: |
+          tar -czvf blog-romira-dev-server.tar.gz -C target/aarch64-unknown-linux-gnu/release blog-romira-dev-server hash.txt
+          tar -czvf site.tar.gz -C target site
+
+      - name: Upload blog-romira-dev-server
+        uses: actions/upload-artifact@v4
+        with:
+          name: blog-romira-dev-server
+          path: |
+            target/aarch64-unknown-linux-gnu/release/blog-romira-dev-server
+            target/aarch64-unknown-linux-gnu/release/hash.txt
+
+      - name: Upload site
+        uses: actions/upload-artifact@v4
+        with:
+          name: site
+          path: target/site
 
 #  create-release-tag:
 #    runs-on: ubuntu-24.04
