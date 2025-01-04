@@ -152,7 +152,7 @@ jobs:
       - name: Set tag output
         run: echo "tag_name=${{ steps.tag_version.outputs.new_tag }}" >> $GITHUB_ENV
 
-  deploy-to-cloudflare-r2:
+  deploy-static-file:
     runs-on: ubuntu-24.04
     needs: create-release-tag
     env:
@@ -171,45 +171,45 @@ jobs:
           AWS_DEFAULT_REGION: auto
         run: aws s3 --endpoint-url ${{ secrets.CLOUDFLARE_ENDPOINT_URL }} sync --delete ${{ env.SITE_DOWNLOAD_PATH }} s3://${{ secrets.CLOUDFLARE_BUCKET_NAME }}/
 
-#    deploy-to-discord-bot-client:
-#      runs-on: ubuntu-latest
-#      needs: create-release-tag
-#      permissions:
-#        id-token: write
-#        contents: read
-#
-#      env:
-#        AWS_REGION: ap-northeast-1
-#        AWS_ROLE_TO_ASSUME: arn:aws:iam::616657986447:role/romira_service_manage_bot_v2_github_actions_deploy_role
-#        INSTANCE_ID: mi-0c7195454110abb6d
-#        SOURCE_FILE_PATH: Cargo.toml
-#        DESTINATION_FILE_PATH: /home/romira/Cargo.toml
-#
-#      steps:
-#        - uses: aws-actions/configure-aws-credentials@v4
-#          with:
-#            aws-region: ${{ env.AWS_REGION }}
-#            role-to-assume: ${{ env.AWS_ROLE_TO_ASSUME }}
-#
-#        - name: deploy to wakaba
-#          run: |
-#            COMMANDS="
-#              curl -L -o /tmp/discord_bot_client.tar.gz 'https://github.com/${{ github.repository }}/releases/download/${{ needs.create-release-tag.outputs.release_tag }}/discord_bot_client.tar.gz' &&
-#              tar -xzvf /tmp/discord_bot_client.tar.gz -C /tmp &&
-#              sudo rsync -a --delete /tmp/discord_bot_client/ /usr/local/mgpf_discord_bot_client_v2/bin/ &&
-#              sudo chmod 755 /usr/local/mgpf_discord_bot_client_v2/bin/discord_bot_client &&
-#              sudo systemctl restart mgpf-discord-bot-client-v2.service
-#            "
-#            COMMANDS=$(echo $COMMANDS | tr '\n' ' ')
-#
-#            COMMAND_ID=$(aws ssm send-command --instance-ids ${{ env.INSTANCE_ID }} \
-#              --document-name "AWS-RunShellScript" \
-#              --parameters "{\"commands\":[\"$COMMANDS\"]}" \
-#              --region $AWS_REGION \
-#              --query "Command.CommandId" \
-#              --output text)
-#
-#            sleep 5  # コマンドが実行されるまで待つ
-#            aws ssm list-command-invocations --command-id "$COMMAND_ID" --details
-#
-#            INVOCATIONS=$(aws ssm list-command-invocations --command-id "$COMMAND_ID" --details)
+  deploy-blog-romira-dev-server:
+    runs-on: ubuntu-24.04
+    needs: create-release-tag
+    permissions:
+      id-token: write
+      contents: read
+
+    env:
+      AWS_REGION: ap-northeast-1
+      AWS_ROLE_TO_ASSUME: arn:aws:iam::616657986447:role/blog-romira-dev-leptos_github_actions_deploy_role
+      INSTANCE_ID: mi-0c7195454110abb6d
+      SOURCE_FILE_PATH: Cargo.toml
+      DESTINATION_FILE_PATH: /home/romira/Cargo.toml
+
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ env.AWS_ROLE_TO_ASSUME }}
+
+      - name: deploy to blog-romira-dev-leptos
+        run: |
+          COMMANDS="
+            curl -L -o /tmp/blog-romira-dev-server.tar.gz 'https://github.com/${{ github.repository }}/releases/download/${{ needs.create-release-tag.outputs.release_tag }}/blog-romira-dev-server.tar.gz' &&
+            tar -xzvf /tmp/blog-romira-dev-server.tar.gz -C /tmp &&
+            sudo rsync -a --delete /tmp/blog-romira-dev-server/ /usr/local/blog-romira-dev-leptos/bin/ &&
+            sudo chmod 755 /usr/local/blog-romira-dev-leptos/bin/blog-romira-dev-server &&
+            sudo systemctl restart blog-romira-dev-leptos.service
+          "
+          COMMANDS=$(echo $COMMANDS | tr '\n' ' ')
+          
+          COMMAND_ID=$(aws ssm send-command --instance-ids ${{ env.INSTANCE_ID }} \
+            --document-name "AWS-RunShellScript" \
+            --parameters "{\"commands\":[\"$COMMANDS\"]}" \
+            --region $AWS_REGION \
+            --query "Command.CommandId" \
+            --output text)
+          
+          sleep 5  # コマンドが実行されるまで待つ
+          aws ssm list-command-invocations --command-id "$COMMAND_ID" --details
+          
+          INVOCATIONS=$(aws ssm list-command-invocations --command-id "$COMMAND_ID" --details)
