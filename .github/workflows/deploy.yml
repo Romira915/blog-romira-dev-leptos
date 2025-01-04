@@ -40,13 +40,13 @@ jobs:
           sudo apt install -y gcc-aarch64-linux-gnu
           rustup target add aarch64-unknown-linux-gnu
           rustup target add wasm32-unknown-unknown
-          if ! command -v wasm-bindgen-cli &> /dev/null; then
+          if ! command -v wasm-bindgen &> /dev/null; then
             cargo install wasm-bindgen-cli
           fi
           if ! command -v cargo-leptos &> /dev/null; then
           cargo install cargo-leptos
           fi
-          if ! command -v stylance-cli &> /dev/null; then
+          if ! command -v stylance &> /dev/null; then
           cargo install stylance-cli
           fi
 
