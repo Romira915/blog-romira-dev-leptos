@@ -1,0 +1,62 @@
+name: Deploy
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+  build:
+    runs-on: ubuntu-24.04
+    needs: ci
+    env:
+      CACHE_PATH: |
+        ~/.cargo/bin/
+        ~/.cargo/registry/index/
+        ~/.cargo/registry/cache/
+        ~/.cargo/git/db/
+        ./**/target
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/cache/restore@v3
+        id: cache-restore-cargo
+        with:
+          path: ${{ env.CACHE_PATH }}
+          key: ${{ runner.os }}-cargo-build-${{ hashFiles('**/Cargo.lock') }}-${{ hashFiles('**/*.rs') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-build-
+            ${{ runner.os }}-cargo-
+
+      - name: Setup rust
+        run: |
+          sudo apt update
+          sudo apt install -y gcc-aarch64-linux-gnu
+          rustup target add aarch64-unknown-linux-gnu
+          rustup target add wasm32-unknown-unknown
+          cargo install wasm-bindgen-cli
+          cargo install cargo-leptos
+          cargo install stylance-cli
+
+      - name: Build
+        env:
+          CARGO_BUILD_TARGET: aarch64-unknown-linux-gnu
+          ASSETS_ROOT: https://cdn.blog.romira.dev
+        run: cargo leptos build --release
+
+      - uses: actions/cache/save@v3
+        id: cache-save-cargo
+        with:
+          path: ${{ env.CACHE_PATH }}
+          key: ${{ runner.os }}-cargo-build-${{ hashFiles('**/Cargo.lock') }}-${{ hashFiles('**/*.rs') }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: blog-romira-dev-server
+          path: target/aarch64-unknown-linux-gnu/release/blog-romira-dev-server
