@@ -205,11 +205,27 @@ jobs:
           COMMAND_ID=$(aws ssm send-command --instance-ids ${{ env.INSTANCE_ID }} \
             --document-name "AWS-RunShellScript" \
             --parameters "{\"commands\":[\"$COMMANDS\"]}" \
-            --region $AWS_REGION \
+            --region ${{ env.AWS_REGION }} \
             --query "Command.CommandId" \
             --output text)
           
           sleep 5  # コマンドが実行されるまで待つ
-          aws ssm list-command-invocations --command-id "$COMMAND_ID" --details
+          STATUS=$(aws ssm list-command-invocations \
+            --command-id "$COMMAND_ID" \
+            --details \
+            --region "${{ env.AWS_REGION }}" \
+            --query "CommandInvocations[0].Status" \
+            --output text)
           
-          INVOCATIONS=$(aws ssm list-command-invocations --command-id "$COMMAND_ID" --details)
+          if [ "$STATUS" != "Success" ]; then
+            echo "Command did not complete successfully. Fetching detailed logs..." >&2
+          
+            # Fetch detailed logs for debugging
+            aws ssm list-command-invocations \
+            --command-id "$COMMAND_ID" \
+            --details \
+            --region "${{ env.AWS_REGION }}" \
+            || echo "Failed to fetch detailed logs." >&2
+          
+            exit 1
+          fi
