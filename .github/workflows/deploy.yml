@@ -69,10 +69,10 @@ jobs:
           key: ${{ runner.os }}-cargo-build-${{ hashFiles('**/Cargo.lock') }}-${{ hashFiles('**/*.rs') }}
 
       # 不要説
-      - name: Zip Artifact
-        run: |
-          tar -czvf blog-romira-dev-server.tar.gz -C target/aarch64-unknown-linux-gnu/release blog-romira-dev-server hash.txt
-          tar -czvf site.tar.gz -C target site
+      #      - name: Zip Artifact
+      #        run: |
+      #          tar -czvf blog-romira-dev-server.tar.gz -C target/aarch64-unknown-linux-gnu/release blog-romira-dev-server hash.txt
+      #          tar -czvf site.tar.gz -C target site
 
       - name: Upload blog-romira-dev-server
         uses: actions/upload-artifact@v4
@@ -80,7 +80,7 @@ jobs:
           name: blog-romira-dev-server
           path: |
             target/aarch64-unknown-linux-gnu/release/blog-romira-dev-server
-            target/aarch64-unknown-linux-gnu/release/hash.txt
+            target/release/hash.txt
 
       - name: Upload site
         uses: actions/upload-artifact@v4
