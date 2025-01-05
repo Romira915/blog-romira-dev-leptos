@@ -1,23 +1,25 @@
-use crate::SERVER_CONFIG;
 use crate::error::NewtArticleServiceError;
 use crate::server::models::newt_article::NewtArticleCollection;
+use crate::SERVER_CONFIG;
+use std::sync::Arc;
 
-pub(crate) struct NewtArticleService<'a> {
+#[derive(Debug, Clone)]
+pub struct NewtArticleService {
     client: reqwest::Client,
-    newt_cdn_base_url: &'a str,
-    newt_base_url: &'a str,
+    newt_cdn_base_url: Arc<String>,
+    newt_base_url: Arc<String>,
 }
 
-impl<'a> NewtArticleService<'a> {
+impl NewtArticleService {
     pub(crate) fn new(
         client: reqwest::Client,
-        newt_cdn_base_url: &'a str,
-        newt_base_url: &'a str,
+        newt_cdn_base_url: impl ToString,
+        newt_base_url: impl ToString,
     ) -> Self {
         Self {
             client,
-            newt_cdn_base_url,
-            newt_base_url,
+            newt_cdn_base_url: Arc::new(newt_cdn_base_url.to_string()),
+            newt_base_url: Arc::new(newt_base_url.to_string()),
         }
     }
 
@@ -47,9 +49,9 @@ impl<'a> NewtArticleService<'a> {
 //noinspection NonAsciiCharacters
 #[cfg(test)]
 mod tests {
-    use crate::SERVER_CONFIG;
     use crate::server::models::newt_article::NewtArticleCollection;
     use crate::server::services::NewtArticleService;
+    use crate::SERVER_CONFIG;
 
     #[tokio::test]
     async fn test_is_previewがfalseの場合はcdn用のトークンとurlを使用してリクエストすること() {

@@ -6,3 +6,5 @@ pub(crate) mod server;
 
 pub use front::app::{App, shell};
 pub use server::config::SERVER_CONFIG;
+#[cfg(feature = "ssr")]
+pub use server::core::AppState;
