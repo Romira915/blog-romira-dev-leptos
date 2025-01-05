@@ -1,6 +1,6 @@
 use crate::error::NewtArticleServiceError;
+use crate::server::config::SERVER_CONFIG;
 use crate::server::models::newt_article::NewtArticleCollection;
-use crate::SERVER_CONFIG;
 use std::sync::Arc;
 
 #[derive(Debug, Clone)]
@@ -49,9 +49,9 @@ impl NewtArticleService {
 //noinspection NonAsciiCharacters
 #[cfg(test)]
 mod tests {
+    use crate::server::config::SERVER_CONFIG;
     use crate::server::models::newt_article::NewtArticleCollection;
     use crate::server::services::NewtArticleService;
-    use crate::SERVER_CONFIG;
 
     #[tokio::test]
     async fn test_is_previewがfalseの場合はcdn用のトークンとurlを使用してリクエストすること() {

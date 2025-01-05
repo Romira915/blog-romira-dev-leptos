@@ -1,8 +1,7 @@
-use axum::extract::FromRef;
-use leptos::prelude::*;
 use crate::constants::{NEWT_BASE_URL, NEWT_CDN_BASE_URL};
 use crate::server::services::NewtArticleService;
-use crate::SERVER_CONFIG;
+use axum::extract::FromRef;
+use leptos::prelude::*;
 
 #[derive(FromRef, Debug, Clone)]
 pub struct AppState {

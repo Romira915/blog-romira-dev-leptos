@@ -1,8 +1,4 @@
-use crate::constants::{NEWT_BASE_URL, NEWT_CDN_BASE_URL};
-use crate::error::NewtArticleServiceError;
-use crate::server::models::newt_article::{NewtArticle, NewtArticleCollection};
-use crate::server::services::NewtArticleService;
-use crate::SERVER_CONFIG;
+use crate::common::handlers::{get_newt_articles_handler, get_number};
 use leptos::prelude::*;
 use leptos_meta::{Meta, Title};
 
@@ -10,8 +6,6 @@ stylance::import_style!(pub my_style, "home_page.module.scss");
 
 #[component]
 pub(crate) fn HomePage() -> impl IntoView {
-    tracing::info!("HomePage {}", SERVER_CONFIG.new_relic_license_key);
-
     let articles = Resource::new(
         || (),
         |_| async move {
@@ -26,17 +20,17 @@ pub(crate) fn HomePage() -> impl IntoView {
         <HomePageMeta/>
         <h1>"HomePage 変更テスト3"</h1>
         <p>"This is the home page."</p>
-        <Suspense fallback=|| "Loading...">
-        {move || {
-            articles.map(|articles| {
-                articles.items.iter().map(|article| {
-                    view! {
-                        <h2>{article.title.clone()}</h2>
-                    }
-                }).collect_view()
-            })
-        }}
-        </Suspense>
+        // <Suspense fallback=|| "Loading...">
+        // {move || {
+        //     articles.map(|articles| {
+        //         articles.items.iter().map(|article| {
+        //             view! {
+        //                 <h2>{article.title.clone()}</h2>
+        //             }
+        //         }).collect_view()
+        //     })
+        // }}
+        // </Suspense>
     }
 }
 
@@ -52,29 +46,4 @@ pub(crate) fn HomePageMeta() -> impl IntoView {
         <Meta property="og:image" content="https://blog-romira.imgix.net/46cea3d7-14ce-45bf-9d1e-52d1df39f2d2/romira'sdevelopblog.png"/>
         <Meta name="twitter:creator" content="@Romira915"/>
     }
-}
-
-#[server]
-pub(crate) async fn get_number() -> Result<i32, ServerFnError> {
-    tracing::info!("get_number");
-    tokio::time::sleep(std::time::Duration::from_secs(1)).await;
-
-    Ok(100)
-}
-
-#[server]
-pub(crate) async fn get_newt_articles_handler() -> Result<NewtArticleCollection, ServerFnError> {
-    let app_state = expect_context::<crate::AppState>();
-    tracing::info!("get_newt_articles {}", app_state.leptos_options.output_name);
-    let service = NewtArticleService::new(reqwest::Client::new(), NEWT_CDN_BASE_URL, NEWT_BASE_URL);
-    let articles = service.get_newt_articles(false).await;
-    let articles = match articles {
-        Ok(articles) => articles,
-        Err(err) => {
-            tracing::error!("get_newt_articles: {:?}", err);
-            return Err(ServerFnError::from(err));
-        }
-    };
-
-    Ok(articles)
 }
