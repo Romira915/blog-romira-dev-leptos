@@ -5,7 +5,7 @@ use std::cmp::Reverse;
 
 use crate::error::GetArticlesError;
 use leptos::prelude::*;
-use leptos::prelude::{ServerFnError, expect_context};
+use leptos::prelude::{expect_context, ServerFnError};
 use reqwest::StatusCode;
 
 #[server]
@@ -16,9 +16,9 @@ pub(crate) async fn get_number() -> Result<i32, ServerFnError> {
     Ok(100)
 }
 
-#[server]
+#[server(endpoint = "get_articles_handler")]
 pub(crate) async fn get_articles_handler()
--> Result<Vec<HomePageArticleDto>, ServerFnError<GetArticlesError>> {
+    -> Result<Vec<HomePageArticleDto>, ServerFnError<GetArticlesError>> {
     use crate::AppState;
     use leptos_axum::ResponseOptions;
 
