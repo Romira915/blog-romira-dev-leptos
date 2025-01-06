@@ -19,7 +19,7 @@ pub(crate) async fn get_articles_handler()
 
     let newt_article_service = expect_context::<AppState>().newt_article_service;
 
-    let articles = newt_article_service.get_published_newt_articles().await?;
+    let articles = newt_article_service.get_published_articles().await?;
     let articles = articles.items.into_iter().map(HomePageArticleDto::from).collect();
 
     Ok(articles)

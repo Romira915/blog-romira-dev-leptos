@@ -13,5 +13,3 @@ pub static SERVER_CONFIG: LazyLock<ServerConfig> = LazyLock::new(|| {
     dotenv::dotenv().ok();
     envy::from_env().expect("Failed to read environment variables")
 });
-#[cfg(not(feature = "ssr"))]
-pub static SERVER_CONFIG: LazyLock<ServerConfig> = LazyLock::new(|| ServerConfig::default());
