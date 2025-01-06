@@ -23,7 +23,7 @@ impl NewtArticleService {
         }
     }
 
-    pub(crate) async fn get_newt_articles(
+    async fn get_newt_articles(
         &self,
         is_preview: bool,
     ) -> Result<NewtArticleCollection, NewtArticleServiceError> {
@@ -43,6 +43,18 @@ impl NewtArticleService {
         let articles: NewtArticleCollection = response.json().await?;
 
         Ok(articles)
+    }
+
+    pub(crate) async fn get_published_newt_articles(
+        &self,
+    ) -> Result<NewtArticleCollection, NewtArticleServiceError> {
+        self.get_newt_articles(false).await
+    }
+
+    pub(crate) async fn get_preview_newt_articles(
+        &self,
+    ) -> Result<NewtArticleCollection, NewtArticleServiceError> {
+        self.get_newt_articles(true).await
     }
 }
 

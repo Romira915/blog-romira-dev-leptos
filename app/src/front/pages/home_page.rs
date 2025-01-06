@@ -1,4 +1,4 @@
-use crate::common::handlers::{get_newt_articles_handler, get_number};
+use crate::common::handlers::{get_articles_handler, get_number};
 use leptos::prelude::*;
 use leptos_meta::{Meta, Title};
 
@@ -9,7 +9,7 @@ pub(crate) fn HomePage() -> impl IntoView {
     let articles = Resource::new(
         || (),
         |_| async move {
-            get_newt_articles_handler()
+            get_articles_handler()
                 .await
                 .expect("failed to get_newt_articles_handler")
         },
@@ -20,17 +20,17 @@ pub(crate) fn HomePage() -> impl IntoView {
         <HomePageMeta/>
         <h1>"HomePage 変更テスト3"</h1>
         <p>"This is the home page."</p>
-        // <Suspense fallback=|| "Loading...">
-        // {move || {
-        //     articles.map(|articles| {
-        //         articles.items.iter().map(|article| {
-        //             view! {
-        //                 <h2>{article.title.clone()}</h2>
-        //             }
-        //         }).collect_view()
-        //     })
-        // }}
-        // </Suspense>
+        <Suspense fallback=|| "Loading...">
+        {move || {
+            articles.map(|articles| {
+                articles.iter().map(|article| {
+                    view! {
+                        <h2>{article.title.clone()}</h2>
+                    }
+                }).collect_view()
+            })
+        }}
+        </Suspense>
     }
 }
 
