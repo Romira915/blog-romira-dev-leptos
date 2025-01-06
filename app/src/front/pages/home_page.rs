@@ -6,14 +6,7 @@ stylance::import_style!(pub my_style, "home_page.module.scss");
 
 #[component]
 pub(crate) fn HomePage() -> impl IntoView {
-    let articles = Resource::new(
-        || (),
-        |_| async move {
-            get_articles_handler()
-                .await
-                .expect("failed to get_newt_articles_handler")
-        },
-    );
+    let articles = Resource::new(|| (), |_| async move { get_articles_handler().await });
     let number = Resource::new(|| (), |_| async move { get_number().await.unwrap() });
 
     view! {
@@ -23,16 +16,25 @@ pub(crate) fn HomePage() -> impl IntoView {
         <Suspense fallback=|| "Loading...">
         {move || {
             articles.map(|articles| {
-                articles.iter().map(|article| {
-                    view! {
-                        <a href={article.src.clone()} >
-                            <h2>{article.title.clone()}</h2>
-                            <p>{article.published_at.format("%Y年%m月%d日 %H:%M").to_string()}</p>
-                            <p>{article.category.clone()}</p>
-                            <img src={article.thumbnail_url.clone()} alt={article.title.clone()} width=300 height=300 />
-                        </a>
+                match articles {
+                    Ok(articles) => {
+                        articles.iter().map(|article| {
+                            view! {
+                                <a href={article.src.clone()} >
+                                    <h2>{article.title.clone()}</h2>
+                                    <p>{article.published_at.format("%Y年%m月%d日 %H:%M").to_string()}</p>
+                                    <p>{article.category.clone()}</p>
+                                    <img src={article.thumbnail_url.clone()} alt={article.title.clone()} width=300 height=300 />
+                                </a>
+                            }
+                        }).collect_view().into_any()
                     }
-                }).collect_view()
+                    Err(e) => {
+                        view! {
+                            <p>{format!("Error: {:?}", e)}</p>
+                        }.into_any()
+                    }
+                }
             })
         }}
         </Suspense>

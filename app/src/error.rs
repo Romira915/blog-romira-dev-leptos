@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 use thiserror::Error;
 
@@ -17,12 +18,12 @@ pub(crate) enum WordPressArticleServiceError {
     UnexpectedStatusCode(reqwest::StatusCode),
 }
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, Serialize, Deserialize)]
 pub enum GetArticlesError {
-    #[error(transparent)]
-    NewtArticleService(#[from] NewtArticleServiceError),
-    #[error(transparent)]
-    WordPressArticleService(#[from] WordPressArticleServiceError),
+    #[error("Failed to get articles from NewtArticleService: {0}")]
+    NewtArticleService(String),
+    #[error("Failed to get articles from WordPressArticleService: {0}")]
+    WordPressArticleService(String),
     #[error("Unknown error: {0}")]
     Unknown(String),
 }

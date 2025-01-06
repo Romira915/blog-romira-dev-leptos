@@ -1,0 +1,50 @@
+/* article_card.module.scss */
+.article-card {
+  display: flex;
+  flex-direction: row;
+  background-color: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s;
+}
+
+.article-card:hover {
+  transform: translateY(-5px);
+}
+
+.article-link {
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+}
+
+.article-thumbnail {
+  width: 150px;
+  height: 100px;
+  object-fit: cover;
+  margin-right: 16px;
+}
+
+.article-info {
+  padding: 16px;
+}
+
+.article-title {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.article-category {
+  font-size: 14px;
+  color: #777;
+  margin-bottom: 8px;
+}
+
+.article-published-at {
+  font-size: 12px;
+  color: #aaa;
+}

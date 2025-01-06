@@ -1,7 +1,7 @@
 use leptos::prelude::*;
 use stylance::import_style;
 
-import_style!(pub header_style, "header.module.scss");
+import_style!(pub(crate) header_style, "header.module.scss");
 
 #[component]
 pub(crate) fn Header() -> impl IntoView {

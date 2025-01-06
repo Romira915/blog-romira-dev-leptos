@@ -5,7 +5,7 @@ use std::cmp::Reverse;
 
 use crate::error::GetArticlesError;
 use leptos::prelude::*;
-use leptos::prelude::{expect_context, ServerFnError};
+use leptos::prelude::{ServerFnError, expect_context};
 use reqwest::StatusCode;
 
 #[server]
@@ -18,7 +18,7 @@ pub(crate) async fn get_number() -> Result<i32, ServerFnError> {
 
 #[server(endpoint = "get_articles_handler")]
 pub(crate) async fn get_articles_handler()
-    -> Result<Vec<HomePageArticleDto>, ServerFnError<GetArticlesError>> {
+-> Result<Vec<HomePageArticleDto>, ServerFnError<GetArticlesError>> {
     use crate::AppState;
     use leptos_axum::ResponseOptions;
 
@@ -32,7 +32,9 @@ pub(crate) async fn get_articles_handler()
         Ok(articles) => articles,
         Err(err) => {
             response.set_status(StatusCode::INTERNAL_SERVER_ERROR);
-            return Err(ServerFnError::from(GetArticlesError::from(err)));
+            return Err(ServerFnError::from(GetArticlesError::NewtArticleService(
+                err.to_string(),
+            )));
         }
     };
 
@@ -41,7 +43,9 @@ pub(crate) async fn get_articles_handler()
         Ok(articles) => articles,
         Err(err) => {
             response.set_status(StatusCode::INTERNAL_SERVER_ERROR);
-            return Err(ServerFnError::from(GetArticlesError::from(err)));
+            return Err(ServerFnError::from(
+                GetArticlesError::WordPressArticleService(err.to_string()),
+            ));
         }
     };
 
