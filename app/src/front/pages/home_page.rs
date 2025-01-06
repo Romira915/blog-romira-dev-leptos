@@ -25,7 +25,12 @@ pub(crate) fn HomePage() -> impl IntoView {
             articles.map(|articles| {
                 articles.iter().map(|article| {
                     view! {
-                        <h2>{article.title.clone()}</h2>
+                        <a href={article.src.clone()} >
+                            <h2>{article.title.clone()}</h2>
+                            <p>{article.published_at.format("%Y年%m月%d日 %H:%M").to_string()}</p>
+                            <p>{article.category.clone()}</p>
+                            <img src={article.thumbnail_url.clone()} alt={article.title.clone()} width=300 height=300 />
+                        </a>
                     }
                 }).collect_view()
             })

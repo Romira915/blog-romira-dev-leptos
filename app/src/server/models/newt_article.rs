@@ -13,6 +13,7 @@ pub struct NewtArticleCollection {
 }
 
 #[derive(Serialize, Deserialize, Debug, Default, PartialEq)]
+#[serde(rename_all = "camelCase")]
 pub(crate) struct NewtArticle {
     #[serde(rename = "_id")]
     pub(crate) id: String,
@@ -35,6 +36,7 @@ impl From<NewtArticle> for HomePageArticleDto {
                 || THUMBNAIL_NO_IMAGE_URL.to_string(),
                 |cover_image| cover_image.src,
             ),
+            src: format!("/articles/{}", value.id),
             category: value.categories.map_or_else(
                 || "".to_string(),
                 |categories| {
@@ -48,8 +50,8 @@ impl From<NewtArticle> for HomePageArticleDto {
             published_at: value
                 .sys
                 .raw
-                .published_at
-                .unwrap_or(value.sys.raw.created_at)
+                .first_published_at
+                .unwrap_or(value.sys.raw.published_at.unwrap_or(value.sys.created_at))
                 .with_timezone(&FixedOffset::east_opt(JST_TZ * HOUR).unwrap()),
         }
     }
@@ -74,7 +76,6 @@ pub(crate) struct AuthorInArticle {
     #[serde(rename = "_sys")]
     pub(crate) sys: Sys,
     pub(crate) full_name: String,
-    #[serde(rename = "profileImage")]
     pub(crate) profile_image_id: Option<String>,
     pub(crate) biography: Option<String>,
 }
@@ -84,6 +85,7 @@ pub(crate) struct AuthorInArticle {
 pub(crate) struct Meta {
     pub(crate) title: String,
     pub(crate) description: String,
+    #[serde(rename = "ogImage")]
     pub(crate) og_image: Option<Image>,
 }
 

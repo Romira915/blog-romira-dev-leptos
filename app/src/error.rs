@@ -1,9 +1,10 @@
+use std::str::FromStr;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub(crate) enum NewtArticleServiceError {
     #[error(transparent)]
-    ReqwestSendError(#[from] reqwest::Error),
+    FailedReqwestSend(#[from] reqwest::Error),
     #[error("Failed to api response status code: {0}")]
     UnexpectedStatusCode(reqwest::StatusCode),
 }
@@ -11,7 +12,24 @@ pub(crate) enum NewtArticleServiceError {
 #[derive(Error, Debug)]
 pub(crate) enum WordPressArticleServiceError {
     #[error(transparent)]
-    ReqwestSendError(#[from] reqwest::Error),
+    FailedReqwestSend(#[from] reqwest::Error),
     #[error("Failed to api response status code: {0}")]
     UnexpectedStatusCode(reqwest::StatusCode),
+}
+
+#[derive(Error, Debug)]
+pub enum GetArticlesError {
+    #[error(transparent)]
+    NewtArticleService(#[from] NewtArticleServiceError),
+    #[error(transparent)]
+    WordPressArticleService(#[from] WordPressArticleServiceError),
+    #[error("Unknown error: {0}")]
+    Unknown(String),
+}
+
+impl FromStr for GetArticlesError {
+    type Err = ();
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(Self::Unknown(s.to_string()))
+    }
 }

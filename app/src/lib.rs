@@ -5,6 +5,6 @@ pub(crate) mod front;
 #[cfg(feature = "ssr")]
 pub(crate) mod server;
 
-pub use front::app::{shell, App};
+pub use front::app::{App, shell};
 #[cfg(feature = "ssr")]
 pub use server::{config::SERVER_CONFIG, contexts::AppState};

@@ -10,6 +10,7 @@ leptos = { workspace = true }
 leptos_meta = { workspace = true }
 leptos_router = { workspace = true }
 leptos-use = { workspace = true }
+leptos_axum = { workspace = true, optional = true }
 serde = { workspace = true }
 thiserror = { workspace = true }
 stylance = { workspace = true }
@@ -32,6 +33,7 @@ ssr = [
     "leptos_meta/ssr",
     "leptos_router/ssr",
     "leptos-use/ssr",
+    "leptos_axum",
     "tokio",
     "dotenv",
     "envy",

@@ -1,12 +1,8 @@
+use crate::common::dto::HomePageArticleDto;
+use crate::constants::{HOUR, JST_TZ};
 use crate::server::models::word_press_category::Category;
-use chrono::NaiveDateTime;
+use chrono::{FixedOffset, NaiveDateTime, TimeZone};
 use serde::{Deserialize, Serialize};
-
-#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
-#[serde(rename_all = "camelCase")]
-pub(crate) struct WordPressArticles {
-    pub(crate) articles: Vec<WordPressArticle>,
-}
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "snake_case")]
@@ -44,6 +40,25 @@ pub(crate) struct WordPressArticle {
     pub(crate) links: Links,
     #[serde(skip_serializing, skip_deserializing)]
     pub(crate) category_names: Vec<Category>,
+}
+
+impl From<WordPressArticle> for HomePageArticleDto {
+    fn from(value: WordPressArticle) -> Self {
+        Self {
+            title: value.title.rendered,
+            thumbnail_url: value.jetpack_featured_media_url,
+            src: value.link,
+            category: value
+                .category_names
+                .iter()
+                .map(|category| category.name.as_str())
+                .collect::<Vec<&str>>()
+                .join(", "),
+            published_at: FixedOffset::east_opt(JST_TZ * HOUR)
+                .unwrap()
+                .from_utc_datetime(&value.date_gmt),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]

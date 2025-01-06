@@ -260,6 +260,7 @@ dependencies = [
  "envy",
  "leptos",
  "leptos-use",
+ "leptos_axum",
  "leptos_meta",
  "leptos_router",
  "mockito",

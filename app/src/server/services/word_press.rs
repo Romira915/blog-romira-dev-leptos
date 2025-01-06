@@ -50,12 +50,74 @@ mod tests {
     use axum::http::StatusCode;
 
     #[tokio::test]
+    async fn test_正常系() {
+        let mut server = mockito::Server::new_async().await;
+        let url = server.url();
+
+        server
+            .mock(
+                "GET",
+                format!(
+                    "/wp-json/wp/v2/posts?author={}",
+                    PRTIMES_WORD_PRESS_AUTHOR_ID
+                )
+                .as_str(),
+            )
+            .with_body(r#"[]"#)
+            .create();
+
+        let client = reqwest::Client::new();
+        let service = WordPressArticleService::new(client, &url);
+
+        let result = service.get_articles().await;
+
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), vec![]);
+    }
+
+    #[tokio::test]
+    async fn test_response_jsonのスキーマが異なる場合エラーを返すこと() {
+        let mut server = mockito::Server::new_async().await;
+        let url = server.url();
+
+        server
+            .mock(
+                "GET",
+                format!(
+                    "/wp-json/wp/v2/posts?author={}",
+                    PRTIMES_WORD_PRESS_AUTHOR_ID
+                )
+                .as_str(),
+            )
+            .with_body(r#"{"id": 1}"#)
+            .create();
+
+        let client = reqwest::Client::new();
+        let service = WordPressArticleService::new(client, &url);
+
+        let result = service.get_articles().await;
+
+        assert!(result.is_err());
+        assert!(matches!(
+            result.unwrap_err(),
+            WordPressArticleServiceError::FailedReqwestSend(_)
+        ));
+    }
+
+    #[tokio::test]
     async fn test_200_299以外のステータスコードが返された場合はエラーを返すこと() {
         let mut server = mockito::Server::new_async().await;
         let url = server.url();
 
         server
-            .mock("GET", format!("/wp-json/wp/v2/posts?author={}", PRTIMES_WORD_PRESS_AUTHOR_ID).as_str())
+            .mock(
+                "GET",
+                format!(
+                    "/wp-json/wp/v2/posts?author={}",
+                    PRTIMES_WORD_PRESS_AUTHOR_ID
+                )
+                .as_str(),
+            )
             .with_status(500)
             .create();
 
