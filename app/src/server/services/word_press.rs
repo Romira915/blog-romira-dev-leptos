@@ -1,6 +1,7 @@
 use crate::constants::PRTIMES_WORD_PRESS_AUTHOR_ID;
 use crate::error::WordPressArticleServiceError;
 use crate::server::models::word_press_article::WordPressArticle;
+use crate::server::models::word_press_category::Category;
 use std::sync::Arc;
 
 #[derive(Debug, Clone)]
@@ -35,9 +36,35 @@ impl WordPressArticleService {
             ));
         }
 
-        let articles: Vec<WordPressArticle> = response.json().await?;
+        let mut articles: Vec<WordPressArticle> = response.json().await?;
+        for article in &mut articles {
+            let mut category = vec![];
+            for id in article.categories.iter() {
+                category.push(self.get_categories(*id).await?);
+            }
+
+            article.category_names = category;
+        }
 
         Ok(articles)
+    }
+
+    async fn get_categories(&self, id: u64) -> Result<Category, WordPressArticleServiceError> {
+        let response = self
+            .client
+            .get(format!("{}/wp-json/wp/v2/categories/{}", self.base_url, id))
+            .send()
+            .await?;
+
+        if !response.status().is_success() {
+            return Err(WordPressArticleServiceError::UnexpectedStatusCode(
+                response.status(),
+            ));
+        }
+
+        let categories: Category = response.json().await?;
+
+        Ok(categories)
     }
 }
 

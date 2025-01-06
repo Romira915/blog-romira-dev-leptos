@@ -5,6 +5,11 @@
   margin: 0;
 }
 
+.blog-title-link {
+  text-decoration: none;
+  color: inherit;
+}
+
 .blog-title {
   font-size: clamp(1.5rem, 5vw, 3rem);
   font-weight: 700;
