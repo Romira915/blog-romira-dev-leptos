@@ -1,4 +1,5 @@
 use crate::common::handlers::{get_articles_handler, get_number};
+use crate::front::components::article_card::ArticleCard;
 use leptos::prelude::*;
 use leptos_meta::{Meta, Title};
 
@@ -19,13 +20,10 @@ pub(crate) fn HomePage() -> impl IntoView {
                 match articles {
                     Ok(articles) => {
                         articles.iter().map(|article| {
+                            let (read_article, write_article) = signal(article.to_owned());
+
                             view! {
-                                <a href={article.src.clone()} >
-                                    <h2>{article.title.clone()}</h2>
-                                    <p>{article.published_at.format("%Y年%m月%d日 %H:%M").to_string()}</p>
-                                    <p>{article.category.clone()}</p>
-                                    <img src={article.thumbnail_url.clone()} alt={article.title.clone()} width=300 height=300 />
-                                </a>
+                                <ArticleCard article={read_article} />
                             }
                         }).collect_view().into_any()
                     }
