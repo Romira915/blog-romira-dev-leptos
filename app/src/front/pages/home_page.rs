@@ -11,30 +11,33 @@ pub(crate) fn HomePage() -> impl IntoView {
     let number = Resource::new(|| (), |_| async move { get_number().await.unwrap() });
 
     view! {
-        <HomePageMeta/>
+        <HomePageMeta />
         <h1>"HomePage 変更テスト3"</h1>
         <p>"This is the home page."</p>
-        <Suspense fallback=|| "Loading...">
-        {move || {
-            articles.map(|articles| {
-                match articles {
-                    Ok(articles) => {
-                        articles.iter().map(|article| {
-                            let (read_article, write_article) = signal(article.to_owned());
+        <Suspense fallback=|| {
+            "Loading..."
+        }>
+            {move || {
+                articles
+                    .map(|articles| {
+                        match articles {
+                            Ok(articles) => {
+                                articles
+                                    .iter()
+                                    .map(|article| {
+                                        let (read_article, write_article) = signal(
+                                            article.to_owned(),
+                                        );
 
-                            view! {
-                                <ArticleCard article={read_article} />
+                                        view! { <ArticleCard article=read_article /> }
+                                    })
+                                    .collect_view()
+                                    .into_any()
                             }
-                        }).collect_view().into_any()
-                    }
-                    Err(e) => {
-                        view! {
-                            <p>{format!("Error: {:?}", e)}</p>
-                        }.into_any()
-                    }
-                }
-            })
-        }}
+                            Err(e) => view! { <p>{format!("Error: {:?}", e)}</p> }.into_any(),
+                        }
+                    })
+            }}
         </Suspense>
     }
 }
@@ -42,13 +45,19 @@ pub(crate) fn HomePage() -> impl IntoView {
 #[component]
 pub(crate) fn HomePageMeta() -> impl IntoView {
     view! {
-        <Title text="Romira's develop blog"/>
-        <Meta property="og:title" content="Romira's develop blog"/>
-        <Meta property="og:description" content="Rustaceanによる開発ブログです．技術共有や個人開発の進捗などを発信します．"/>
-        <Meta property="og:type" content="article"/>
-        <Meta property="og:url" content="https://blog.romira.dev"/>
-        <Meta property="og:site_name" content="Romira's develop blog"/>
-        <Meta property="og:image" content="https://blog-romira.imgix.net/46cea3d7-14ce-45bf-9d1e-52d1df39f2d2/romira'sdevelopblog.png"/>
-        <Meta name="twitter:creator" content="@Romira915"/>
+        <Title text="Romira's develop blog" />
+        <Meta property="og:title" content="Romira's develop blog" />
+        <Meta
+            property="og:description"
+            content="Rustaceanによる開発ブログです．技術共有や個人開発の進捗などを発信します．"
+        />
+        <Meta property="og:type" content="article" />
+        <Meta property="og:url" content="https://blog.romira.dev" />
+        <Meta property="og:site_name" content="Romira's develop blog" />
+        <Meta
+            property="og:image"
+            content="https://blog-romira.imgix.net/46cea3d7-14ce-45bf-9d1e-52d1df39f2d2/romira'sdevelopblog.png"
+        />
+        <Meta name="twitter:creator" content="@Romira915" />
     }
 }
