@@ -1,0 +1,94 @@
+// 記事カードスタイル
+.article-card {
+  display: flex; // 横並びにする
+  align-items: flex-start;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: 0 2px 4px var(--shadow);
+  border-radius: 8px;
+  overflow: hidden;
+  transition: transform 0.3s, box-shadow 0.3s;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 8px var(--shadow);
+  }
+}
+
+.article-link {
+  display: flex; // 子要素を横並びにする
+  text-decoration: none;
+  color: inherit;
+  width: 100%;
+}
+
+.article-thumbnail {
+  flex-shrink: 0; // サムネイルのサイズを固定
+  width: 120px; // サムネイルの横幅
+  height: 120px; // サムネイルの高さ
+  object-fit: cover; // アスペクト比を維持しながらサイズ調整
+  border-top-left-radius: 8px;
+  border-bottom-left-radius: 8px;
+}
+
+.article-info {
+  flex-grow: 1; // 残りのスペースを埋める
+  padding: 16px;
+  background-color: var(--surface);
+  display: flex;
+  flex-direction: column; // 縦並び
+  justify-content: center; // 縦方向の中央揃え
+}
+
+.article-title {
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: var(--text-primary);
+  margin: 0 0 8px;
+  line-height: 1.5;
+}
+
+.article-category {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin: 0 0 4px;
+}
+
+.article-published-at {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+// カテゴリリスト
+.article-category-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+
+  .article-category {
+    display: inline-block;
+    padding: 4px 8px;
+    background-color: var(--primary);
+    color: var(--text-primary);
+    border-radius: 4px;
+    font-size: 0.875rem;
+    margin-right: 8px;
+  }
+}
+
+@media (max-width: 600px) {
+  .article-card {
+    flex-direction: column;
+  }
+
+  .article-thumbnail {
+    width: 100%; // 横幅いっぱいに表示
+    height: auto;
+    border-radius: 0; // 角丸をリセット
+  }
+
+  .article-info {
+    padding: 16px;
+  }
+}

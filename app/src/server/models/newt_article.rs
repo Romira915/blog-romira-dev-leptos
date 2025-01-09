@@ -1,4 +1,6 @@
-use chrono::{DateTime, Utc};
+use crate::common::dto::HomePageArticleDto;
+use crate::constants::{HOUR, JST_TZ, THUMBNAIL_NO_IMAGE_URL};
+use chrono::{DateTime, FixedOffset, Utc};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Default, PartialEq)]
@@ -11,6 +13,7 @@ pub struct NewtArticleCollection {
 }
 
 #[derive(Serialize, Deserialize, Debug, Default, PartialEq)]
+#[serde(rename_all = "camelCase")]
 pub(crate) struct NewtArticle {
     #[serde(rename = "_id")]
     pub(crate) id: String,
@@ -23,6 +26,35 @@ pub(crate) struct NewtArticle {
     pub(crate) cover_image: Option<Image>,
     pub(crate) author: Option<AuthorInArticle>,
     pub(crate) categories: Option<Vec<Category>>,
+}
+
+impl From<NewtArticle> for HomePageArticleDto {
+    fn from(value: NewtArticle) -> Self {
+        Self {
+            title: value.title,
+            thumbnail_url: value.cover_image.map_or_else(
+                || THUMBNAIL_NO_IMAGE_URL.to_string(),
+                |cover_image| cover_image.src,
+            ),
+            src: format!("/articles/{}", value.id),
+            category: value.categories.map_or_else(
+                || "".to_string(),
+                |categories| {
+                    categories
+                        .iter()
+                        .map(|category| category.name.as_str())
+                        .collect::<Vec<&str>>()
+                        .join(", ")
+                },
+            ),
+            published_at: value
+                .sys
+                .raw
+                .first_published_at
+                .unwrap_or(value.sys.raw.published_at.unwrap_or(value.sys.created_at))
+                .with_timezone(&FixedOffset::east_opt(JST_TZ * HOUR).unwrap()),
+        }
+    }
 }
 
 #[derive(Debug, Default, Serialize, Deserialize, PartialEq)]
@@ -44,7 +76,6 @@ pub(crate) struct AuthorInArticle {
     #[serde(rename = "_sys")]
     pub(crate) sys: Sys,
     pub(crate) full_name: String,
-    #[serde(rename = "profileImage")]
     pub(crate) profile_image_id: Option<String>,
     pub(crate) biography: Option<String>,
 }
@@ -54,6 +85,7 @@ pub(crate) struct AuthorInArticle {
 pub(crate) struct Meta {
     pub(crate) title: String,
     pub(crate) description: String,
+    #[serde(rename = "ogImage")]
     pub(crate) og_image: Option<Image>,
 }
 

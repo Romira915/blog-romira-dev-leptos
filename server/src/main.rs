@@ -25,16 +25,29 @@ async fn main() {
     let conf = get_configuration(None).unwrap();
     let addr = conf.leptos_options.site_addr;
     let leptos_options = conf.leptos_options;
+    let app_state = AppState::new(leptos_options.clone());
     // Generate the list of routes in your Leptos App
     let routes = generate_route_list(App);
 
     let app = Router::new()
-        .leptos_routes(&leptos_options, routes, {
-            let leptos_options = leptos_options.clone();
-            move || shell(leptos_options.clone())
-        })
-        .fallback(leptos_axum::file_and_error_handler(shell))
-        .with_state(leptos_options)
+        .leptos_routes_with_context(
+            &app_state,
+            routes,
+            {
+                let app_state = app_state.clone();
+                move || provide_context(app_state.clone())
+            },
+            {
+                let leptos_options = leptos_options.clone();
+                move || shell(leptos_options.clone())
+            },
+        )
+        // .leptos_routes(&app_state, routes, {
+        //     let leptos_options = leptos_options.clone();
+        //     move || shell(leptos_options.clone())
+        // })
+        .fallback(leptos_axum::file_and_error_handler::<AppState, _>(shell))
+        .with_state(app_state)
         .layer(MakeSpanForHttp.into_tracing_service());
 
     // run our app with hyper

@@ -1,7 +1,36 @@
+use serde::{Deserialize, Serialize};
+use std::str::FromStr;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
-pub enum NewtArticleServiceError {
-    #[error("Failed to fetch Newt articles")]
-    NewtApiError(#[from] reqwest::Error),
+pub(crate) enum NewtArticleServiceError {
+    #[error(transparent)]
+    FailedReqwestSend(#[from] reqwest::Error),
+    #[error("Failed to api response status code: {0}")]
+    UnexpectedStatusCode(reqwest::StatusCode),
+}
+
+#[derive(Error, Debug)]
+pub(crate) enum WordPressArticleServiceError {
+    #[error(transparent)]
+    FailedReqwestSend(#[from] reqwest::Error),
+    #[error("Failed to api response status code: {0}")]
+    UnexpectedStatusCode(reqwest::StatusCode),
+}
+
+#[derive(Error, Debug, Serialize, Deserialize)]
+pub enum GetArticlesError {
+    #[error("Failed to get articles from NewtArticleService: {0}")]
+    NewtArticleService(String),
+    #[error("Failed to get articles from WordPressArticleService: {0}")]
+    WordPressArticleService(String),
+    #[error("Unknown error: {0}")]
+    Unknown(String),
+}
+
+impl FromStr for GetArticlesError {
+    type Err = ();
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(Self::Unknown(s.to_string()))
+    }
 }

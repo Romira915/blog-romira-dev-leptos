@@ -11,17 +11,17 @@ pub(crate) struct Category {
     pub(crate) taxonomy: String,
     pub(crate) parent: u64,
     pub(crate) meta: Vec<String>,
-    pub(crate) _links: crate::server::models::word_press_article::Links,
+    pub(crate) _links: Links,
 }
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize, PartialEq)]
 pub(crate) struct Links {
     #[serde(rename = "self")]
-    pub(crate) self_: Vec<crate::server::models::word_press_article::Link>,
-    pub(crate) collection: Vec<crate::server::models::word_press_article::Link>,
-    pub(crate) about: Vec<crate::server::models::word_press_article::Link>,
+    pub(crate) self_: Vec<Link>,
+    pub(crate) collection: Vec<Link>,
+    pub(crate) about: Vec<Link>,
     #[serde(rename = "wp:post_type")]
-    pub(crate) wp_post_type: Vec<crate::server::models::word_press_article::Link>,
+    pub(crate) wp_post_type: Vec<Link>,
     pub(crate) curies: Vec<Cury>,
 }
 
