@@ -25,7 +25,7 @@ pub(crate) fn ArticleCard(article: ReadSignal<HomePageArticleDto>) -> impl IntoV
                             </li>
                         </ul>
                         <p class=article_card_style::article_published_at>
-                            {article.read().published_at.to_string()}
+                            {article.read().published_at.format("%Y年%m月%d日").to_string()}
                         </p>
                     </figcaption>
                 </figure>
