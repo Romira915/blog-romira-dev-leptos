@@ -1,7 +1,7 @@
 // 記事カードスタイル
 .article-card {
   display: flex; // 横並びにする
-  align-items: flex-start;
+  align-items: center;
   background-color: var(--surface);
   border: 1px solid var(--border);
   box-shadow: 0 2px 4px var(--shadow);
@@ -20,6 +20,11 @@
   text-decoration: none;
   color: inherit;
   width: 100%;
+}
+
+.article-figure {
+  display: flex;
+  flex-direction: row;
 }
 
 .article-thumbnail {

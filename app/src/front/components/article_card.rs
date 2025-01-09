@@ -9,7 +9,7 @@ pub(crate) fn ArticleCard(article: ReadSignal<HomePageArticleDto>) -> impl IntoV
     view! {
         <article class=article_card_style::article_card>
             <a href=article.read().src.clone() class=article_card_style::article_link>
-                <figure>
+                <figure class=article_card_style::article_figure>
                     <img
                         src=article.read().thumbnail_url.clone()
                         alt="Article thumbnail for {article.read().title.clone()}"
