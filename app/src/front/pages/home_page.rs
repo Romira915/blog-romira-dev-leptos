@@ -1,19 +1,21 @@
-use crate::common::handlers::{get_articles_handler, get_number};
-use crate::front::components::article_card::ArticleCard;
+use crate::common::handlers::{get_articles_handler, get_author_handler, get_number};
+use crate::constants::{ROMIRA_GITHUB_URL, ROMIRA_X_URL};
+use crate::front::components::article_card::ArticleCardList;
+use crate::front::components::author_card::AuthorCard;
 use leptos::prelude::*;
 use leptos_meta::{Meta, Title};
 
-stylance::import_style!(pub my_style, "home_page.module.scss");
+stylance::import_style!(pub home_page_style, "home_page.module.scss");
 
 #[component]
 pub(crate) fn HomePage() -> impl IntoView {
     let articles = Resource::new(|| (), |_| async move { get_articles_handler().await });
+    let author = Resource::new(|| (), |_| async move { get_author_handler().await });
     let number = Resource::new(|| (), |_| async move { get_number().await.unwrap() });
 
     view! {
         <HomePageMeta />
-        <h1>"HomePage 変更テスト3"</h1>
-        <p>"This is the home page."</p>
+            <section class=home_page_style::home_page>
         <Suspense fallback=|| {
             "Loading..."
         }>
@@ -22,16 +24,28 @@ pub(crate) fn HomePage() -> impl IntoView {
                     .map(|articles| {
                         match articles {
                             Ok(articles) => {
-                                articles
-                                    .iter()
-                                    .map(|article| {
-                                        let (read_article, write_article) = signal(
-                                            article.to_owned(),
-                                        );
-
-                                        view! { <ArticleCard article=read_article /> }
-                                    })
-                                    .collect_view()
+                                view! { <ArticleCardList articles=articles.clone() /> }.into_any()
+                            }
+                            Err(e) => view! { <p>{format!("Error: {:?}", e)}</p> }.into_any(),
+                        }
+                    })
+            }}
+        </Suspense>
+        <Suspense fallback=|| {
+            "Loading..."
+        }>
+            {move || {
+                author
+                    .map(|author| {
+                        match author {
+                            Ok(author) => {
+                                view! {
+                                    <AuthorCard
+                                        author=author.clone()
+                                        github_url=ROMIRA_GITHUB_URL
+                                        x_url=ROMIRA_X_URL
+                                    />
+                                }
                                     .into_any()
                             }
                             Err(e) => view! { <p>{format!("Error: {:?}", e)}</p> }.into_any(),
@@ -39,6 +53,7 @@ pub(crate) fn HomePage() -> impl IntoView {
                     })
             }}
         </Suspense>
+        </section>
     }
 }
 

@@ -1,35 +1,74 @@
-use crate::common::dto::HomePageArticleDto;
+use crate::common::dto::{ArticleSource, HomePageArticleDto};
 use leptos::prelude::*;
 use stylance::import_style;
 
 import_style!(pub(crate) article_card_style, "article_card.module.scss");
 
 #[component]
-pub(crate) fn ArticleCard(article: ReadSignal<HomePageArticleDto>) -> impl IntoView {
+pub(crate) fn ArticleCard(article: HomePageArticleDto) -> impl IntoView {
+    let a_target = match article.article_source {
+        ArticleSource::Newt => "_self",
+        _ => "_blank",
+    };
+
     view! {
         <article class=article_card_style::article_card>
-            <a href=article.read().src.clone() class=article_card_style::article_link>
+            <a
+                href=article.src.get()
+                aria-label=article.title.get()
+                class=article_card_style::article_link
+                target=a_target
+                rel="noopener noreferrer"
+            >
                 <figure class=article_card_style::article_figure>
                     <img
-                        src=article.read().thumbnail_url.clone()
-                        alt="Article thumbnail for {article.read().title.clone()}"
+                        src=article.thumbnail_url.get()
+                        alt=format!("Thumbnail of {}", article.title.get())
+                        loading="lazy"
                         class=article_card_style::article_thumbnail
                     />
                     <figcaption class=article_card_style::article_info>
-                        <h2 class=article_card_style::article_title>
-                            {article.read().title.clone()}
-                        </h2>
+                        <h2 class=article_card_style::article_title>{article.title.get()}</h2>
                         <ul class=article_card_style::article_category_list>
-                            <li class=article_card_style::article_category>
-                                {article.read().category.clone()}
-                            </li>
+                            {article
+                                .category
+                                .iter()
+                                .map(|category| {
+                                    view! {
+                                        <li class=article_card_style::article_category>
+                                            {category.get()}
+                                        </li>
+                                    }
+                                })
+                                .collect_view()}
                         </ul>
                         <p class=article_card_style::article_published_at>
-                            {article.read().published_at.format("%Y年%m月%d日").to_string()}
+                            {article.published_at.get()}
                         </p>
                     </figcaption>
                 </figure>
             </a>
         </article>
+    }
+}
+
+#[component]
+pub(crate) fn ArticleCardList(
+    #[prop(optional)] class: &'static str,
+    articles: Vec<HomePageArticleDto>,
+) -> impl IntoView {
+    view! {
+        <section class=format!(
+            "{} {}",
+            article_card_style::article_card_list,
+            class,
+        )>
+            {articles
+                .iter()
+                .map(|article| {
+                    view! { <ArticleCard article=article.clone() /> }
+                })
+                .collect_view()}
+        </section>
     }
 }

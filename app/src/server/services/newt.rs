@@ -1,6 +1,7 @@
-use crate::SERVER_CONFIG;
 use crate::error::NewtArticleServiceError;
 use crate::server::models::newt_article::NewtArticleCollection;
+use crate::server::models::newt_author::Author;
+use crate::SERVER_CONFIG;
 use std::sync::Arc;
 
 #[derive(Debug, Clone)]
@@ -61,6 +62,30 @@ impl NewtArticleService {
         &self,
     ) -> Result<NewtArticleCollection, NewtArticleServiceError> {
         self.get_articles(true).await
+    }
+
+    pub(crate) async fn get_author<T>(&self, author_id: T) -> Result<Author, NewtArticleServiceError>
+    where
+        T: std::fmt::Display,
+    {
+        let (base_url, api_token) = (&self.newt_cdn_base_url, &SERVER_CONFIG.newt_cdn_api_token);
+
+        let response = self
+            .client
+            .get(format!("{base_url}/blog/author/{author_id}"))
+            .bearer_auth(api_token)
+            .send()
+            .await?;
+
+        if !response.status().is_success() {
+            return Err(NewtArticleServiceError::UnexpectedStatusCode(
+                response.status(),
+            ));
+        }
+
+        let author: Author = response.json().await?;
+
+        Ok(author)
     }
 }
 

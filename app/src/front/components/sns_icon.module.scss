@@ -1,0 +1,57 @@
+.github-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+
+  &:hover {
+    transform: scale(1.1);
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .github-icon {
+    filter: invert(100%);
+  }
+}
+
+.x-icon {
+  width: 50px; // SVG全体のサイズ
+  height: 50px;
+  transition: transform 0.3s ease;
+
+  &:hover {
+    transform: scale(1.1);
+  }
+
+  .x-icon-circle {
+    stroke: #000; // 通常時の円の枠線色
+    fill: #fff; // 通常時の円の背景色
+    stroke-width: 2px;
+    transition: fill 0.3s ease;
+
+    @media (prefers-color-scheme: dark) {
+      stroke: #fff; // ダークモード時の円の枠線色
+      fill: #000; // ダークモード時の円の背景色
+    }
+  }
+
+  .x-icon-g {
+    transform: translate(4px, 4px);
+  }
+
+  .x-icon-path {
+    fill: #000; // 通常時のアイコンの色（円と対比）
+    transition: fill 0.3s ease;
+
+    @media (prefers-color-scheme: dark) {
+      fill: #fff; // ダークモード時のアイコンの色
+    }
+  }
+
+
+}
+
+
+
