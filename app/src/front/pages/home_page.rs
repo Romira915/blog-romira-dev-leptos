@@ -15,44 +15,45 @@ pub(crate) fn HomePage() -> impl IntoView {
 
     view! {
         <HomePageMeta />
-            <section class=home_page_style::home_page>
-        <Suspense fallback=|| {
-            "Loading..."
-        }>
-            {move || {
-                articles
-                    .map(|articles| {
-                        match articles {
-                            Ok(articles) => {
-                                view! { <ArticleCardList articles=articles.clone() /> }.into_any()
-                            }
-                            Err(e) => view! { <p>{format!("Error: {:?}", e)}</p> }.into_any(),
-                        }
-                    })
-            }}
-        </Suspense>
-        <Suspense fallback=|| {
-            "Loading..."
-        }>
-            {move || {
-                author
-                    .map(|author| {
-                        match author {
-                            Ok(author) => {
-                                view! {
-                                    <AuthorCard
-                                        author=author.clone()
-                                        github_url=ROMIRA_GITHUB_URL
-                                        x_url=ROMIRA_X_URL
-                                    />
+        <section class=home_page_style::home_page>
+            <Suspense fallback=|| {
+                "Loading..."
+            }>
+                {move || {
+                    articles
+                        .map(|articles| {
+                            match articles {
+                                Ok(articles) => {
+                                    view! { <ArticleCardList articles=articles.clone() /> }
+                                        .into_any()
                                 }
-                                    .into_any()
+                                Err(e) => view! { <p>{format!("Error: {:?}", e)}</p> }.into_any(),
                             }
-                            Err(e) => view! { <p>{format!("Error: {:?}", e)}</p> }.into_any(),
-                        }
-                    })
-            }}
-        </Suspense>
+                        })
+                }}
+            </Suspense>
+            <Suspense fallback=|| {
+                "Loading..."
+            }>
+                {move || {
+                    author
+                        .map(|author| {
+                            match author {
+                                Ok(author) => {
+                                    view! {
+                                        <AuthorCard
+                                            author=author.clone()
+                                            github_url=ROMIRA_GITHUB_URL
+                                            x_url=ROMIRA_X_URL
+                                        />
+                                    }
+                                        .into_any()
+                                }
+                                Err(e) => view! { <p>{format!("Error: {:?}", e)}</p> }.into_any(),
+                            }
+                        })
+                }}
+            </Suspense>
         </section>
     }
 }

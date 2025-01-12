@@ -1,7 +1,7 @@
+use crate::SERVER_CONFIG;
 use crate::error::NewtArticleServiceError;
 use crate::server::models::newt_article::NewtArticleCollection;
 use crate::server::models::newt_author::Author;
-use crate::SERVER_CONFIG;
 use std::sync::Arc;
 
 #[derive(Debug, Clone)]
@@ -64,7 +64,10 @@ impl NewtArticleService {
         self.get_articles(true).await
     }
 
-    pub(crate) async fn get_author<T>(&self, author_id: T) -> Result<Author, NewtArticleServiceError>
+    pub(crate) async fn get_author<T>(
+        &self,
+        author_id: T,
+    ) -> Result<Author, NewtArticleServiceError>
     where
         T: std::fmt::Display,
     {
