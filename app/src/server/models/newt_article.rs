@@ -37,7 +37,7 @@ impl From<NewtArticle> for HomePageArticleDto {
                 || THUMBNAIL_NO_IMAGE_URL.into(),
                 |cover_image| cover_image.src.clone(),
             )),
-            src: RwSignal::new(format!("/articles/{}", value.slug)),
+            src: RwSignal::new(format!("/articles/{}", value.id)),
             category: value
                 .categories
                 .as_ref()
