@@ -1,7 +1,8 @@
-use crate::common::dto::HomePageArticleDto;
-use crate::constants::{HOUR, JST_TZ};
+use crate::common::dto::{ArticleSource, HomePageArticleDto};
+use crate::constants::{DATE_DISPLAY_FORMAT, HOUR, JST_TZ};
 use crate::server::models::word_press_category::Category;
 use chrono::{FixedOffset, NaiveDateTime, TimeZone};
+use leptos::prelude::RwSignal;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
@@ -45,18 +46,21 @@ pub(crate) struct WordPressArticle {
 impl From<WordPressArticle> for HomePageArticleDto {
     fn from(value: WordPressArticle) -> Self {
         Self {
-            title: value.title.rendered,
-            thumbnail_url: value.jetpack_featured_media_url,
-            src: value.link,
+            title: RwSignal::new(value.title.rendered),
+            thumbnail_url: RwSignal::new(value.jetpack_featured_media_url),
+            src: RwSignal::new(value.link),
             category: value
                 .category_names
                 .iter()
-                .map(|category| category.name.as_str())
-                .collect::<Vec<&str>>()
-                .join(", "),
-            published_at: FixedOffset::east_opt(JST_TZ * HOUR)
-                .unwrap()
-                .from_utc_datetime(&value.date_gmt),
+                .map(|category| RwSignal::new(category.name.clone()))
+                .collect(),
+            published_at: RwSignal::new(
+                FixedOffset::east(JST_TZ * HOUR)
+                    .from_utc_datetime(&value.date)
+                    .format(DATE_DISPLAY_FORMAT)
+                    .to_string(),
+            ),
+            article_source: ArticleSource::WordPress,
         }
     }
 }

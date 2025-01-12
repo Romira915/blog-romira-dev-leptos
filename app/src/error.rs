@@ -21,7 +21,9 @@ pub(crate) enum WordPressArticleServiceError {
 #[derive(Error, Debug, Serialize, Deserialize)]
 pub enum GetArticlesError {
     #[error("Failed to get articles from NewtArticleService: {0}")]
-    NewtArticleService(String),
+    NewtArticleServiceGetArticles(String),
+    #[error("Failed to get author from NewtArticleService: {0}")]
+    NewtArticleServiceGetAuthor(String),
     #[error("Failed to get articles from WordPressArticleService: {0}")]
     WordPressArticleService(String),
     #[error("Unknown error: {0}")]

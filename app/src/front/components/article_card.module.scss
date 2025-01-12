@@ -1,12 +1,17 @@
+.article-card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 // 記事カードスタイル
 .article-card {
   display: flex; // 横並びにする
-  align-items: flex-start;
+  align-items: center;
   background-color: var(--surface);
   border: 1px solid var(--border);
   box-shadow: 0 2px 4px var(--shadow);
   border-radius: 8px;
-  overflow: hidden;
   transition: transform 0.3s, box-shadow 0.3s;
 
   &:hover {
@@ -17,15 +22,24 @@
 
 .article-link {
   display: flex; // 子要素を横並びにする
+  width: 100%; // リンクを親要素いっぱいに広げる
   text-decoration: none;
   color: inherit;
-  width: 100%;
+}
+
+.article-figure {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  padding: 16px;
+  margin: 0;
 }
 
 .article-thumbnail {
   flex-shrink: 0; // サムネイルのサイズを固定
-  width: 120px; // サムネイルの横幅
-  height: 120px; // サムネイルの高さ
+  width: 228px; // サムネイルの横幅
+  height: 128px; // サムネイルの高さ
   object-fit: cover; // アスペクト比を維持しながらサイズ調整
   border-top-left-radius: 8px;
   border-bottom-left-radius: 8px;
@@ -38,20 +52,15 @@
   display: flex;
   flex-direction: column; // 縦並び
   justify-content: center; // 縦方向の中央揃え
+  gap: 8px; // 子要素間の間隔
 }
 
 .article-title {
   font-size: 1.25rem;
   font-weight: bold;
   color: var(--text-primary);
-  margin: 0 0 8px;
+  margin: 0;
   line-height: 1.5;
-}
-
-.article-category {
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-  margin: 0 0 4px;
 }
 
 .article-published-at {
@@ -62,6 +71,8 @@
 
 // カテゴリリスト
 .article-category-list {
+  display: flex;
+  gap: 8px;
   list-style: none;
   padding: 0;
   margin: 0;
@@ -69,16 +80,15 @@
   .article-category {
     display: inline-block;
     padding: 4px 8px;
-    background-color: var(--primary);
+    background-color: var(--secondary);
     color: var(--text-primary);
     border-radius: 4px;
     font-size: 0.875rem;
-    margin-right: 8px;
   }
 }
 
 @media (max-width: 600px) {
-  .article-card {
+  .article-figure {
     flex-direction: column;
   }
 
@@ -86,9 +96,5 @@
     width: 100%; // 横幅いっぱいに表示
     height: auto;
     border-radius: 0; // 角丸をリセット
-  }
-
-  .article-info {
-    padding: 16px;
   }
 }
