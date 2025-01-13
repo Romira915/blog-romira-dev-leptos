@@ -62,6 +62,10 @@ pub(crate) fn HomePage() -> impl IntoView {
 pub(crate) fn HomePageMeta() -> impl IntoView {
     view! {
         <Title text="Romira's develop blog" />
+        <Meta
+            name="description"
+            content="Rustaceanによる開発ブログです．技術共有や個人開発の進捗などを発信します．"
+        />
         <Meta property="og:title" content="Romira's develop blog" />
         <Meta
             property="og:description"

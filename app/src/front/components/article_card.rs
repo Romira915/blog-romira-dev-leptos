@@ -23,8 +23,9 @@ pub(crate) fn ArticleCard(article: HomePageArticleDto) -> impl IntoView {
                 <figure class=article_card_style::article_figure>
                     <img
                         src=article.thumbnail_url.get()
+                        width=228
+                        height=128
                         alt=format!("Thumbnail of {}", article.title.get())
-                        loading="lazy"
                         class=article_card_style::article_thumbnail
                     />
                     <figcaption class=article_card_style::article_info>
