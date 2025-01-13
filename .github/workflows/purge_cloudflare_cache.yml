@@ -3,8 +3,8 @@ on:
   workflow_dispatch:
   workflow_call:
     secrets:
-      - CLOUDFLARE_ZONE
-      - CLOUDFLARE_TOKEN
+      CLOUDFLARE_ZONE: ${{ secrets.CLOUDFLARE_ZONE }}
+      CLOUDFLARE_TOKEN: ${{ secrets.CLOUDFLARE_TOKEN }}
 
 jobs:
   purge-cache:
