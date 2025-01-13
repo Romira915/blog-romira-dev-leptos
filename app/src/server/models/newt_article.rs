@@ -1,5 +1,6 @@
 use crate::common::dto::{ArticleSource, HomePageArticleDto};
 use crate::constants::{DATE_DISPLAY_FORMAT, HOUR, JST_TZ, THUMBNAIL_NO_IMAGE_URL};
+use crate::server::utils::url::to_optimize_thumbnail_url;
 use chrono::{DateTime, FixedOffset, Utc};
 use leptos::prelude::RwSignal;
 use serde::{Deserialize, Serialize};
@@ -33,9 +34,11 @@ impl From<NewtArticle> for HomePageArticleDto {
     fn from(value: NewtArticle) -> Self {
         Self {
             title: RwSignal::new(value.title),
-            thumbnail_url: RwSignal::new(value.cover_image.as_ref().map_or_else(
-                || THUMBNAIL_NO_IMAGE_URL.into(),
-                |cover_image| cover_image.src.clone(),
+            thumbnail_url: RwSignal::new(to_optimize_thumbnail_url(
+                value.cover_image.as_ref().map_or_else(
+                    || THUMBNAIL_NO_IMAGE_URL,
+                    |cover_image| cover_image.src.as_str(),
+                ),
             )),
             src: RwSignal::new(format!("/articles/{}", value.id)),
             category: value
