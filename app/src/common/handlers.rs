@@ -1,8 +1,6 @@
 use crate::common::dto::{HomePageArticleDto, HomePageAuthorDto};
-use crate::constants::{HOUR, JST_TZ, NEWT_BASE_URL, NEWT_CDN_BASE_URL, ROMIRA_NEWT_AUTHOR_ID};
+use crate::constants::ROMIRA_NEWT_AUTHOR_ID;
 use crate::error::GetArticlesError;
-use chrono::{FixedOffset, TimeZone};
-use leptos::html::article;
 use leptos::prelude::*;
 use leptos::prelude::{ServerFnError, expect_context};
 use reqwest::StatusCode;
