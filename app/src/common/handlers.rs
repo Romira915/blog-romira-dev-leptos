@@ -15,6 +15,7 @@ pub(crate) async fn get_articles_handler()
     let app_state = expect_context::<AppState>();
     let newt_article_service = app_state.newt_article_service;
     let wordpress_article_service = app_state.word_press_article_service;
+    let qiita_article_service = app_state.qiita_article_service;
     let response = expect_context::<ResponseOptions>();
 
     let newt_articles = newt_article_service.get_published_articles().await;
@@ -39,6 +40,17 @@ pub(crate) async fn get_articles_handler()
         }
     };
 
+    let qiita_articles = qiita_article_service.get_articles().await;
+    let qiita_articles = match qiita_articles {
+        Ok(articles) => articles,
+        Err(err) => {
+            response.set_status(StatusCode::INTERNAL_SERVER_ERROR);
+            return Err(ServerFnError::from(GetArticlesError::QiitaArticleService(
+                err.to_string(),
+            )));
+        }
+    };
+
     let mut articles = newt_articles
         .items
         .into_iter()
@@ -46,6 +58,7 @@ pub(crate) async fn get_articles_handler()
         .collect::<Vec<HomePageArticleDto>>();
 
     articles.extend(wordpress_articles.into_iter().map(HomePageArticleDto::from));
+    articles.extend(qiita_articles.into_iter().map(HomePageArticleDto::from));
     articles.sort_unstable_by_key(|a| Reverse(a.published_at.get()));
 
     Ok(articles)

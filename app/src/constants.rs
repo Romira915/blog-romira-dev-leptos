@@ -12,3 +12,4 @@ pub(crate) const JST_TZ: i32 = 9;
 pub(crate) const DATE_DISPLAY_FORMAT: &str = "%Y年%m月%d日";
 pub(crate) const ROMIRA_GITHUB_URL: &str = "https://github.com/Romira915";
 pub(crate) const ROMIRA_X_URL: &str = "https://x.com/Romira915";
+pub(crate) const QIITA_BASE_URL: &str = "https://qiita.com";

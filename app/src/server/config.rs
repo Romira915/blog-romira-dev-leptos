@@ -6,6 +6,7 @@ pub struct ServerConfig {
     pub new_relic_license_key: String,
     pub newt_cdn_api_token: String,
     pub newt_api_token: String,
+    pub qiita_api_token: String,
 }
 
 #[cfg(feature = "ssr")]

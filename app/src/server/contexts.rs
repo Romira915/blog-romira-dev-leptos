@@ -1,5 +1,8 @@
-use crate::constants::{NEWT_BASE_URL, NEWT_CDN_BASE_URL, PRTIMES_WORD_PRESS_BASE_URL};
+use crate::constants::{
+    NEWT_BASE_URL, NEWT_CDN_BASE_URL, PRTIMES_WORD_PRESS_BASE_URL, QIITA_BASE_URL,
+};
 use crate::server::services::newt::NewtArticleService;
+use crate::server::services::qiita::QiitaArticleService;
 use crate::server::services::word_press::WordPressArticleService;
 use axum::extract::FromRef;
 use leptos::prelude::*;
@@ -9,6 +12,7 @@ pub struct AppState {
     pub leptos_options: LeptosOptions,
     pub newt_article_service: NewtArticleService,
     pub word_press_article_service: WordPressArticleService,
+    pub qiita_article_service: QiitaArticleService,
 }
 
 impl AppState {
@@ -26,6 +30,7 @@ impl AppState {
                 client.clone(),
                 PRTIMES_WORD_PRESS_BASE_URL,
             ),
+            qiita_article_service: QiitaArticleService::new(client.clone(), QIITA_BASE_URL),
         }
     }
 }
