@@ -12,6 +12,7 @@ concurrency:
 jobs:
   ci:
     uses: ./.github/workflows/ci.yml
+
   build:
     runs-on: ubuntu-24.04
     needs: ci
@@ -229,3 +230,9 @@ jobs:
           
             exit 1
           fi
+
+  purge-cloudflare-cache:
+    needs:
+      - deploy-static-file
+      - deploy-blog-romira-dev-server
+    uses: ./.github/workflows/purge_cloudflare_cache.yml
