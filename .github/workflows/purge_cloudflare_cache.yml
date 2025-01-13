@@ -3,8 +3,12 @@ on:
   workflow_dispatch:
   workflow_call:
     secrets:
-      CLOUDFLARE_ZONE: ${{ secrets.CLOUDFLARE_ZONE }}
-      CLOUDFLARE_TOKEN: ${{ secrets.CLOUDFLARE_TOKEN }}
+      CLOUDFLARE_ZONE:
+        description: "Cloudflare Zone ID"
+        required: true
+      CLOUDFLARE_TOKEN:
+        description: "Cloudflare API Token"
+        required: true
 
 jobs:
   purge-cache:
