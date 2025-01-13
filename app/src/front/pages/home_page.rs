@@ -1,4 +1,4 @@
-use crate::common::handlers::{get_articles_handler, get_author_handler, get_number};
+use crate::common::handlers::{get_articles_handler, get_author_handler};
 use crate::constants::{ROMIRA_GITHUB_URL, ROMIRA_X_URL};
 use crate::front::components::article_card::ArticleCardList;
 use crate::front::components::author_card::AuthorCard;
@@ -11,7 +11,6 @@ stylance::import_style!(pub home_page_style, "home_page.module.scss");
 pub(crate) fn HomePage() -> impl IntoView {
     let articles = Resource::new(|| (), |_| async move { get_articles_handler().await });
     let author = Resource::new(|| (), |_| async move { get_author_handler().await });
-    let number = Resource::new(|| (), |_| async move { get_number().await.unwrap() });
 
     view! {
         <HomePageMeta />
