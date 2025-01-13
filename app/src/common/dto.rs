@@ -15,6 +15,7 @@ pub struct HomePageArticleDto {
 pub(crate) enum ArticleSource {
     Newt,
     WordPress,
+    Qiita,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
