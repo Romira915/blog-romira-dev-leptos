@@ -1,7 +1,7 @@
+use crate::SERVER_CONFIG;
 use crate::error::QiitaArticleServiceError;
 use crate::server::models::qiita_article::QiitaArticleList;
 use crate::server::utils::html::get_og_image_url;
-use crate::SERVER_CONFIG;
 use std::sync::Arc;
 
 #[derive(Debug, Clone)]
