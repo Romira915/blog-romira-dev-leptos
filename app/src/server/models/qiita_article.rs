@@ -4,10 +4,10 @@ use chrono::{DateTime, FixedOffset, Utc};
 use leptos::prelude::RwSignal;
 use serde::{Deserialize, Serialize};
 
-pub type QiitaArticleList = Vec<QiitaArticle>;
+pub(crate) type QiitaArticleList = Vec<QiitaArticle>;
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct QiitaArticle {
+pub(crate) struct QiitaArticle {
     pub rendered_body: String,
     pub body: String,
     pub coediting: bool,
@@ -28,14 +28,15 @@ pub struct QiitaArticle {
     pub team_membership: Option<TeamMembership>,
     pub organization_url_name: Option<String>,
     pub slide: bool,
+    #[serde(skip_serializing, skip_deserializing)]
+    pub og_image_url: String,
 }
 
 impl From<QiitaArticle> for HomePageArticleDto {
     fn from(value: QiitaArticle) -> Self {
         Self {
             title: RwSignal::new(value.title),
-            /// TODO: og:image が取得できるようになったら修正する
-            thumbnail_url: RwSignal::new(value.user.profile_image_url),
+            thumbnail_url: RwSignal::new(value.og_image_url),
             src: RwSignal::new(value.url),
             category: value
                 .tags

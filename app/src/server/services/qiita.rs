@@ -1,6 +1,7 @@
-use crate::SERVER_CONFIG;
 use crate::error::QiitaArticleServiceError;
 use crate::server::models::qiita_article::QiitaArticleList;
+use crate::server::utils::html::get_og_image_url;
+use crate::SERVER_CONFIG;
 use std::sync::Arc;
 
 #[derive(Debug, Clone)]
@@ -33,7 +34,12 @@ impl QiitaArticleService {
             ));
         }
 
-        let articles: QiitaArticleList = response.json().await?;
+        let mut articles: QiitaArticleList = response.json().await?;
+        for article in articles.iter_mut() {
+            article.og_image_url = get_og_image_url(&self.client, &article.url)
+                .await?
+                .map_or(article.user.profile_image_url.clone(), |url| url);
+        }
 
         Ok(articles)
     }

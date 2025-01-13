@@ -23,6 +23,7 @@ serde_json = { workspace = true }
 dotenv = { workspace = true, optional = true }
 axum = { workspace = true, optional = true }
 url = { workspace = true, optional = true }
+select = { workspace = true, optional = true }
 
 [dev-dependencies]
 mockito = { workspace = true }
@@ -40,6 +41,7 @@ ssr = [
     "envy",
     "axum",
     "url",
+    "select",
 ]
 
 [package.metadata.cargo-all-features]
