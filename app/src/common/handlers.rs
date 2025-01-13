@@ -4,17 +4,9 @@ use crate::error::GetArticlesError;
 use chrono::{FixedOffset, TimeZone};
 use leptos::html::article;
 use leptos::prelude::*;
-use leptos::prelude::{ServerFnError, expect_context};
+use leptos::prelude::{expect_context, ServerFnError};
 use reqwest::StatusCode;
 use std::cmp::Reverse;
-
-#[server]
-pub(crate) async fn get_number() -> Result<i32, ServerFnError> {
-    tracing::info!("get_number");
-    tokio::time::sleep(std::time::Duration::from_secs(1)).await;
-
-    Ok(100)
-}
 
 #[server(endpoint = "get_articles_handler")]
 pub(crate) async fn get_articles_handler()
@@ -54,15 +46,6 @@ pub(crate) async fn get_articles_handler()
         .into_iter()
         .map(HomePageArticleDto::from)
         .collect::<Vec<HomePageArticleDto>>();
-    // #[cfg(debug_assertions)]
-    // articles.push(HomePageArticleDto {
-    //     title: "Debug Long Title".repeat(30).to_string(),
-    //     thumbnail_url: "https://blog-romira.imgix.net/95424e09-0b44-4165-a5d9-498fdad10553/Windows・WSLの開発環境をansibleで管理しているという話.jpg".to_string(),
-    //     src: format!("{}/articles/debug", NEWT_BASE_URL),
-    //     category: vec!["Debug".to_string()],
-    //     published_at: chrono::Utc::now()
-    //         .with_timezone(&FixedOffset::east_opt(JST_TZ * HOUR).unwrap()),
-    // });
 
     articles.extend(wordpress_articles.into_iter().map(HomePageArticleDto::from));
     articles.sort_unstable_by_key(|a| Reverse(a.published_at.get()));
