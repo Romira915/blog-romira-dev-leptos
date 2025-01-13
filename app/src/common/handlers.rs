@@ -4,7 +4,7 @@ use crate::error::GetArticlesError;
 use chrono::{FixedOffset, TimeZone};
 use leptos::html::article;
 use leptos::prelude::*;
-use leptos::prelude::{expect_context, ServerFnError};
+use leptos::prelude::{ServerFnError, expect_context};
 use reqwest::StatusCode;
 use std::cmp::Reverse;
 
