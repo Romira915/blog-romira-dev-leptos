@@ -27,10 +27,15 @@ pub(crate) fn AuthorCard(
                     <p class=author_card_style::author_description>{author.description.get()}</p>
                 </div>
                 <div class=author_card_style::author_sns>
-                    <a href=github_url target="_blank" rel="noopener noreferrer">
+                    <a
+                        href=github_url
+                        aria-label="GitHub"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
                         <GitHubIcon />
                     </a>
-                    <a href=x_url target="_blank" rel="noopener noreferrer">
+                    <a href=x_url aria-label="X" target="_blank" rel="noopener noreferrer">
                         <XIcon />
                     </a>
                 </div>
