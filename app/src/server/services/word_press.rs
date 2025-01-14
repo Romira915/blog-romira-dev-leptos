@@ -18,7 +18,7 @@ impl WordPressArticleService {
         }
     }
 
-    pub(crate) async fn get_articles(
+    pub(crate) async fn fetch_articles(
         &self,
     ) -> Result<Vec<WordPressArticle>, WordPressArticleServiceError> {
         let response = self
@@ -40,7 +40,7 @@ impl WordPressArticleService {
         for article in &mut articles {
             let mut category = vec![];
             for id in article.categories.iter() {
-                category.push(self.get_categories(*id).await?);
+                category.push(self.fetch_categories(*id).await?);
             }
 
             article.category_names = category;
@@ -49,7 +49,7 @@ impl WordPressArticleService {
         Ok(articles)
     }
 
-    async fn get_categories(&self, id: u64) -> Result<Category, WordPressArticleServiceError> {
+    async fn fetch_categories(&self, id: u64) -> Result<Category, WordPressArticleServiceError> {
         let response = self
             .client
             .get(format!("{}/wp-json/wp/v2/categories/{}", self.base_url, id))
@@ -96,7 +96,7 @@ mod tests {
         let client = reqwest::Client::new();
         let service = WordPressArticleService::new(client, &url);
 
-        let result = service.get_articles().await;
+        let result = service.fetch_articles().await;
 
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), vec![]);
@@ -122,7 +122,7 @@ mod tests {
         let client = reqwest::Client::new();
         let service = WordPressArticleService::new(client, &url);
 
-        let result = service.get_articles().await;
+        let result = service.fetch_articles().await;
 
         assert!(result.is_err());
         assert!(matches!(
@@ -151,7 +151,7 @@ mod tests {
         let client = reqwest::Client::new();
         let service = WordPressArticleService::new(client, &url);
 
-        let result = service.get_articles().await;
+        let result = service.fetch_articles().await;
 
         assert!(result.is_err());
         assert_eq!(

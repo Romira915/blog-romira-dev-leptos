@@ -1,6 +1,6 @@
 use crate::SERVER_CONFIG;
 use crate::error::NewtArticleServiceError;
-use crate::server::models::newt_article::NewtArticleCollection;
+use crate::server::models::newt_article::{NewtArticle, NewtArticleCollection};
 use crate::server::models::newt_author::Author;
 use std::sync::Arc;
 
@@ -24,7 +24,7 @@ impl NewtArticleService {
         }
     }
 
-    async fn get_articles(
+    async fn fetch_articles(
         &self,
         is_preview: bool,
     ) -> Result<NewtArticleCollection, NewtArticleServiceError> {
@@ -52,19 +52,46 @@ impl NewtArticleService {
         Ok(articles)
     }
 
-    pub(crate) async fn get_published_articles(
+    pub(crate) async fn fetch_published_articles(
         &self,
     ) -> Result<NewtArticleCollection, NewtArticleServiceError> {
-        self.get_articles(false).await
+        self.fetch_articles(false).await
     }
 
-    pub(crate) async fn get_preview_articles(
+    pub(crate) async fn fetch_preview_articles(
         &self,
     ) -> Result<NewtArticleCollection, NewtArticleServiceError> {
-        self.get_articles(true).await
+        self.fetch_articles(true).await
     }
 
-    pub(crate) async fn get_author<T>(
+    pub(crate) async fn fetch_article<T>(
+        &self,
+        article_id: T,
+    ) -> Result<NewtArticle, NewtArticleServiceError>
+    where
+        T: std::fmt::Display,
+    {
+        let (base_url, api_token) = (&self.newt_cdn_base_url, &SERVER_CONFIG.newt_cdn_api_token);
+
+        let response = self
+            .client
+            .get(format!("{base_url}/blog/article/{article_id}"))
+            .bearer_auth(api_token)
+            .send()
+            .await?;
+
+        if !response.status().is_success() {
+            return Err(NewtArticleServiceError::UnexpectedStatusCode(
+                response.status(),
+            ));
+        }
+
+        let article: NewtArticle = response.json().await?;
+
+        Ok(article)
+    }
+
+    pub(crate) async fn fetch_author<T>(
         &self,
         author_id: T,
     ) -> Result<Author, NewtArticleServiceError>
@@ -118,7 +145,7 @@ mod tests {
         let client = reqwest::Client::new();
         let service = NewtArticleService::new(client, &url, "");
 
-        let result = service.get_articles(false).await;
+        let result = service.fetch_articles(false).await;
 
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), NewtArticleCollection::default());
@@ -142,7 +169,7 @@ mod tests {
         let client = reqwest::Client::new();
         let service = NewtArticleService::new(client, "", &url);
 
-        let result = service.get_articles(true).await;
+        let result = service.fetch_articles(true).await;
 
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), NewtArticleCollection::default());
@@ -161,7 +188,7 @@ mod tests {
         let client = reqwest::Client::new();
         let service = NewtArticleService::new(client, &url, "");
 
-        let result = service.get_articles(false).await;
+        let result = service.fetch_articles(false).await;
 
         assert!(result.is_err());
         assert_eq!(

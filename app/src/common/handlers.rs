@@ -18,7 +18,7 @@ pub(crate) async fn get_articles_handler()
     let qiita_article_service = app_state.qiita_article_service;
     let response = expect_context::<ResponseOptions>();
 
-    let newt_articles = newt_article_service.get_published_articles().await;
+    let newt_articles = newt_article_service.fetch_published_articles().await;
     let newt_articles = match newt_articles {
         Ok(articles) => articles,
         Err(err) => {
@@ -29,7 +29,7 @@ pub(crate) async fn get_articles_handler()
         }
     };
 
-    let wordpress_articles = wordpress_article_service.get_articles().await;
+    let wordpress_articles = wordpress_article_service.fetch_articles().await;
     let wordpress_articles = match wordpress_articles {
         Ok(articles) => articles,
         Err(err) => {
@@ -40,7 +40,7 @@ pub(crate) async fn get_articles_handler()
         }
     };
 
-    let qiita_articles = qiita_article_service.get_articles().await;
+    let qiita_articles = qiita_article_service.fetch_articles().await;
     let qiita_articles = match qiita_articles {
         Ok(articles) => articles,
         Err(err) => {
@@ -74,7 +74,9 @@ pub(crate) async fn get_author_handler()
     let newt_article_service = app_state.newt_article_service;
     let response = expect_context::<ResponseOptions>();
 
-    let author = newt_article_service.get_author(ROMIRA_NEWT_AUTHOR_ID).await;
+    let author = newt_article_service
+        .fetch_author(ROMIRA_NEWT_AUTHOR_ID)
+        .await;
     let author = match author {
         Ok(author) => author,
         Err(err) => {

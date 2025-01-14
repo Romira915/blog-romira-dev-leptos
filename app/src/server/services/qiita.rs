@@ -18,7 +18,9 @@ impl QiitaArticleService {
         }
     }
 
-    pub(crate) async fn get_articles(&self) -> Result<QiitaArticleList, QiitaArticleServiceError> {
+    pub(crate) async fn fetch_articles(
+        &self,
+    ) -> Result<QiitaArticleList, QiitaArticleServiceError> {
         let (base_url, api_token) = (&self.qiita_base_url, &SERVER_CONFIG.qiita_api_token);
 
         let response = self
