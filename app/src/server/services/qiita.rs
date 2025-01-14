@@ -1,7 +1,7 @@
-use crate::SERVER_CONFIG;
 use crate::error::QiitaArticleServiceError;
 use crate::server::models::qiita_article::QiitaArticleList;
 use crate::server::utils::html::get_og_image_url;
+use crate::SERVER_CONFIG;
 use std::sync::Arc;
 
 #[derive(Debug, Clone)]
@@ -18,7 +18,9 @@ impl QiitaArticleService {
         }
     }
 
-    pub(crate) async fn get_articles(&self) -> Result<QiitaArticleList, QiitaArticleServiceError> {
+    pub(crate) async fn fetch_articles(
+        &self,
+    ) -> Result<QiitaArticleList, QiitaArticleServiceError> {
         let (base_url, api_token) = (&self.qiita_base_url, &SERVER_CONFIG.qiita_api_token);
 
         let response = self
