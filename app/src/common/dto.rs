@@ -24,3 +24,14 @@ pub struct HomePageAuthorDto {
     pub(crate) avatar_url: RwSignal<String>,
     pub(crate) description: RwSignal<String>,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ArticleDetailDto {
+    pub(crate) title: RwSignal<String>,
+    pub(crate) thumbnail_url: RwSignal<String>,
+    pub(crate) body: RwSignal<String>,
+    pub(crate) category: Vec<RwSignal<String>>,
+    pub(crate) published_at: RwSignal<String>,
+    pub(crate) description: RwSignal<String>,
+    pub(crate) og_image_url: RwSignal<String>,
+}
