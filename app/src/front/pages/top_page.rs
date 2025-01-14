@@ -5,16 +5,16 @@ use crate::front::components::author_card::AuthorCard;
 use leptos::prelude::*;
 use leptos_meta::{Meta, Title};
 
-stylance::import_style!(pub home_page_style, "home_page.module.scss");
+stylance::import_style!(pub top_page_style, "top_page.module.scss");
 
 #[component]
-pub(crate) fn HomePage() -> impl IntoView {
+pub(crate) fn TopPage() -> impl IntoView {
     let articles = Resource::new(|| (), |_| async move { get_articles_handler().await });
     let author = Resource::new(|| (), |_| async move { get_author_handler().await });
 
     view! {
-        <HomePageMeta />
-        <section class=home_page_style::home_page>
+        <TopPageMeta />
+        <section class=top_page_style::home_page>
             <Suspense fallback=|| {
                 "Loading..."
             }>
@@ -58,7 +58,7 @@ pub(crate) fn HomePage() -> impl IntoView {
 }
 
 #[component]
-pub(crate) fn HomePageMeta() -> impl IntoView {
+pub(crate) fn TopPageMeta() -> impl IntoView {
     view! {
         <Title text="Romira's develop blog" />
         <Meta

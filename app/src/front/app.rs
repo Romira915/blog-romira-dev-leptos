@@ -1,12 +1,12 @@
 use crate::front::components::header::Header;
 use crate::front::pages::article_page::ArticlePage;
-use crate::front::pages::home_page::HomePage;
+use crate::front::pages::top_page::TopPage;
 use leptos::config::LeptosOptions;
 use leptos::prelude::*;
-use leptos::{IntoView, component, view};
-use leptos_meta::{HashedStylesheet, Link, Meta, MetaTags, Stylesheet, provide_meta_context};
+use leptos::{component, view, IntoView};
+use leptos_meta::{provide_meta_context, HashedStylesheet, Link, Meta, MetaTags, Stylesheet};
 use leptos_router::components::{Route, Router, Routes};
-use leptos_router::{SsrMode, StaticSegment, path};
+use leptos_router::{path, SsrMode, StaticSegment};
 
 #[cfg(debug_assertions)]
 const ASSETS_ROOT: &str = "";
@@ -50,7 +50,7 @@ pub fn App() -> impl IntoView {
             <Header />
             <main>
                 <Routes fallback=|| "Not Found.">
-                    <Route path=StaticSegment("") view=HomePage ssr=SsrMode::Async />
+                    <Route path=StaticSegment("") view=TopPage ssr=SsrMode::Async />
                     <Route path=path!("/articles/:id") view=ArticlePage ssr=SsrMode::Async />
                 </Routes>
             </main>
