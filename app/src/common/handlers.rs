@@ -2,7 +2,7 @@ use crate::common::dto::{HomePageArticleDto, HomePageAuthorDto};
 use crate::constants::ROMIRA_NEWT_AUTHOR_ID;
 use crate::error::GetArticlesError;
 use leptos::prelude::*;
-use leptos::prelude::{expect_context, ServerFnError};
+use leptos::prelude::{ServerFnError, expect_context};
 use reqwest::StatusCode;
 use std::cmp::Reverse;
 

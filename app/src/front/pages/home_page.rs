@@ -70,7 +70,7 @@ pub(crate) fn HomePageMeta() -> impl IntoView {
             property="og:description"
             content="Rustaceanによる開発ブログです．技術共有や個人開発の進捗などを発信します．"
         />
-        <Meta property="og:type" content="article" />
+        <Meta property="og:type" content="website" />
         <Meta property="og:url" content="https://blog.romira.dev" />
         <Meta property="og:site_name" content="Romira's develop blog" />
         <Meta
