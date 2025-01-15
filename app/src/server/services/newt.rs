@@ -79,7 +79,7 @@ impl NewtArticleService {
             .bearer_auth(api_token)
             .send()
             .await?;
-        
+
         if response.status() == reqwest::StatusCode::NOT_FOUND {
             return Ok(None);
         }

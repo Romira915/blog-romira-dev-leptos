@@ -20,21 +20,22 @@ pub(crate) fn ArticlePage() -> impl IntoView {
 
     view! {
         <Suspense fallback=|| {
-                "Loading..."
-            }>
-         {move || {
-                    article
-                        .map(|article| {
-                            match article {
-                                Ok(article) => {
-                                    view! { <div>{article.title}</div> }
-                                        .into_any()
-                                }
-                     Err(ServerFnError::WrappedServerError(GetArticleError::NotFound)) => view! { <p>{"Not Found"}</p> }.into_any(),
-                                Err(e) => view! { <p>{format!("Error: {:?}", e.source())}</p> }.into_any(),
+            "Loading..."
+        }>
+            {move || {
+                article
+                    .map(|article| {
+                        match article {
+                            Ok(article) => view! { <div>{article.title}</div> }.into_any(),
+                            Err(ServerFnError::WrappedServerError(GetArticleError::NotFound)) => {
+                                view! { <p>{"Not Found"}</p> }.into_any()
                             }
-                        })
-                }} 
+                            Err(e) => {
+                                view! { <p>{format!("Error: {:?}", e.source())}</p> }.into_any()
+                            }
+                        }
+                    })
+            }}
         </Suspense>
     }
 }
