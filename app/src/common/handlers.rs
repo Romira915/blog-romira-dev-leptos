@@ -1,10 +1,11 @@
-use crate::common::dto::{HomePageArticleDto, HomePageAuthorDto};
+use crate::common::dto::{ArticleDetailDto, HomePageArticleDto, HomePageAuthorDto};
 use crate::constants::ROMIRA_NEWT_AUTHOR_ID;
-use crate::error::GetArticlesError;
+use crate::error::{GetArticleError, GetArticlesError, GetAuthorError};
 use leptos::prelude::*;
 use leptos::prelude::{ServerFnError, expect_context};
 use reqwest::StatusCode;
 use std::cmp::Reverse;
+use std::sync::Arc;
 
 #[server(endpoint = "get_articles_handler")]
 pub(crate) async fn get_articles_handler()
@@ -65,8 +66,8 @@ pub(crate) async fn get_articles_handler()
 }
 
 #[server(endpoint = "get_author_handler")]
-pub(crate) async fn get_author_handler()
--> Result<HomePageAuthorDto, ServerFnError<GetArticlesError>> {
+pub(crate) async fn get_author_handler() -> Result<HomePageAuthorDto, ServerFnError<GetAuthorError>>
+{
     use crate::AppState;
     use leptos_axum::ResponseOptions;
 
@@ -82,10 +83,39 @@ pub(crate) async fn get_author_handler()
         Err(err) => {
             response.set_status(StatusCode::INTERNAL_SERVER_ERROR);
             return Err(ServerFnError::from(
-                GetArticlesError::NewtArticleServiceGetAuthor(err.to_string()),
+                GetAuthorError::NewtArticleServiceGetAuthor(err.to_string()),
             ));
         }
     };
 
     Ok(author.into())
+}
+
+#[server(endpoint = "get_article_handler")]
+pub(crate) async fn get_article_handler(
+    id: Arc<String>,
+) -> Result<ArticleDetailDto, ServerFnError<GetArticleError>> {
+    use crate::AppState;
+    use leptos_axum::ResponseOptions;
+
+    let app_state = expect_context::<AppState>();
+    let newt_article_service = app_state.newt_article_service;
+    let response = expect_context::<ResponseOptions>();
+
+    let article = newt_article_service.fetch_article(&id).await;
+    let article = match article {
+        Ok(Some(article)) => article,
+        Ok(None) => {
+            response.set_status(StatusCode::NOT_FOUND);
+            return Err(ServerFnError::from(GetArticleError::NotFound));
+        }
+        Err(err) => {
+            response.set_status(StatusCode::INTERNAL_SERVER_ERROR);
+            return Err(ServerFnError::from(
+                GetArticleError::NewtArticleServiceGetArticle(err.to_string()),
+            ));
+        }
+    };
+
+    Ok(article.into())
 }

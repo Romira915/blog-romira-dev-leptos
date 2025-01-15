@@ -67,7 +67,7 @@ impl NewtArticleService {
     pub(crate) async fn fetch_article<T>(
         &self,
         article_id: T,
-    ) -> Result<NewtArticle, NewtArticleServiceError>
+    ) -> Result<Option<NewtArticle>, NewtArticleServiceError>
     where
         T: std::fmt::Display,
     {
@@ -79,6 +79,10 @@ impl NewtArticleService {
             .bearer_auth(api_token)
             .send()
             .await?;
+        
+        if response.status() == reqwest::StatusCode::NOT_FOUND {
+            return Ok(None);
+        }
 
         if !response.status().is_success() {
             return Err(NewtArticleServiceError::UnexpectedStatusCode(
@@ -88,7 +92,7 @@ impl NewtArticleService {
 
         let article: NewtArticle = response.json().await?;
 
-        Ok(article)
+        Ok(Some(article))
     }
 
     pub(crate) async fn fetch_author<T>(
