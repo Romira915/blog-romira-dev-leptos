@@ -6,7 +6,9 @@ use leptos::prelude::{ServerFnError, expect_context};
 use reqwest::StatusCode;
 use std::cmp::Reverse;
 use std::sync::Arc;
+use tracing::instrument;
 
+#[instrument]
 #[server(endpoint = "get_articles_handler")]
 pub(crate) async fn get_articles_handler()
 -> Result<Vec<HomePageArticleDto>, ServerFnError<GetArticlesError>> {
@@ -81,6 +83,7 @@ pub(crate) async fn get_articles_handler()
     Ok(articles)
 }
 
+#[instrument]
 #[server(endpoint = "get_author_handler")]
 pub(crate) async fn get_author_handler() -> Result<HomePageAuthorDto, ServerFnError<GetAuthorError>>
 {
@@ -108,6 +111,7 @@ pub(crate) async fn get_author_handler() -> Result<HomePageAuthorDto, ServerFnEr
     Ok(author.into())
 }
 
+#[instrument]
 #[server(endpoint = "get_article_handler")]
 pub(crate) async fn get_article_handler(
     id: Arc<String>,

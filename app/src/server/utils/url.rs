@@ -1,5 +1,7 @@
+use tracing::instrument;
 use url::Url;
 
+#[instrument]
 pub(crate) fn to_optimize_thumbnail_url(url: &str) -> String {
     let mut url = Url::parse(url).expect("Failed to parse URL");
     url.query_pairs_mut()

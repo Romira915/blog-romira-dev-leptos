@@ -3,6 +3,7 @@ use crate::constants::{DATE_DISPLAY_FORMAT, HOUR, JST_TZ};
 use chrono::{DateTime, FixedOffset, Utc};
 use leptos::prelude::RwSignal;
 use serde::{Deserialize, Serialize};
+use tracing::instrument;
 
 pub(crate) type QiitaArticleList = Vec<QiitaArticle>;
 
@@ -33,6 +34,7 @@ pub(crate) struct QiitaArticle {
 }
 
 impl From<QiitaArticle> for HomePageArticleDto {
+    #[instrument]
     fn from(value: QiitaArticle) -> Self {
         Self {
             title: RwSignal::new(value.title),

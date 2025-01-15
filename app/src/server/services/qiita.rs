@@ -2,7 +2,9 @@ use crate::SERVER_CONFIG;
 use crate::error::QiitaArticleServiceError;
 use crate::server::models::qiita_article::QiitaArticleList;
 use crate::server::utils::html::get_og_image_url;
+use std::fmt::Debug;
 use std::sync::Arc;
+use tracing::instrument;
 
 #[derive(Debug, Clone)]
 pub(crate) struct QiitaArticleService {
@@ -11,13 +13,15 @@ pub(crate) struct QiitaArticleService {
 }
 
 impl QiitaArticleService {
-    pub(crate) fn new(client: reqwest::Client, qiita_base_url: impl ToString) -> Self {
+    #[instrument]
+    pub(crate) fn new(client: reqwest::Client, qiita_base_url: impl ToString + Debug) -> Self {
         Self {
             client,
             qiita_base_url: Arc::new(qiita_base_url.to_string()),
         }
     }
 
+    #[instrument]
     pub(crate) async fn fetch_articles(
         &self,
     ) -> Result<QiitaArticleList, QiitaArticleServiceError> {

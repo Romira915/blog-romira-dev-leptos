@@ -4,6 +4,7 @@ use crate::server::utils::url::to_optimize_thumbnail_url;
 use chrono::{DateTime, FixedOffset, Utc};
 use leptos::prelude::RwSignal;
 use serde::{Deserialize, Serialize};
+use tracing::instrument;
 
 #[derive(Serialize, Deserialize, Debug, Default, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -31,6 +32,7 @@ pub(crate) struct NewtArticle {
 }
 
 impl From<NewtArticle> for HomePageArticleDto {
+    #[instrument]
     fn from(value: NewtArticle) -> Self {
         Self {
             title: RwSignal::new(value.title),
@@ -66,6 +68,7 @@ impl From<NewtArticle> for HomePageArticleDto {
 }
 
 impl From<NewtArticle> for ArticleDetailDto {
+    #[instrument]
     fn from(value: NewtArticle) -> Self {
         Self {
             title: RwSignal::new(value.title),

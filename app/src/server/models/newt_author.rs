@@ -2,6 +2,7 @@ use crate::common::dto::HomePageAuthorDto;
 use crate::server::models::newt_article::{Image, Sys};
 use leptos::prelude::RwSignal;
 use serde::{Deserialize, Serialize};
+use tracing::instrument;
 
 #[derive(Debug, Default, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -16,6 +17,7 @@ pub(crate) struct Author {
 }
 
 impl From<Author> for HomePageAuthorDto {
+    #[instrument]
     fn from(value: Author) -> Self {
         Self {
             name: RwSignal::new(value.full_name),
