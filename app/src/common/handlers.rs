@@ -24,8 +24,14 @@ pub(crate) async fn get_articles_handler()
         Ok(articles) => articles,
         Err(err) => {
             response.set_status(StatusCode::INTERNAL_SERVER_ERROR);
+            tracing::error!(
+                error = err.to_string(),
+                "Failed to get articles from NewtArticleService",
+            );
             return Err(ServerFnError::from(
-                GetArticlesError::NewtArticleServiceGetArticles(err.to_string()),
+                GetArticlesError::NewtArticleServiceGetArticles(
+                    "Failed to get articles from NewtArticleService".to_string(),
+                ),
             ));
         }
     };
@@ -35,8 +41,14 @@ pub(crate) async fn get_articles_handler()
         Ok(articles) => articles,
         Err(err) => {
             response.set_status(StatusCode::INTERNAL_SERVER_ERROR);
+            tracing::error!(
+                error = err.to_string(),
+                "Failed to get articles from WordPressArticleService",
+            );
             return Err(ServerFnError::from(
-                GetArticlesError::WordPressArticleService(err.to_string()),
+                GetArticlesError::WordPressArticleService(
+                    "Failed to get articles from WordPressArticleService".to_string(),
+                ),
             ));
         }
     };
@@ -46,8 +58,12 @@ pub(crate) async fn get_articles_handler()
         Ok(articles) => articles,
         Err(err) => {
             response.set_status(StatusCode::INTERNAL_SERVER_ERROR);
+            tracing::error!(
+                error = err.to_string(),
+                "Failed to get articles from QiitaArticleService",
+            );
             return Err(ServerFnError::from(GetArticlesError::QiitaArticleService(
-                err.to_string(),
+                "Failed to get articles from QiitaArticleService".to_string(),
             )));
         }
     };
@@ -82,8 +98,9 @@ pub(crate) async fn get_author_handler() -> Result<HomePageAuthorDto, ServerFnEr
         Ok(author) => author,
         Err(err) => {
             response.set_status(StatusCode::INTERNAL_SERVER_ERROR);
+            tracing::error!(error = err.to_string(), "Failed to get author");
             return Err(ServerFnError::from(
-                GetAuthorError::NewtArticleServiceGetAuthor(err.to_string()),
+                GetAuthorError::NewtArticleServiceGetAuthor("Failed to get author".to_string()),
             ));
         }
     };
@@ -94,7 +111,7 @@ pub(crate) async fn get_author_handler() -> Result<HomePageAuthorDto, ServerFnEr
 #[server(endpoint = "get_article_handler")]
 pub(crate) async fn get_article_handler(
     id: Arc<String>,
-) -> Result<ArticleDetailDto, ServerFnError<GetArticleError>> {
+) -> Result<Option<ArticleDetailDto>, ServerFnError<GetArticleError>> {
     use crate::AppState;
     use leptos_axum::ResponseOptions;
 
@@ -104,18 +121,20 @@ pub(crate) async fn get_article_handler(
 
     let article = newt_article_service.fetch_article(&id).await;
     let article = match article {
-        Ok(Some(article)) => article,
-        Ok(None) => {
-            response.set_status(StatusCode::NOT_FOUND);
-            return Err(ServerFnError::from(GetArticleError::NotFound));
-        }
+        Ok(article) => article,
         Err(err) => {
             response.set_status(StatusCode::INTERNAL_SERVER_ERROR);
+            tracing::error!(
+                error = err.to_string(),
+                "Failed to get article from NewtArticleService",
+            );
             return Err(ServerFnError::from(
-                GetArticleError::NewtArticleServiceGetArticle(err.to_string()),
+                GetArticleError::NewtArticleServiceGetArticle(
+                    "Failed to get article from NewtArticleService".to_string(),
+                ),
             ));
         }
     };
 
-    Ok(article.into())
+    Ok(article.map(ArticleDetailDto::from))
 }

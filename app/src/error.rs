@@ -66,8 +66,6 @@ impl FromStr for GetAuthorError {
 pub enum GetArticleError {
     #[error("Failed to get article from NewtArticleService: {0}")]
     NewtArticleServiceGetArticle(String),
-    #[error("Article not found")]
-    NotFound,
     #[error("Unknown error: {0}")]
     Unknown(String),
 }

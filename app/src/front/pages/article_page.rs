@@ -26,10 +26,8 @@ pub(crate) fn ArticlePage() -> impl IntoView {
                 article
                     .map(|article| {
                         match article {
-                            Ok(article) => view! { <div>{article.title}</div> }.into_any(),
-                            Err(ServerFnError::WrappedServerError(GetArticleError::NotFound)) => {
-                                view! { <p>{"Not Found"}</p> }.into_any()
-                            }
+                            Ok(Some(article)) => view! { <div>{article.title}</div> }.into_any(),
+                            Ok(None) => view! { <p>{"Not Found"}</p> }.into_any(),
                             Err(e) => {
                                 view! { <p>{format!("Error: {:?}", e.source())}</p> }.into_any()
                             }
