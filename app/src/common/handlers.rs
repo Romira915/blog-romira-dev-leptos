@@ -136,5 +136,9 @@ pub(crate) async fn get_article_handler(
         }
     };
 
+    if article.is_none() {
+        response.set_status(StatusCode::NOT_FOUND);
+    }
+
     Ok(article.map(ArticleDetailDto::from))
 }
