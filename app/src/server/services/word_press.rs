@@ -2,7 +2,9 @@ use crate::constants::PRTIMES_WORD_PRESS_AUTHOR_ID;
 use crate::error::WordPressArticleServiceError;
 use crate::server::models::word_press_article::WordPressArticle;
 use crate::server::models::word_press_category::Category;
+use std::fmt::Debug;
 use std::sync::Arc;
+use tracing::instrument;
 
 #[derive(Debug, Clone)]
 pub(crate) struct WordPressArticleService {
@@ -11,13 +13,15 @@ pub(crate) struct WordPressArticleService {
 }
 
 impl WordPressArticleService {
-    pub(crate) fn new(client: reqwest::Client, base_url: impl ToString) -> Self {
+    #[instrument]
+    pub(crate) fn new(client: reqwest::Client, base_url: impl ToString + Debug) -> Self {
         Self {
             client,
             base_url: Arc::new(base_url.to_string()),
         }
     }
 
+    #[instrument]
     pub(crate) async fn fetch_articles(
         &self,
     ) -> Result<Vec<WordPressArticle>, WordPressArticleServiceError> {
@@ -49,6 +53,7 @@ impl WordPressArticleService {
         Ok(articles)
     }
 
+    #[instrument]
     async fn fetch_categories(&self, id: u64) -> Result<Category, WordPressArticleServiceError> {
         let response = self
             .client

@@ -1,6 +1,8 @@
 use select::document::Document;
 use select::predicate::{Attr, Name, Predicate};
+use tracing::instrument;
 
+#[instrument]
 pub(crate) async fn get_og_image_url(
     client: &reqwest::Client,
     url: &str,

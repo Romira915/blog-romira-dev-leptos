@@ -1,0 +1,5 @@
+#!/bin/sh
+
+cargo fmt --all
+leptosfmt ./**/*.rs
+git add -u

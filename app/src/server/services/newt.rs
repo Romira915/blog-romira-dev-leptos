@@ -2,7 +2,9 @@ use crate::SERVER_CONFIG;
 use crate::error::NewtArticleServiceError;
 use crate::server::models::newt_article::{NewtArticle, NewtArticleCollection};
 use crate::server::models::newt_author::Author;
+use std::fmt::Debug;
 use std::sync::Arc;
+use tracing::instrument;
 
 #[derive(Debug, Clone)]
 pub(crate) struct NewtArticleService {
@@ -12,10 +14,11 @@ pub(crate) struct NewtArticleService {
 }
 
 impl NewtArticleService {
+    #[instrument]
     pub(crate) fn new(
         client: reqwest::Client,
-        newt_cdn_base_url: impl ToString,
-        newt_base_url: impl ToString,
+        newt_cdn_base_url: impl ToString + Debug,
+        newt_base_url: impl ToString + Debug,
     ) -> Self {
         Self {
             client,
@@ -24,6 +27,7 @@ impl NewtArticleService {
         }
     }
 
+    #[instrument]
     async fn fetch_articles(
         &self,
         is_preview: bool,
@@ -52,24 +56,27 @@ impl NewtArticleService {
         Ok(articles)
     }
 
+    #[instrument]
     pub(crate) async fn fetch_published_articles(
         &self,
     ) -> Result<NewtArticleCollection, NewtArticleServiceError> {
         self.fetch_articles(false).await
     }
 
+    #[instrument]
     pub(crate) async fn fetch_preview_articles(
         &self,
     ) -> Result<NewtArticleCollection, NewtArticleServiceError> {
         self.fetch_articles(true).await
     }
 
+    #[instrument]
     pub(crate) async fn fetch_article<T>(
         &self,
         article_id: T,
-    ) -> Result<NewtArticle, NewtArticleServiceError>
+    ) -> Result<Option<NewtArticle>, NewtArticleServiceError>
     where
-        T: std::fmt::Display,
+        T: std::fmt::Display + Debug,
     {
         let (base_url, api_token) = (&self.newt_cdn_base_url, &SERVER_CONFIG.newt_cdn_api_token);
 
@@ -80,6 +87,10 @@ impl NewtArticleService {
             .send()
             .await?;
 
+        if response.status() == reqwest::StatusCode::NOT_FOUND {
+            return Ok(None);
+        }
+
         if !response.status().is_success() {
             return Err(NewtArticleServiceError::UnexpectedStatusCode(
                 response.status(),
@@ -88,15 +99,16 @@ impl NewtArticleService {
 
         let article: NewtArticle = response.json().await?;
 
-        Ok(article)
+        Ok(Some(article))
     }
 
+    #[instrument]
     pub(crate) async fn fetch_author<T>(
         &self,
         author_id: T,
     ) -> Result<Author, NewtArticleServiceError>
     where
-        T: std::fmt::Display,
+        T: std::fmt::Display + Debug,
     {
         let (base_url, api_token) = (&self.newt_cdn_base_url, &SERVER_CONFIG.newt_cdn_api_token);
 

@@ -1,9 +1,10 @@
-use crate::common::dto::{ArticleSource, HomePageArticleDto};
+use crate::common::dto::{ArticleDetailDto, ArticleSource, HomePageArticleDto};
 use crate::constants::{DATE_DISPLAY_FORMAT, HOUR, JST_TZ, THUMBNAIL_NO_IMAGE_URL};
 use crate::server::utils::url::to_optimize_thumbnail_url;
 use chrono::{DateTime, FixedOffset, Utc};
 use leptos::prelude::RwSignal;
 use serde::{Deserialize, Serialize};
+use tracing::instrument;
 
 #[derive(Serialize, Deserialize, Debug, Default, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -31,6 +32,7 @@ pub(crate) struct NewtArticle {
 }
 
 impl From<NewtArticle> for HomePageArticleDto {
+    #[instrument]
     fn from(value: NewtArticle) -> Self {
         Self {
             title: RwSignal::new(value.title),
@@ -61,6 +63,54 @@ impl From<NewtArticle> for HomePageArticleDto {
                     .to_string(),
             ),
             article_source: ArticleSource::Newt,
+        }
+    }
+}
+
+impl From<NewtArticle> for ArticleDetailDto {
+    #[instrument]
+    fn from(value: NewtArticle) -> Self {
+        Self {
+            title: RwSignal::new(value.title),
+            thumbnail_url: RwSignal::new(to_optimize_thumbnail_url(
+                value.cover_image.as_ref().map_or_else(
+                    || THUMBNAIL_NO_IMAGE_URL,
+                    |cover_image| cover_image.src.as_str(),
+                ),
+            )),
+            body: RwSignal::new(value.body.unwrap_or_default()),
+            category: value
+                .categories
+                .as_ref()
+                .map_or_else(Vec::new, |categories| {
+                    categories
+                        .iter()
+                        .map(|category| RwSignal::new(category.name.clone()))
+                        .collect()
+                }),
+            published_at: RwSignal::new(
+                value
+                    .sys
+                    .raw
+                    .first_published_at
+                    .unwrap_or(value.sys.raw.published_at.unwrap_or(value.sys.created_at))
+                    .with_timezone(&FixedOffset::east_opt(JST_TZ * HOUR).unwrap())
+                    .format(DATE_DISPLAY_FORMAT)
+                    .to_string(),
+            ),
+            description: RwSignal::new(
+                value
+                    .meta
+                    .as_ref()
+                    .map_or_else(String::new, |meta| meta.description.clone()),
+            ),
+            og_image_url: RwSignal::new(to_optimize_thumbnail_url(
+                value
+                    .meta
+                    .as_ref()
+                    .and_then(|meta| meta.og_image.as_ref())
+                    .map_or_else(|| THUMBNAIL_NO_IMAGE_URL, |og_image| og_image.src.as_str()),
+            )),
         }
     }
 }

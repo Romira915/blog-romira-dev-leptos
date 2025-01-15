@@ -4,6 +4,7 @@ use crate::server::models::word_press_category::Category;
 use chrono::{FixedOffset, NaiveDateTime, TimeZone};
 use leptos::prelude::RwSignal;
 use serde::{Deserialize, Serialize};
+use tracing::instrument;
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "snake_case")]
@@ -44,6 +45,7 @@ pub(crate) struct WordPressArticle {
 }
 
 impl From<WordPressArticle> for HomePageArticleDto {
+    #[instrument]
     fn from(value: WordPressArticle) -> Self {
         Self {
             title: RwSignal::new(value.title.rendered),

@@ -6,6 +6,7 @@ use crate::server::services::qiita::QiitaArticleService;
 use crate::server::services::word_press::WordPressArticleService;
 use axum::extract::FromRef;
 use leptos::prelude::*;
+use tracing::instrument;
 
 #[derive(FromRef, Debug, Clone)]
 pub struct AppState {
@@ -16,6 +17,7 @@ pub struct AppState {
 }
 
 impl AppState {
+    #[instrument]
     pub fn new(leptos_options: LeptosOptions) -> Self {
         let client = reqwest::Client::new();
 

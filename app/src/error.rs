@@ -46,3 +46,33 @@ impl FromStr for GetArticlesError {
         Ok(Self::Unknown(s.to_string()))
     }
 }
+
+#[derive(Error, Debug, Serialize, Deserialize)]
+pub enum GetAuthorError {
+    #[error("Failed to get author from NewtArticleService: {0}")]
+    NewtArticleServiceGetAuthor(String),
+    #[error("Unknown error: {0}")]
+    Unknown(String),
+}
+
+impl FromStr for GetAuthorError {
+    type Err = ();
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(Self::Unknown(s.to_string()))
+    }
+}
+
+#[derive(Error, Debug, Serialize, Deserialize)]
+pub enum GetArticleError {
+    #[error("Failed to get article from NewtArticleService: {0}")]
+    NewtArticleServiceGetArticle(String),
+    #[error("Unknown error: {0}")]
+    Unknown(String),
+}
+
+impl FromStr for GetArticleError {
+    type Err = ();
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(Self::Unknown(s.to_string()))
+    }
+}
