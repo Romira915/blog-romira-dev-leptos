@@ -5,7 +5,7 @@ use crate::front::components::author_card::AuthorCard;
 use leptos::prelude::*;
 use leptos_meta::{Meta, Title};
 
-stylance::import_style!(pub top_page_style, "top_page.module.scss");
+stylance::import_style!(pub(crate) top_page_style, "top_page.module.scss");
 
 #[component]
 pub(crate) fn TopPage() -> impl IntoView {

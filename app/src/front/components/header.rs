@@ -8,7 +8,7 @@ pub(crate) fn Header() -> impl IntoView {
     view! {
         <header class=header_style::header>
             <a href="/" class=header_style::blog_title_link>
-                <h1 class=header_style::blog_title>"Romira's develop blog"</h1>
+                <div class=header_style::blog_title>"Romira's develop blog"</div>
             </a>
         </header>
     }
