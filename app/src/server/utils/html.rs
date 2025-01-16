@@ -9,11 +9,17 @@ pub(crate) async fn get_og_image_url(
 ) -> Result<Option<String>, reqwest::Error> {
     let start = std::time::Instant::now();
     let response = client.get(url).send().await?;
-    tracing::info!("client.get(url).send().await?: {} ms", start.elapsed().as_millis());
+    tracing::info!(
+        "client.get(url).send().await?: {} ms",
+        start.elapsed().as_millis()
+    );
 
     let start = std::time::Instant::now();
     let document = Document::from(response.text().await?.as_str());
-    tracing::info!("Document::from(response.text().await?.as_str()): {} ms", start.elapsed().as_millis());
+    tracing::info!(
+        "Document::from(response.text().await?.as_str()): {} ms",
+        start.elapsed().as_millis()
+    );
 
     let start = std::time::Instant::now();
     if let Some(meta_tag) = document
@@ -24,16 +30,19 @@ pub(crate) async fn get_og_image_url(
             return Ok(Some(content.to_string()));
         }
     }
-    tracing::info!("if let Some(meta_tag) = document.find(Name(\"meta\").and(Attr(\"property\", \"og:image\"))).next() {{}}: {} ms", start.elapsed().as_millis());
+    tracing::info!(
+        "if let Some(meta_tag) = document.find(Name(\"meta\").and(Attr(\"property\", \"og:image\"))).next() {{}}: {} ms",
+        start.elapsed().as_millis()
+    );
 
     Ok(None)
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::server::models::newt_article::NewtArticleCollection;
-    use crate::SERVER_CONFIG;
     use super::*;
+    use crate::SERVER_CONFIG;
+    use crate::server::models::newt_article::NewtArticleCollection;
 
     #[tokio::test]
     async fn test_get_og_image_url() {
@@ -53,11 +62,14 @@ mod tests {
                 "#,
             )
             .create();
-        
+
         let client = reqwest::Client::new();
         let result = get_og_image_url(&client, &url).await;
 
         assert!(result.is_ok());
-        assert_eq!(result.unwrap(), Some("https://example.com/image.jpg".to_string()));
+        assert_eq!(
+            result.unwrap(),
+            Some("https://example.com/image.jpg".to_string())
+        );
     }
 }
