@@ -56,8 +56,9 @@ impl From<WordPressArticle> for HomePageArticleDto {
                 .iter()
                 .map(|category| RwSignal::new(category.name.clone()))
                 .collect(),
-            published_at: RwSignal::new(
-                FixedOffset::east(JST_TZ * HOUR)
+            first_published_at: RwSignal::new(
+                FixedOffset::east_opt(JST_TZ * HOUR)
+                    .unwrap()
                     .from_utc_datetime(&value.date)
                     .format(DATE_DISPLAY_FORMAT)
                     .to_string(),

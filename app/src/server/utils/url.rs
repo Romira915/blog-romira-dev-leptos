@@ -14,6 +14,32 @@ pub(crate) fn to_optimize_thumbnail_url(url: &str) -> String {
     url.to_string()
 }
 
+#[instrument]
+pub(crate) fn to_optimize_cover_image_url(url: &str) -> String {
+    let mut url = Url::parse(url).expect("Failed to parse URL");
+    url.query_pairs_mut()
+        .append_pair("fit", "crop")
+        .append_pair("w", "1920")
+        .append_pair("h", "1080")
+        .append_pair("q", "75")
+        .append_pair("auto", "format,compress,enhance");
+
+    url.to_string()
+}
+
+#[instrument]
+pub(crate) fn to_optimize_og_image_url(url: &str) -> String {
+    let mut url = Url::parse(url).expect("Failed to parse URL");
+    url.query_pairs_mut()
+        .append_pair("fit", "crop")
+        .append_pair("w", "1200")
+        .append_pair("h", "630")
+        .append_pair("q", "75")
+        .append_pair("auto", "format,compress,enhance");
+
+    url.to_string()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

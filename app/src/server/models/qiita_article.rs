@@ -45,7 +45,7 @@ impl From<QiitaArticle> for HomePageArticleDto {
                 .iter()
                 .map(|tag| RwSignal::new(tag.name.clone()))
                 .collect(),
-            published_at: RwSignal::new(
+            first_published_at: RwSignal::new(
                 value
                     .created_at
                     .with_timezone(&FixedOffset::east_opt(JST_TZ * HOUR).unwrap())

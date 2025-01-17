@@ -1,4 +1,3 @@
-use crate::front::components::header::Header;
 use crate::front::pages::article_page::ArticlePage;
 use crate::front::pages::top_page::TopPage;
 use leptos::config::LeptosOptions;
@@ -47,7 +46,6 @@ pub fn App() -> impl IntoView {
             href="https://blog-romira.imgix.net/4874cb12-6e50-4aa3-a1f5-541de4ae184c/icon.JPG?w=32&h=32&auto=format&fit=crop&mask=ellipse&q=75"
         />
         <Router>
-            <Header />
             <main>
                 <Routes fallback=|| "Not Found.">
                     <Route path=StaticSegment("") view=TopPage ssr=SsrMode::Async />
