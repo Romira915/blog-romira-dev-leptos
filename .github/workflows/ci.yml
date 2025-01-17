@@ -48,8 +48,7 @@ jobs:
         shell: bash
 
       - name: cargo clippy
-        #        run: cargo clippy --all-targets --all-features -- -D warnings
-        run: cargo clippy --all-targets --all-features
+        run: cargo clippy --all-targets --all-features -- -D warnings
         shell: bash
 
       - name: cargo test
