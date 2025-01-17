@@ -3,9 +3,7 @@ use crate::front::pages::top_page::TopPage;
 use leptos::config::LeptosOptions;
 use leptos::prelude::*;
 use leptos::{IntoView, component, view};
-use leptos_meta::{
-    HashedStylesheet, Link, Meta, MetaTags, Script, Stylesheet, provide_meta_context,
-};
+use leptos_meta::{HashedStylesheet, MetaTags, Stylesheet, provide_meta_context};
 use leptos_router::components::{Route, Router, Routes};
 use leptos_router::{SsrMode, StaticSegment, path};
 
