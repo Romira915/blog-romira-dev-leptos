@@ -1,5 +1,6 @@
 use crate::common::dto::ArticleMetaDto;
 use crate::common::handlers::get_article_handler;
+use crate::common::response::set_article_page_cache_control;
 use crate::constants::{ORIGIN, WEB_APP_TITLE};
 use crate::front::components::article_detail::ArticleDetail;
 use crate::front::components::header::Header;
@@ -15,6 +16,8 @@ import_style!(pub(crate) article_page_style, "article_page.module.scss");
 
 #[component]
 pub(crate) fn ArticlePage() -> impl IntoView {
+    set_article_page_cache_control();
+
     let params = use_params_map();
     let id = Arc::new(params.read().get("id").unwrap_or_default());
 
