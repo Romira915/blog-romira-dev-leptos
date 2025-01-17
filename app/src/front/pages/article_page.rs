@@ -1,7 +1,6 @@
 use crate::common::dto::ArticleMetaDto;
-use crate::common::handlers::{get_article_handler, get_articles_handler};
+use crate::common::handlers::get_article_handler;
 use crate::constants::{ORIGIN, WEB_APP_TITLE};
-use crate::error::GetArticleError;
 use crate::front::components::article_detail::ArticleDetail;
 use crate::front::components::header::Header;
 use crate::front::components::not_found::NotFound;
@@ -11,7 +10,6 @@ use leptos_router::hooks::use_params_map;
 use std::error::Error;
 use std::sync::Arc;
 use stylance::import_style;
-use tracing::instrument;
 
 import_style!(pub(crate) article_page_style, "article_page.module.scss");
 

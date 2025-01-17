@@ -2,9 +2,7 @@ use crate::common::dto::{
     ArticleDetailDto, ArticleMetaDto, ArticlePageDto, ArticleSource, HomePageArticleDto,
 };
 use crate::constants::{DATE_DISPLAY_FORMAT, HOUR, JST_TZ, THUMBNAIL_NO_IMAGE_URL};
-use crate::server::utils::url::{
-    to_optimize_cover_image_url, to_optimize_og_image_url, to_optimize_thumbnail_url,
-};
+use crate::server::utils::url::to_optimize_thumbnail_url;
 use chrono::{DateTime, FixedOffset, Utc};
 use leptos::prelude::RwSignal;
 use serde::{Deserialize, Serialize};

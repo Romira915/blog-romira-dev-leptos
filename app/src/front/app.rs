@@ -1,4 +1,3 @@
-use crate::front::components::header::Header;
 use crate::front::pages::article_page::ArticlePage;
 use crate::front::pages::top_page::TopPage;
 use leptos::config::LeptosOptions;
