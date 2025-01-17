@@ -10,10 +10,10 @@ use tracing::instrument;
 
 #[derive(FromRef, Debug, Clone)]
 pub struct AppState {
-    pub leptos_options: LeptosOptions,
-    pub newt_article_service: NewtArticleService,
-    pub word_press_article_service: WordPressArticleService,
-    pub qiita_article_service: QiitaArticleService,
+    pub(crate) leptos_options: LeptosOptions,
+    pub(crate) newt_article_service: NewtArticleService,
+    pub(crate) word_press_article_service: WordPressArticleService,
+    pub(crate) qiita_article_service: QiitaArticleService,
 }
 
 impl AppState {

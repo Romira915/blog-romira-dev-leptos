@@ -41,8 +41,6 @@ pub(crate) async fn get_og_image_url(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::SERVER_CONFIG;
-    use crate::server::models::newt_article::NewtArticleCollection;
 
     #[tokio::test]
     async fn test_get_og_image_url() {

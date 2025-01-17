@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use crate::common::dto::ArticleDetailDto;
 use leptos::prelude::*;
 use stylance::import_style;
