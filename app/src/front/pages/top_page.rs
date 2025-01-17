@@ -7,12 +7,16 @@ use crate::front::components::article_card::ArticleCardList;
 use crate::front::components::author_card::AuthorCard;
 use crate::front::components::header::Header;
 use leptos::prelude::*;
+
+use crate::common::response::set_top_page_cache_control;
 use leptos_meta::{Meta, Title};
 
 stylance::import_style!(pub(crate) top_page_style, "top_page.module.scss");
 
 #[component]
 pub(crate) fn TopPage() -> impl IntoView {
+    set_top_page_cache_control();
+
     let articles = Resource::new(|| (), |_| async move { get_articles_handler().await });
     let author = Resource::new(|| (), |_| async move { get_author_handler().await });
 
