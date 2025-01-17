@@ -57,18 +57,16 @@ pub(crate) fn ArticlePage() -> impl IntoView {
 
 #[component]
 pub(crate) fn ArticlePageMeta(meta: ArticleMetaDto) -> impl IntoView {
+    let keywords = meta
+        .keywords
+        .iter()
+        .map(|k| k.get_untracked())
+        .collect::<Vec<String>>()
+        .join(", ");
     view! {
         <Title text=meta.title.get() />
         <Meta name="description" content=meta.description.get_untracked() />
-        <Meta
-            name="keywords"
-            content=meta
-                .keywords
-                .iter()
-                .map(|k| k.get_untracked())
-                .collect::<Vec<String>>()
-                .join(", ")
-        />
+        <Meta name="keywords" content=keywords />
         <Meta name="date" content=meta.published_at.get_untracked() />
         <Meta name="creation_date" content=meta.first_published_at.get_untracked() />
         <Meta property="og:sitename" content=WEB_APP_TITLE />
