@@ -1,5 +1,7 @@
 use crate::common::handlers::{get_article_handler, get_articles_handler};
 use crate::error::GetArticleError;
+use crate::front::components::article_detail::ArticleDetail;
+use crate::front::components::header::Header;
 use crate::front::components::not_found::NotFound;
 use leptos::prelude::*;
 use leptos_router::hooks::use_params_map;
@@ -23,6 +25,7 @@ pub(crate) fn ArticlePage() -> impl IntoView {
     );
 
     view! {
+        <Header is_h1=false />
         <Suspense fallback=|| {
             "Loading..."
         }>
@@ -30,7 +33,9 @@ pub(crate) fn ArticlePage() -> impl IntoView {
                 article
                     .map(|article| {
                         match article {
-                            Ok(Some(article)) => view! { <div>{article.title}</div> }.into_any(),
+                            Ok(Some(article)) => {
+                                view! { <ArticleDetail article=article.clone() /> }.into_any()
+                            }
                             Ok(None) => view! { <NotFound /> }.into_any(),
                             Err(e) => {
                                 view! { <p>{format!("Error: {:?}", e.source())}</p> }.into_any()

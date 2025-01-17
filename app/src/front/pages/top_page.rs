@@ -2,6 +2,7 @@ use crate::common::handlers::{get_articles_handler, get_author_handler};
 use crate::constants::{ROMIRA_GITHUB_URL, ROMIRA_X_URL};
 use crate::front::components::article_card::ArticleCardList;
 use crate::front::components::author_card::AuthorCard;
+use crate::front::components::header::Header;
 use leptos::prelude::*;
 use leptos_meta::{Meta, Title};
 
@@ -14,6 +15,7 @@ pub(crate) fn TopPage() -> impl IntoView {
 
     view! {
         <TopPageMeta />
+        <Header is_h1=true />
         <section class=top_page_style::home_page>
             <Suspense fallback=|| {
                 "Loading..."
