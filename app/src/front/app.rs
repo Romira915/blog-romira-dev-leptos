@@ -23,6 +23,7 @@ pub fn shell(options: LeptosOptions) -> impl IntoView {
                 <meta name="viewport" content="width=device-width, initial-scale=1" />
                 <meta name="color-scheme" content="dark light" />
                 <script async src="https://www.googletagmanager.com/gtag/js?id=G-4P5K3SBG1K" />
+                <script async src=format!("{}/google_analytics.js", ASSETS_ROOT) />
                 <link
                     rel="icon"
                     href="https://blog-romira.imgix.net/4874cb12-6e50-4aa3-a1f5-541de4ae184c/icon.JPG?w=32&h=32&auto=format&fit=crop&mask=ellipse&q=75"
