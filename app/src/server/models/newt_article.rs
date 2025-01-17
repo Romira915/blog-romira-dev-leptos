@@ -2,7 +2,9 @@ use crate::common::dto::{
     ArticleDetailDto, ArticleMetaDto, ArticlePageDto, ArticleSource, HomePageArticleDto,
 };
 use crate::constants::{DATE_DISPLAY_FORMAT, HOUR, JST_TZ, THUMBNAIL_NO_IMAGE_URL};
-use crate::server::utils::url::to_optimize_thumbnail_url;
+use crate::server::utils::url::{
+    to_optimize_cover_image_url, to_optimize_og_image_url, to_optimize_thumbnail_url,
+};
 use chrono::{DateTime, FixedOffset, Utc};
 use leptos::prelude::RwSignal;
 use serde::{Deserialize, Serialize};
@@ -73,7 +75,7 @@ impl From<NewtArticle> for ArticlePageDto {
     #[instrument]
     fn from(value: NewtArticle) -> Self {
         let title = RwSignal::new(value.title);
-        let cover_image_url = RwSignal::new(to_optimize_thumbnail_url(
+        let cover_image_url = RwSignal::new(to_optimize_cover_image_url(
             value.cover_image.as_ref().map_or_else(
                 || THUMBNAIL_NO_IMAGE_URL,
                 |cover_image| cover_image.src.as_str(),
@@ -118,7 +120,7 @@ impl From<NewtArticle> for ArticlePageDto {
                 .map_or_else(|| "".to_string(), |meta| meta.description.clone()),
         );
         let og_image_url =
-            RwSignal::new(to_optimize_thumbnail_url(value.meta.as_ref().map_or_else(
+            RwSignal::new(to_optimize_og_image_url(value.meta.as_ref().map_or_else(
                 || THUMBNAIL_NO_IMAGE_URL,
                 |meta| {
                     meta.og_image
