@@ -1,3 +1,9 @@
+pub(crate) const WEB_APP_TITLE: &str = "Romira's develop blog";
+pub(crate) const WEB_APP_DESCRIPTION: &str =
+    "Rustaceanによる開発ブログです．技術共有や個人開発の進捗などを発信します．";
+pub(crate) const ORIGIN: &str = "https://blog.romira.dev";
+pub(crate) const WEB_TOP_PAGE_OG_IMAGE_URL: &str =
+    "https://blog-romira.imgix.net/46cea3d7-14ce-45bf-9d1e-52d1df39f2d2/romira'sdevelopblog.png";
 pub(crate) const NEWT_CDN_BASE_URL: &str = "https://blog-romira-dev.cdn.newt.so/v1";
 pub(crate) const NEWT_BASE_URL: &str = "https://blog-romira-dev.api.newt.so/v1";
 /// Newt上のauthor content id

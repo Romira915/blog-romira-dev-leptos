@@ -1,6 +1,10 @@
-use crate::common::dto::{ArticleDetailDto, ArticleSource, HomePageArticleDto};
+use crate::common::dto::{
+    ArticleDetailDto, ArticleMetaDto, ArticlePageDto, ArticleSource, HomePageArticleDto,
+};
 use crate::constants::{DATE_DISPLAY_FORMAT, HOUR, JST_TZ, THUMBNAIL_NO_IMAGE_URL};
-use crate::server::utils::url::to_optimize_thumbnail_url;
+use crate::server::utils::url::{
+    to_optimize_cover_image_url, to_optimize_og_image_url, to_optimize_thumbnail_url,
+};
 use chrono::{DateTime, FixedOffset, Utc};
 use leptos::prelude::RwSignal;
 use serde::{Deserialize, Serialize};
@@ -52,12 +56,12 @@ impl From<NewtArticle> for HomePageArticleDto {
                         .map(|category| RwSignal::new(category.name.clone()))
                         .collect()
                 }),
-            published_at: RwSignal::new(
+            first_published_at: RwSignal::new(
                 value
                     .sys
                     .raw
                     .first_published_at
-                    .unwrap_or(value.sys.raw.published_at.unwrap_or(value.sys.created_at))
+                    .unwrap_or(DateTime::from_timestamp(0, 0).unwrap())
                     .with_timezone(&FixedOffset::east_opt(JST_TZ * HOUR).unwrap())
                     .format(DATE_DISPLAY_FORMAT)
                     .to_string(),
@@ -67,50 +71,81 @@ impl From<NewtArticle> for HomePageArticleDto {
     }
 }
 
-impl From<NewtArticle> for ArticleDetailDto {
+impl From<NewtArticle> for ArticlePageDto {
     #[instrument]
     fn from(value: NewtArticle) -> Self {
-        Self {
-            title: RwSignal::new(value.title),
-            thumbnail_url: RwSignal::new(to_optimize_thumbnail_url(
-                value.cover_image.as_ref().map_or_else(
-                    || THUMBNAIL_NO_IMAGE_URL,
-                    |cover_image| cover_image.src.as_str(),
-                ),
-            )),
-            body: RwSignal::new(value.body.unwrap_or_default()),
-            category: value
-                .categories
+        let title = RwSignal::new(value.title);
+        let cover_image_url = RwSignal::new(to_optimize_thumbnail_url(
+            value.cover_image.as_ref().map_or_else(
+                || THUMBNAIL_NO_IMAGE_URL,
+                |cover_image| cover_image.src.as_str(),
+            ),
+        ));
+        let body = RwSignal::new(value.body.unwrap_or_default());
+        let category = value
+            .categories
+            .as_ref()
+            .map_or_else(Vec::new, |categories| {
+                categories
+                    .iter()
+                    .map(|category| RwSignal::new(category.name.clone()))
+                    .collect()
+            });
+        let published_at_rfc3339 = RwSignal::new(
+            value
+                .sys
+                .raw
+                .published_at
+                .unwrap_or(DateTime::from_timestamp(0, 0).unwrap())
+                .with_timezone(&FixedOffset::east_opt(JST_TZ * HOUR).unwrap())
+                .to_rfc3339(),
+        );
+        let first_published_at_date_time = value
+            .sys
+            .raw
+            .first_published_at
+            .unwrap_or(DateTime::from_timestamp(0, 0).unwrap())
+            .with_timezone(&FixedOffset::east_opt(JST_TZ * HOUR).unwrap());
+        let first_published_at = RwSignal::new(
+            first_published_at_date_time
+                .format(DATE_DISPLAY_FORMAT)
+                .to_string(),
+        );
+        let first_published_at_rfc3339 = RwSignal::new(first_published_at_date_time.to_rfc3339());
+        let id = RwSignal::new(value.id);
+        let description = RwSignal::new(
+            value
+                .meta
                 .as_ref()
-                .map_or_else(Vec::new, |categories| {
-                    categories
-                        .iter()
-                        .map(|category| RwSignal::new(category.name.clone()))
-                        .collect()
-                }),
-            published_at: RwSignal::new(
-                value
-                    .sys
-                    .raw
-                    .first_published_at
-                    .unwrap_or(value.sys.raw.published_at.unwrap_or(value.sys.created_at))
-                    .with_timezone(&FixedOffset::east_opt(JST_TZ * HOUR).unwrap())
-                    .format(DATE_DISPLAY_FORMAT)
-                    .to_string(),
-            ),
-            description: RwSignal::new(
-                value
-                    .meta
-                    .as_ref()
-                    .map_or_else(String::new, |meta| meta.description.clone()),
-            ),
-            og_image_url: RwSignal::new(to_optimize_thumbnail_url(
-                value
-                    .meta
-                    .as_ref()
-                    .and_then(|meta| meta.og_image.as_ref())
-                    .map_or_else(|| THUMBNAIL_NO_IMAGE_URL, |og_image| og_image.src.as_str()),
-            )),
+                .map_or_else(|| "".to_string(), |meta| meta.description.clone()),
+        );
+        let og_image_url =
+            RwSignal::new(to_optimize_thumbnail_url(value.meta.as_ref().map_or_else(
+                || THUMBNAIL_NO_IMAGE_URL,
+                |meta| {
+                    meta.og_image
+                        .as_ref()
+                        .map_or_else(|| THUMBNAIL_NO_IMAGE_URL, |og_image| og_image.src.as_str())
+                },
+            )));
+
+        Self {
+            article_detail_dto: ArticleDetailDto {
+                title,
+                cover_image_url,
+                body,
+                category: category.clone(),
+                first_published_at,
+            },
+            article_meta_dto: ArticleMetaDto {
+                id,
+                title,
+                description,
+                keywords: category,
+                og_image_url,
+                published_at: published_at_rfc3339,
+                first_published_at: first_published_at_rfc3339,
+            },
         }
     }
 }

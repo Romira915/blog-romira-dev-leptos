@@ -44,7 +44,7 @@ pub(crate) fn ArticleCard(article: HomePageArticleDto) -> impl IntoView {
                                 .collect_view()}
                         </ul>
                         <p class=article_card_style::article_published_at>
-                            {article.published_at.get()}
+                            {article.first_published_at.get()}
                         </p>
                     </figcaption>
                 </figure>

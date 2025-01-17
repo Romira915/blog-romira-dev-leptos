@@ -1,4 +1,4 @@
-use crate::common::dto::{ArticleDetailDto, HomePageArticleDto, HomePageAuthorDto};
+use crate::common::dto::{ArticleDetailDto, ArticlePageDto, HomePageArticleDto, HomePageAuthorDto};
 use crate::constants::ROMIRA_NEWT_AUTHOR_ID;
 use crate::error::{GetArticleError, GetArticlesError, GetAuthorError};
 use leptos::prelude::*;
@@ -78,7 +78,7 @@ pub(crate) async fn get_articles_handler()
 
     articles.extend(wordpress_articles.into_iter().map(HomePageArticleDto::from));
     articles.extend(qiita_articles.into_iter().map(HomePageArticleDto::from));
-    articles.sort_unstable_by_key(|a| Reverse(a.published_at.get()));
+    articles.sort_unstable_by_key(|a| Reverse(a.first_published_at.get()));
 
     Ok(articles)
 }
@@ -115,7 +115,7 @@ pub(crate) async fn get_author_handler() -> Result<HomePageAuthorDto, ServerFnEr
 #[server(endpoint = "get_article_handler")]
 pub(crate) async fn get_article_handler(
     id: Arc<String>,
-) -> Result<Option<ArticleDetailDto>, ServerFnError<GetArticleError>> {
+) -> Result<Option<ArticlePageDto>, ServerFnError<GetArticleError>> {
     use crate::AppState;
     use leptos_axum::ResponseOptions;
 
@@ -144,5 +144,5 @@ pub(crate) async fn get_article_handler(
         response.set_status(StatusCode::NOT_FOUND);
     }
 
-    Ok(article.map(ArticleDetailDto::from))
+    Ok(article.map(ArticlePageDto::from))
 }
