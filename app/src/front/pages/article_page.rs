@@ -9,7 +9,6 @@ use leptos::prelude::*;
 use leptos_meta::{Meta, Title};
 use leptos_router::hooks::use_params_map;
 use std::error::Error;
-use std::sync::Arc;
 use stylance::import_style;
 
 import_style!(pub(crate) article_page_style, "article_page.module.scss");

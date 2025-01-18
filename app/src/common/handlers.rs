@@ -6,7 +6,6 @@ use leptos::prelude::{ServerFnError, expect_context};
 use leptos::server_fn::codec::GetUrl;
 use reqwest::StatusCode;
 use std::cmp::Reverse;
-use std::sync::Arc;
 use tracing::instrument;
 
 #[instrument]
