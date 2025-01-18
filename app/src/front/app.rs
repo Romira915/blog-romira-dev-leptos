@@ -1,5 +1,6 @@
 use crate::front::pages::article_page::ArticlePage;
 use crate::front::pages::not_found_page::NotFoundPage;
+use crate::front::pages::preview_article_page::PreviewArticlePage;
 use crate::front::pages::top_page::TopPage;
 use leptos::config::LeptosOptions;
 use leptos::prelude::*;
@@ -59,6 +60,7 @@ pub fn App() -> impl IntoView {
                 <Routes fallback=|| view! { <NotFoundPage /> }>
                     <Route path=StaticSegment("") view=TopPage ssr=SsrMode::Async />
                     <Route path=path!("/articles/:id") view=ArticlePage ssr=SsrMode::Async />
+                    <Route path=path!("/preview/:id") view=PreviewArticlePage ssr=SsrMode::Async />
                 </Routes>
             </main>
         </Router>

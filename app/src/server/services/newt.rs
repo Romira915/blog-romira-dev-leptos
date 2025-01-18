@@ -71,14 +71,19 @@ impl NewtArticleService {
     }
 
     #[instrument]
-    pub(crate) async fn fetch_article<T>(
+    async fn fetch_article<T>(
         &self,
         article_id: T,
+        is_preview: bool,
     ) -> Result<Option<NewtArticle>, NewtArticleServiceError>
     where
         T: std::fmt::Display + Debug,
     {
-        let (base_url, api_token) = (&self.newt_cdn_base_url, &SERVER_CONFIG.newt_cdn_api_token);
+        let (base_url, api_token) = if is_preview {
+            (&self.newt_base_url, &SERVER_CONFIG.newt_api_token)
+        } else {
+            (&self.newt_cdn_base_url, &SERVER_CONFIG.newt_cdn_api_token)
+        };
 
         let response = self
             .client
@@ -100,6 +105,28 @@ impl NewtArticleService {
         let article: NewtArticle = response.json().await?;
 
         Ok(Some(article))
+    }
+
+    #[instrument]
+    pub(crate) async fn fetch_published_article<T>(
+        &self,
+        article_id: T,
+    ) -> Result<Option<NewtArticle>, NewtArticleServiceError>
+    where
+        T: std::fmt::Display + Debug,
+    {
+        self.fetch_article(article_id, false).await
+    }
+
+    #[instrument]
+    pub(crate) async fn fetch_preview_article<T>(
+        &self,
+        article_id: T,
+    ) -> Result<Option<NewtArticle>, NewtArticleServiceError>
+    where
+        T: std::fmt::Display + Debug,
+    {
+        self.fetch_article(article_id, true).await
     }
 
     #[instrument]
