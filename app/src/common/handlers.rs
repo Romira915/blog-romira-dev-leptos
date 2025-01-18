@@ -121,7 +121,7 @@ pub(crate) async fn get_author_handler() -> Result<HomePageAuthorDto, ServerFnEr
 #[instrument]
 #[server(input = GetUrl, endpoint = "get_article_handler")]
 pub(crate) async fn get_article_handler(
-    id: Arc<String>,
+    id: String,
 ) -> Result<Option<ArticlePageDto>, ServerFnError<GetArticleError>> {
     use crate::AppState;
     use crate::server::http::response::set_article_page_cache_control;
@@ -160,7 +160,7 @@ pub(crate) async fn get_article_handler(
 #[instrument]
 #[server(input = GetUrl, endpoint = "get_preview_article_handler")]
 pub(crate) async fn get_preview_article_handler(
-    id: Arc<String>,
+    id: String,
 ) -> Result<Option<ArticlePageDto>, ServerFnError<GetArticleError>> {
     use crate::AppState;
     use crate::server::http::response::set_preview_article_page_cache_control;

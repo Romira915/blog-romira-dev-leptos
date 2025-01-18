@@ -19,15 +19,9 @@ pub(crate) fn ArticlePage() -> impl IntoView {
     set_article_page_cache_control();
 
     let params = use_params_map();
-    let id = Arc::new(params.read().get("id").unwrap_or_default());
+    let id = move || params.read().get("id").unwrap_or_default();
 
-    let article = Resource::new(
-        || (),
-        move |_| {
-            let id = id.clone();
-            async move { get_article_handler(id).await }
-        },
-    );
+    let article = Resource::new(id, move |id| async move { get_article_handler(id).await });
 
     view! {
         <Header is_h1=false />
