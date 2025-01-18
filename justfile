@@ -1,3 +1,11 @@
+setup:
+    #!/bin/bash -eux
+    rustup target add wasm32-unknown-unknown
+    cargo install wasm-bindgen-cli
+    cargo install cargo-leptos
+    cargo install leptosfmt
+    cargo install stylance-cli
+
 watch:
     #!/bin/bash -eux
     stylance --watch ./app &
