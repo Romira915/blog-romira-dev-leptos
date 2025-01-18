@@ -6,9 +6,9 @@ import_style!(pub(crate) article_card_style, "article_card.module.scss");
 
 #[component]
 pub(crate) fn ArticleCard(article: HomePageArticleDto) -> impl IntoView {
-    let a_target = match article.article_source {
-        ArticleSource::Newt => "_self",
-        _ => "_blank",
+    let (a_target, a_ref) = match article.article_source {
+        ArticleSource::Newt => ("_self", ""),
+        _ => ("_blank", "noopener noreferrer"),
     };
 
     view! {
@@ -18,7 +18,7 @@ pub(crate) fn ArticleCard(article: HomePageArticleDto) -> impl IntoView {
                 aria-label=article.title.get()
                 class=article_card_style::article_link
                 target=a_target
-                rel="noopener noreferrer"
+                rel=a_ref
             >
                 <figure class=article_card_style::article_figure>
                     <img

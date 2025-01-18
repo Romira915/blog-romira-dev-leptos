@@ -3,16 +3,18 @@ use crate::constants::ROMIRA_NEWT_AUTHOR_ID;
 use crate::error::{GetArticleError, GetArticlesError, GetAuthorError};
 use leptos::prelude::*;
 use leptos::prelude::{ServerFnError, expect_context};
+use leptos::server_fn::codec::GetUrl;
 use reqwest::StatusCode;
 use std::cmp::Reverse;
 use std::sync::Arc;
 use tracing::instrument;
 
 #[instrument]
-#[server(endpoint = "get_articles_handler")]
+#[server(input = GetUrl, endpoint = "get_articles_handler")]
 pub(crate) async fn get_articles_handler()
 -> Result<Vec<HomePageArticleDto>, ServerFnError<GetArticlesError>> {
     use crate::AppState;
+    use crate::server::http::response::set_top_page_cache_control;
     use leptos_axum::ResponseOptions;
 
     let app_state = expect_context::<AppState>();
@@ -20,6 +22,8 @@ pub(crate) async fn get_articles_handler()
     let wordpress_article_service = app_state.word_press_article_service;
     let qiita_article_service = app_state.qiita_article_service;
     let response = expect_context::<ResponseOptions>();
+
+    set_top_page_cache_control(&response);
 
     let newt_articles = newt_article_service.fetch_published_articles().await;
     let newt_articles = match newt_articles {
@@ -84,15 +88,18 @@ pub(crate) async fn get_articles_handler()
 }
 
 #[instrument]
-#[server(endpoint = "get_author_handler")]
+#[server(input = GetUrl, endpoint = "get_author_handler")]
 pub(crate) async fn get_author_handler() -> Result<HomePageAuthorDto, ServerFnError<GetAuthorError>>
 {
     use crate::AppState;
+    use crate::server::http::response::set_top_page_cache_control;
     use leptos_axum::ResponseOptions;
 
     let app_state = expect_context::<AppState>();
     let newt_article_service = app_state.newt_article_service;
     let response = expect_context::<ResponseOptions>();
+
+    set_top_page_cache_control(&response);
 
     let author = newt_article_service
         .fetch_author(ROMIRA_NEWT_AUTHOR_ID)
@@ -112,16 +119,19 @@ pub(crate) async fn get_author_handler() -> Result<HomePageAuthorDto, ServerFnEr
 }
 
 #[instrument]
-#[server(endpoint = "get_article_handler")]
+#[server(input = GetUrl, endpoint = "get_article_handler")]
 pub(crate) async fn get_article_handler(
     id: Arc<String>,
 ) -> Result<Option<ArticlePageDto>, ServerFnError<GetArticleError>> {
     use crate::AppState;
+    use crate::server::http::response::set_article_page_cache_control;
     use leptos_axum::ResponseOptions;
 
     let app_state = expect_context::<AppState>();
     let newt_article_service = app_state.newt_article_service;
     let response = expect_context::<ResponseOptions>();
+
+    set_article_page_cache_control(&response);
 
     let article = newt_article_service.fetch_article(&id).await;
     let article = match article {
