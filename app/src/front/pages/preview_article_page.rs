@@ -1,5 +1,5 @@
 use crate::common::dto::ArticleMetaDto;
-use crate::common::handlers::{get_article_handler, get_preview_article_handler};
+use crate::common::handlers::get_preview_article_handler;
 use crate::common::response::set_article_page_cache_control;
 use crate::constants::{ORIGIN, WEB_APP_TITLE};
 use crate::front::components::article_detail::ArticleDetail;
