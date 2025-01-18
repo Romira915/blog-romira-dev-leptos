@@ -3,9 +3,7 @@ use axum::http::header::{CACHE_CONTROL, CDN_CACHE_CONTROL};
 use leptos::prelude::expect_context;
 use leptos_axum::ResponseOptions;
 
-pub(crate) fn set_top_page_cache_control() {
-    let response = expect_context::<ResponseOptions>();
-
+pub(crate) fn set_top_page_cache_control(response: &ResponseOptions) {
     response.insert_header(
         CACHE_CONTROL,
         HeaderValue::from_static(
@@ -18,9 +16,7 @@ pub(crate) fn set_top_page_cache_control() {
     );
 }
 
-pub(crate) fn set_article_page_cache_control() {
-    let response = expect_context::<ResponseOptions>();
-
+pub(crate) fn set_article_page_cache_control(response: &ResponseOptions) {
     response.insert_header(
         CACHE_CONTROL,
         HeaderValue::from_static(
