@@ -3,7 +3,7 @@ use crate::front::pages::top_page::TopPage;
 use leptos::config::LeptosOptions;
 use leptos::prelude::*;
 use leptos::{IntoView, component, view};
-use leptos_meta::{HashedStylesheet, MetaTags, Stylesheet, provide_meta_context};
+use leptos_meta::{HashedStylesheet, Link, MetaTags, Stylesheet, provide_meta_context};
 use leptos_router::components::{Route, Router, Routes};
 use leptos_router::{SsrMode, StaticSegment, path};
 
@@ -22,10 +22,6 @@ pub fn shell(options: LeptosOptions) -> impl IntoView {
                 <meta name="color-scheme" content="dark light" />
                 <script async src="https://www.googletagmanager.com/gtag/js?id=G-4P5K3SBG1K" />
                 <script async src=format!("{}/google_analytics.js", ASSETS_ROOT) />
-                <link
-                    rel="icon"
-                    href="https://blog-romira.imgix.net/4874cb12-6e50-4aa3-a1f5-541de4ae184c/icon.JPG?w=32&h=32&auto=format&fit=crop&mask=ellipse&q=75"
-                />
                 <AutoReload options=options.clone() />
                 <HydrationScripts options=options.clone() root=ASSETS_ROOT />
                 {if cfg!(debug_assertions) {
@@ -47,6 +43,10 @@ pub fn App() -> impl IntoView {
     provide_meta_context();
 
     view! {
+        <Link
+            rel="icon"
+            href="https://blog-romira.imgix.net/4874cb12-6e50-4aa3-a1f5-541de4ae184c/icon.JPG?w=32&h=32&auto=format&fit=crop&mask=ellipse&q=75"
+        />
         <Router>
             <main>
                 <Routes fallback=|| "Not Found.">
