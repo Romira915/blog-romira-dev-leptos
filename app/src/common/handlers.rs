@@ -133,7 +133,46 @@ pub(crate) async fn get_article_handler(
 
     set_article_page_cache_control(&response);
 
-    let article = newt_article_service.fetch_article(&id).await;
+    let article = newt_article_service.fetch_published_article(&id).await;
+    let article = match article {
+        Ok(article) => article,
+        Err(err) => {
+            response.set_status(StatusCode::INTERNAL_SERVER_ERROR);
+            tracing::error!(
+                error = err.to_string(),
+                "Failed to get article from NewtArticleService",
+            );
+            return Err(ServerFnError::from(
+                GetArticleError::NewtArticleServiceGetArticle(
+                    "Failed to get article from NewtArticleService".to_string(),
+                ),
+            ));
+        }
+    };
+
+    if article.is_none() {
+        response.set_status(StatusCode::NOT_FOUND);
+    }
+
+    Ok(article.map(ArticlePageDto::from))
+}
+
+#[instrument]
+#[server(input = GetUrl, endpoint = "get_preview_article_handler")]
+pub(crate) async fn get_preview_article_handler(
+    id: Arc<String>,
+) -> Result<Option<ArticlePageDto>, ServerFnError<GetArticleError>> {
+    use crate::AppState;
+    use crate::server::http::response::set_preview_article_page_cache_control;
+    use leptos_axum::ResponseOptions;
+
+    let app_state = expect_context::<AppState>();
+    let newt_article_service = app_state.newt_article_service;
+    let response = expect_context::<ResponseOptions>();
+
+    set_preview_article_page_cache_control(&response);
+
+    let article = newt_article_service.fetch_preview_article(&id).await;
     let article = match article {
         Ok(article) => article,
         Err(err) => {

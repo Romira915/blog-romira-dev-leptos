@@ -27,3 +27,18 @@ pub(crate) fn set_article_page_cache_control(response: &ResponseOptions) {
         HeaderValue::from_static("max-age=1296000, stale-while-revalidate=1296000"),
     );
 }
+
+pub(crate) fn set_preview_article_page_cache_control(response: &ResponseOptions) {
+    response.insert_header(
+        CACHE_CONTROL,
+        HeaderValue::from_static(
+            "no-cache, must-revalidate, no-store, max-age=0, stale-while-revalidate=0, private",
+        ),
+    );
+    response.insert_header(
+        CDN_CACHE_CONTROL,
+        HeaderValue::from_static(
+            "no-cache, must-revalidate, no-store, max-age=0, stale-while-revalidate=0, private",
+        ),
+    );
+}
