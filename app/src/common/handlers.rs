@@ -3,13 +3,14 @@ use crate::constants::ROMIRA_NEWT_AUTHOR_ID;
 use crate::error::{GetArticleError, GetArticlesError, GetAuthorError};
 use leptos::prelude::*;
 use leptos::prelude::{ServerFnError, expect_context};
+use leptos::server_fn::codec::GetUrl;
 use reqwest::StatusCode;
 use std::cmp::Reverse;
 use std::sync::Arc;
 use tracing::instrument;
 
 #[instrument]
-#[server(endpoint = "get_articles_handler")]
+#[server(input = GetUrl, endpoint = "get_articles_handler")]
 pub(crate) async fn get_articles_handler()
 -> Result<Vec<HomePageArticleDto>, ServerFnError<GetArticlesError>> {
     use crate::AppState;
@@ -84,7 +85,7 @@ pub(crate) async fn get_articles_handler()
 }
 
 #[instrument]
-#[server(endpoint = "get_author_handler")]
+#[server(input = GetUrl, endpoint = "get_author_handler")]
 pub(crate) async fn get_author_handler() -> Result<HomePageAuthorDto, ServerFnError<GetAuthorError>>
 {
     use crate::AppState;
