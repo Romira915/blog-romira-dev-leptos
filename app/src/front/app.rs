@@ -22,7 +22,13 @@ pub fn shell(options: LeptosOptions) -> impl IntoView {
                 <meta name="viewport" content="width=device-width, initial-scale=1" />
                 <meta name="color-scheme" content="dark light" />
                 <script async src="https://www.googletagmanager.com/gtag/js?id=G-4P5K3SBG1K" />
-                <script async src=format!("{}/google_analytics.js", ASSETS_ROOT) />
+                <script>
+                    {"window.dataLayer = window.dataLayer || [];
+                    function gtag(){dataLayer.push(arguments);}
+                    gtag('js', new Date());
+                    
+                    gtag('config', 'G-4P5K3SBG1K');"}
+                </script>
                 <AutoReload options=options.clone() />
                 <HydrationScripts options=options.clone() root=ASSETS_ROOT />
                 {if cfg!(debug_assertions) {
