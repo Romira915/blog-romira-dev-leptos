@@ -23,6 +23,7 @@ jobs:
             echo 'urls=["https://blog.romira.dev/", "https://blog.romira.dev/articles/${{ github.event.client_payload.id }}"]' >> $GITHUB_ENV
           else
             echo 'urls=[]' >> $GITHUB_ENV
+          fi
 
       - name: Purge cache
         uses: jakejarvis/cloudflare-purge-action@master
