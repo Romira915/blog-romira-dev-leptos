@@ -7,7 +7,7 @@ import_style!(pub(crate) article_card_style, "article_card.module.scss");
 #[component]
 pub(crate) fn ArticleCard(article: HomePageArticleDto) -> impl IntoView {
     let (a_target, a_ref) = match article.article_source {
-        ArticleSource::Newt => ("_self", ""),
+        ArticleSource::Newt => ("", ""),
         _ => ("_blank", "noopener noreferrer"),
     };
 
