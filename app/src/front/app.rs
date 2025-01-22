@@ -43,8 +43,6 @@ pub fn shell(options: LeptosOptions) -> impl IntoView {
                     crossorigin="anonymous"
                     referrerpolicy="no-referrer"
                 ></script>
-                // FIXME: クライアントサイドルーティング時に適用されない問題を解決する
-                <script>{"hljs.highlightAll();"}</script>
                 <AutoReload options=options.clone() />
                 <HydrationScripts options=options.clone() root=ASSETS_ROOT />
                 {if cfg!(debug_assertions) {
