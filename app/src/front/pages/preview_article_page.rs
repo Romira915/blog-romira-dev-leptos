@@ -37,6 +37,7 @@ pub(crate) fn PreviewArticlePage() -> impl IntoView {
                                 view! {
                                     <ArticlePageMeta meta=article.article_meta_dto.clone() />
                                     <ArticleDetail article=article.article_detail_dto.clone() />
+                                    <script>{"hljs.highlightAll();"}</script>
                                 }
                                     .into_any()
                             }
