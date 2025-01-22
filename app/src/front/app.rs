@@ -30,7 +30,7 @@ pub fn shell(options: LeptosOptions) -> impl IntoView {
                     
                     gtag('config', 'G-4P5K3SBG1K');"}
                 </script>
-                <link rel="stylesheet" href="/google.min.css" />
+                <link rel="stylesheet" href=format!("{}/google.min.css", ASSETS_ROOT) />
                 <script
                     src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js"
                     integrity="sha512-EBLzUL8XLl+va/zAsmXwS7Z2B1F9HUHkZwyS/VKwh3S7T/U0nF4BaU29EP/ZSf6zgiIxYAnKLu6bJ8dqpmX5uw=="
