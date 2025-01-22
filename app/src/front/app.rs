@@ -30,6 +30,21 @@ pub fn shell(options: LeptosOptions) -> impl IntoView {
                     
                     gtag('config', 'G-4P5K3SBG1K');"}
                 </script>
+                <link rel="stylesheet" href="/google.min.css" />
+                <script
+                    src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js"
+                    integrity="sha512-EBLzUL8XLl+va/zAsmXwS7Z2B1F9HUHkZwyS/VKwh3S7T/U0nF4BaU29EP/ZSf6zgiIxYAnKLu6bJ8dqpmX5uw=="
+                    crossorigin="anonymous"
+                    referrerpolicy="no-referrer"
+                ></script>
+                <script
+                    src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/languages/powershell.min.js"
+                    integrity="sha512-J5RVPDNPGNQPjzhjtYPsrLHTX/7GPhPU1AvmyCo/hjKWBecwfX6ByD0oG/NAS5VU3hwk8A/DVVxjXm4ZEBJwhg=="
+                    crossorigin="anonymous"
+                    referrerpolicy="no-referrer"
+                ></script>
+                // FIXME: クライアントサイドルーティング時に適用されない問題を解決する
+                <script>{"hljs.highlightAll();"}</script>
                 <AutoReload options=options.clone() />
                 <HydrationScripts options=options.clone() root=ASSETS_ROOT />
                 {if cfg!(debug_assertions) {
