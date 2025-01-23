@@ -36,5 +36,5 @@ jobs:
           PURGE_URLS: '["${{ env.ORIGIN_URL }}", 
                         "${{ env.ORIGIN_URL }}/api/get_articles_handler", 
                         "${{ env.ORIGIN_URL }}/api/get_author_handler", 
-                        "${{ env.ORIGIN_URL }}/api/get_article_handler", 
+                        "${{ env.ORIGIN_URL }}/api/get_article_handler?id=${{ github.event.client_payload.id }}&", 
                         "${{ env.ORIGIN_URL }}/articles/${{ github.event.client_payload.id }}"]'

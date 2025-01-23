@@ -36,6 +36,8 @@ pub(crate) fn ArticlePage() -> impl IntoView {
                                     <ArticlePageMeta meta=article.article_meta_dto.clone() />
                                     <ArticleDetail article=article.article_detail_dto.clone() />
                                     <script>{"hljs.highlightAll();"}</script>
+                                    // newt embed
+                                    <script async src="//cdn.iframe.ly/embed.js"></script>
                                 }
                                     .into_any()
                             }
