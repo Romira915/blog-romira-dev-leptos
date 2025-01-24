@@ -26,14 +26,25 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/cache/restore@v4
-        id: cache-restore-cargo
+      - name: Cache Cargo
+        id: cache-cargo
+        uses: actions/cache@v4
         with:
           path: ${{ env.CACHE_PATH }}
-          key: ${{ runner.os }}-cargo-build-${{ hashFiles('**/Cargo.lock') }}-${{ hashFiles('**/*.rs') }}
+          key: ${{ runner.os }}-cargo-build-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-build-
             ${{ runner.os }}-cargo-
+
+      #      - uses: actions/cache/restore@v4
+      #        id: cache-restore-cargo
+      #        with:
+      #          path: ${{ env.CACHE_PATH }}
+      #          key: ${{ runner.os }}-cargo-build-${{ hashFiles('**/Cargo.lock') }}-${{ hashFiles('**/*.rs') }}
+      #          restore-keys: |
+      #            ${{ runner.os }}-cargo-build-${{ hashFiles('**/Cargo.lock') }}-
+      #            ${{ runner.os }}-cargo-build-
+      #            ${{ runner.os }}-cargo-
 
       - uses: extractions/setup-just@v2
         with:
@@ -59,11 +70,11 @@ jobs:
           cargo leptos build --release --bin-cargo-args="--target=aarch64-unknown-linux-gnu"
           cp target/release/hash.txt target/aarch64-unknown-linux-gnu/release/hash.txt
 
-      - uses: actions/cache/save@v4
-        id: cache-save-cargo
-        with:
-          path: ${{ env.CACHE_PATH }}
-          key: ${{ runner.os }}-cargo-build-${{ hashFiles('**/Cargo.lock') }}-${{ hashFiles('**/*.rs') }}
+      #      - uses: actions/cache/save@v4
+      #        id: cache-save-cargo
+      #        with:
+      #          path: ${{ env.CACHE_PATH }}
+      #          key: ${{ runner.os }}-cargo-build-${{ hashFiles('**/Cargo.lock') }}-${{ hashFiles('**/*.rs') }}
 
       - name: Upload blog-romira-dev-server
         uses: actions/upload-artifact@v4
