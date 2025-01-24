@@ -31,15 +31,17 @@ jobs:
             ${{ runner.os }}-cargo-test-
             ${{ runner.os }}-cargo-
 
+      - uses: extractions/setup-just@v2
+        with:
+          just-version: 1.39.0
+
       - name: Setup .env
         run: |
           cp .env.example .env
 
       - name: Install leptosfmt
         run: |
-          if ! command -v leptosfmt &> /dev/null; then
-            cargo install leptosfmt
-          fi
+          just setup_leptosfmt
 
       - name: cargo fmt
         run: |
