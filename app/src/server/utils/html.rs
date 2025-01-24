@@ -7,21 +7,10 @@ pub(crate) async fn get_og_image_url(
     client: &reqwest::Client,
     url: &str,
 ) -> Result<Option<String>, reqwest::Error> {
-    let start = std::time::Instant::now();
     let response = client.get(url).send().await?;
-    tracing::info!(
-        "client.get(url).send().await?: {} ms",
-        start.elapsed().as_millis()
-    );
 
-    let start = std::time::Instant::now();
     let document = Document::from(response.text().await?.as_str());
-    tracing::info!(
-        "Document::from(response.text().await?.as_str()): {} ms",
-        start.elapsed().as_millis()
-    );
 
-    let start = std::time::Instant::now();
     if let Some(meta_tag) = document
         .find(Name("meta").and(Attr("property", "og:image")))
         .next()
@@ -30,10 +19,6 @@ pub(crate) async fn get_og_image_url(
             return Ok(Some(content.to_string()));
         }
     }
-    tracing::info!(
-        "if let Some(meta_tag) = document.find(Name(\"meta\").and(Attr(\"property\", \"og:image\"))).next() {{}}: {} ms",
-        start.elapsed().as_millis()
-    );
 
     Ok(None)
 }
