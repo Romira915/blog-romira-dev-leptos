@@ -16,7 +16,7 @@ use tracing::Span;
 async fn main() {
     easy_init_newrelic_opentelemetry::NewRelicSubscriberInitializer::default()
         .newrelic_service_name("blog-romira-dev")
-        .host_name("localhost")
+        .host_name(&SERVER_CONFIG.host_name)
         .newrelic_license_key(&SERVER_CONFIG.new_relic_license_key)
         .timestamps_offset(offset!(+09:00:00))
         .init()

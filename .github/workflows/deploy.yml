@@ -165,6 +165,13 @@ jobs:
           name: site
           path: ${{ env.SITE_DOWNLOAD_PATH }}
 
+      # 2025-01-25: AWS S3 SDKとR2の互換性問題が発生しているため、aws-cliのバージョンを指定する
+      # https://www.cloudflarestatus.com/incidents/t5nrjmpxc1cj
+      - name: Install aws-cli
+        uses: unfor19/install-aws-cli-action@v1
+        with:
+          version: 2.22.35
+
       - name: Deploy to Cloudflare R2
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.CLOUDFLARE_R2_ACCESS_KEY_ID }}
