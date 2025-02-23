@@ -4,16 +4,16 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+axum = { workspace = true }
 blog-romira-dev-app = { path = "../app", features = ["ssr"] }
+easy_init_newrelic_opentelemetry = { workspace = true }
+http = { workspace = true }
 leptos = { workspace = true, features = ["ssr"] }
+leptos_axum = { workspace = true, features = ["default"] }
 leptos_meta = { workspace = true, features = ["ssr"] }
 leptos_router = { workspace = true, features = ["ssr"] }
-leptos_axum = { workspace = true, features = ["default"] }
-tokio = { workspace = true }
-axum = { workspace = true }
-easy_init_newrelic_opentelemetry = { workspace = true }
 time = { workspace = true }
+tokio = { workspace = true }
 tower = { workspace = true }
 tower-http = { workspace = true, features = ["trace"] }
 tracing = { workspace = true }
-http = { workspace = true }

@@ -3,13 +3,13 @@ members = ["app", "front", "server"]
 resolver = "2"
 
 [workspace.dependencies]
-leptos_router = { version = "0.7.4", default-features = false }
+leptos = { version = "0.7.5", default-features = false } #"nightly", "hydration"] }
+leptos_router = { version = "0.7.5", default-features = false }
+leptos_meta = { version = "0.7.5", default-features = false }
+leptos_axum = { version = "0.7.5", default-features = false }
+leptos-use = { version = "0.15.0" }
 console_error_panic_hook = "0.1.7"
 console_log = "1.0.0"
-leptos = { version = "0.7.4", default-features = false } #"nightly", "hydration"] }
-leptos_meta = { version = "0.7.4", default-features = false }
-leptos_axum = { version = "0.7.4", default-features = false }
-leptos-use = { version = "0.15.0" }
 log = "0.4.22"
 serde = { version = "1.0.216", features = ["derive"] }
 thiserror = "2.0.7"
