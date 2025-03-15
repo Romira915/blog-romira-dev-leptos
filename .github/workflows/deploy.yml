@@ -46,7 +46,7 @@ jobs:
       #            ${{ runner.os }}-cargo-build-
       #            ${{ runner.os }}-cargo-
 
-      - uses: extractions/setup-just@v2
+      - uses: extractions/setup-just@v3
         with:
           just-version: 1.39.0
 
