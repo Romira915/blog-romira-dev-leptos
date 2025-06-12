@@ -14,9 +14,10 @@ pub(crate) async fn get_og_image_url(
     if let Some(meta_tag) = document
         .find(Name("meta").and(Attr("property", "og:image")))
         .next()
-        && let Some(content) = meta_tag.attr("content") {
-            return Ok(Some(content.to_string()));
-        }
+        && let Some(content) = meta_tag.attr("content")
+    {
+        return Ok(Some(content.to_string()));
+    }
 
     Ok(None)
 }

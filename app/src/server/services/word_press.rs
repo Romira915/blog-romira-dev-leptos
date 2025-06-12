@@ -89,10 +89,7 @@ mod tests {
         server
             .mock(
                 "GET",
-                format!(
-                    "/wp-json/wp/v2/posts?author={PRTIMES_WORD_PRESS_AUTHOR_ID}"
-                )
-                .as_str(),
+                format!("/wp-json/wp/v2/posts?author={PRTIMES_WORD_PRESS_AUTHOR_ID}").as_str(),
             )
             .with_body(r#"[]"#)
             .create();
@@ -114,10 +111,7 @@ mod tests {
         server
             .mock(
                 "GET",
-                format!(
-                    "/wp-json/wp/v2/posts?author={PRTIMES_WORD_PRESS_AUTHOR_ID}"
-                )
-                .as_str(),
+                format!("/wp-json/wp/v2/posts?author={PRTIMES_WORD_PRESS_AUTHOR_ID}").as_str(),
             )
             .with_body(r#"{"id": 1}"#)
             .create();
@@ -142,10 +136,7 @@ mod tests {
         server
             .mock(
                 "GET",
-                format!(
-                    "/wp-json/wp/v2/posts?author={PRTIMES_WORD_PRESS_AUTHOR_ID}"
-                )
-                .as_str(),
+                format!("/wp-json/wp/v2/posts?author={PRTIMES_WORD_PRESS_AUTHOR_ID}").as_str(),
             )
             .with_status(500)
             .create();
