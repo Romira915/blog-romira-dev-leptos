@@ -90,8 +90,7 @@ mod tests {
             .mock(
                 "GET",
                 format!(
-                    "/wp-json/wp/v2/posts?author={}",
-                    PRTIMES_WORD_PRESS_AUTHOR_ID
+                    "/wp-json/wp/v2/posts?author={PRTIMES_WORD_PRESS_AUTHOR_ID}"
                 )
                 .as_str(),
             )
@@ -116,8 +115,7 @@ mod tests {
             .mock(
                 "GET",
                 format!(
-                    "/wp-json/wp/v2/posts?author={}",
-                    PRTIMES_WORD_PRESS_AUTHOR_ID
+                    "/wp-json/wp/v2/posts?author={PRTIMES_WORD_PRESS_AUTHOR_ID}"
                 )
                 .as_str(),
             )
@@ -145,8 +143,7 @@ mod tests {
             .mock(
                 "GET",
                 format!(
-                    "/wp-json/wp/v2/posts?author={}",
-                    PRTIMES_WORD_PRESS_AUTHOR_ID
+                    "/wp-json/wp/v2/posts?author={PRTIMES_WORD_PRESS_AUTHOR_ID}"
                 )
                 .as_str(),
             )
