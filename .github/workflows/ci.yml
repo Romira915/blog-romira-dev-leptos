@@ -2,7 +2,7 @@ name: CI
 
 on:
   pull_request:
-    types: [ opened, synchronize, reopened ]
+    types: [opened, synchronize, reopened]
   workflow_dispatch:
   workflow_call:
 
@@ -34,6 +34,11 @@ jobs:
       - uses: extractions/setup-just@v3
         with:
           just-version: 1.39.0
+
+      - name: Setup rustup components
+        run: |
+          rustup component add --toolchain nightly-x86_64-unknown-linux-gnu rustfmt
+          rustup component add --toolchain nightly-x86_64-unknown-linux-gnu clippy
 
       - name: Setup .env
         run: |

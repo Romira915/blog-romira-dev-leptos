@@ -35,7 +35,7 @@ pub(crate) fn TopPage() -> impl IntoView {
                                     view! { <ArticleCardList articles=articles.clone() /> }
                                         .into_any()
                                 }
-                                Err(e) => view! { <p>{format!("Error: {:?}", e)}</p> }.into_any(),
+                                Err(e) => view! { <p>{format!("Error: {e:?}")}</p> }.into_any(),
                             }
                         })
                 }}
@@ -57,7 +57,7 @@ pub(crate) fn TopPage() -> impl IntoView {
                                     }
                                         .into_any()
                                 }
-                                Err(e) => view! { <p>{format!("Error: {:?}", e)}</p> }.into_any(),
+                                Err(e) => view! { <p>{format!("Error: {e:?}")}</p> }.into_any(),
                             }
                         })
                 }}
