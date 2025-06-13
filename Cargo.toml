@@ -13,7 +13,7 @@ envy = "0.4.2"
 http = "1.2.0"
 leptos = { version = "0.7.5", default-features = false } #"nightly", "hydration"] }
 leptos-use = { version = "0.16.0" }
-leptos_axum = { version = "0.7.5", default-features = false }
+leptos_axum = { version = "0.8.0", default-features = false }
 leptos_meta = { version = "0.7.5", default-features = false }
 leptos_router = { version = "0.7.5", default-features = false }
 log = "0.4.22"
