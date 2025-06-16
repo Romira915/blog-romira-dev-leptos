@@ -64,13 +64,6 @@ impl NewtArticleService {
     }
 
     #[instrument]
-    pub(crate) async fn fetch_preview_articles(
-        &self,
-    ) -> Result<NewtArticleCollection, NewtArticleServiceError> {
-        self.fetch_articles(true).await
-    }
-
-    #[instrument]
     async fn fetch_article<T>(
         &self,
         article_id: T,
