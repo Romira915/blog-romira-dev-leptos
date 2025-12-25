@@ -200,7 +200,7 @@ jobs:
       DESTINATION_FILE_PATH: /home/romira/Cargo.toml
 
     steps:
-      - uses: aws-actions/configure-aws-credentials@v4
+      - uses: aws-actions/configure-aws-credentials@v5
         with:
           aws-region: ${{ env.AWS_REGION }}
           role-to-assume: ${{ env.AWS_ROLE_TO_ASSUME }}
