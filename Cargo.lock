@@ -1222,7 +1222,7 @@ dependencies = [
  "libc",
  "percent-encoding",
  "pin-project-lite",
- "socket2 0.5.10",
+ "socket2 0.6.1",
  "tokio",
  "tower-service",
  "tracing",
@@ -1486,9 +1486,9 @@ dependencies = [
 
 [[package]]
 name = "leptos-use"
-version = "0.16.3"
+version = "0.17.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ce2162c453100c7d6bc0b6f188ef1df582e35c2458caf6cb69fcddc87619c0db"
+checksum = "3a59caa13dbc0f4d71bf3d610884953273c52a0bbe995b35d36cdb1c8f91142f"
 dependencies = [
  "cfg-if",
  "chrono",
@@ -2346,7 +2346,7 @@ dependencies = [
  "quinn-udp",
  "rustc-hash",
  "rustls",
- "socket2 0.5.10",
+ "socket2 0.6.1",
  "thiserror 2.0.17",
  "tokio",
  "tracing",
@@ -2383,7 +2383,7 @@ dependencies = [
  "cfg_aliases",
  "libc",
  "once_cell",
- "socket2 0.5.10",
+ "socket2 0.6.1",
  "tracing",
  "windows-sys 0.60.2",
 ]
@@ -3106,18 +3106,18 @@ checksum = "7da8b5736845d9f2fcb837ea5d9e2628564b3b043a70948a3f0b778838c5fb4f"
 
 [[package]]
 name = "stylance"
-version = "0.6.0"
+version = "0.7.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cb98ec3b593f005791976cb36947af5bc64c1d8b5c37ae3a909076287f1be20e"
+checksum = "479a1d9e3f0411bdffb9d4cedcd732f5e70eac7dd4710e6ee585b969a9127f27"
 dependencies = [
  "stylance-macros",
 ]
 
 [[package]]
 name = "stylance-core"
-version = "0.6.0"
+version = "0.7.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e4e6b833937b4a01d1f67db7a1dbd220d35271cee8f8581086467a25e16f7946"
+checksum = "47ff5e24150f378e5b0f642fbced2b7eab84cb483761714ab49257cbe99b1e24"
 dependencies = [
  "anyhow",
  "serde",
@@ -3128,9 +3128,9 @@ dependencies = [
 
 [[package]]
 name = "stylance-macros"
-version = "0.6.0"
+version = "0.7.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "138509d238319b5fdd75df17b9d3aab696c56bb2dbb9641cbf87647a68bb3361"
+checksum = "9bfb85482de6162dae517408102671bd434459798a62bb9f3d5fb9d5863868c0"
 dependencies = [
  "anyhow",
  "proc-macro2",
