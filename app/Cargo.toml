@@ -19,6 +19,8 @@ reqwest = { workspace = true }
 select = { workspace = true, optional = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
+sqlx = { workspace = true, optional = true }
+uuid = { workspace = true }
 stylance = { workspace = true }
 thiserror = { workspace = true }
 tokio = { workspace = true, optional = true }
@@ -42,10 +44,11 @@ ssr = [
     "axum",
     "url",
     "select",
+    "sqlx",
 ]
 
 [package.metadata.cargo-all-features]
-denylist = ["axum", "tower", "tower-http", "tokio", "leptos_axum"]
+denylist = ["axum", "tower", "tower-http", "tokio", "leptos_axum", "sqlx"]
 skip_feature_sets = [["csr", "ssr"], ["csr", "hydrate"], ["ssr", "hydrate"]]
 
 [package.metadata.stylance]

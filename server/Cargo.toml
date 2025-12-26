@@ -12,6 +12,7 @@ leptos = { workspace = true, features = ["ssr"] }
 leptos_axum = { workspace = true, features = ["default"] }
 leptos_meta = { workspace = true, features = ["ssr"] }
 leptos_router = { workspace = true, features = ["ssr"] }
+sqlx = { workspace = true }
 time = { workspace = true }
 tokio = { workspace = true }
 tower = { workspace = true }

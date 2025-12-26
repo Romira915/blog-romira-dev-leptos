@@ -5,6 +5,7 @@ use blog_romira_dev_app::*;
 use leptos::logging::log;
 use leptos::prelude::*;
 use leptos_axum::{LeptosRoutes, generate_route_list};
+use sqlx::postgres::PgPoolOptions;
 use time::macros::offset;
 use tower::ServiceBuilder;
 use tower::layer::util::{Identity, Stack};
@@ -22,10 +23,23 @@ async fn main() {
         .init()
         .expect("Failed to initialize NewRelic");
 
+    // Database connection pool
+    let db_pool = PgPoolOptions::new()
+        .max_connections(5)
+        .connect(&SERVER_CONFIG.database_url)
+        .await
+        .expect("Failed to connect to database");
+
+    // Run migrations
+    sqlx::migrate!("../migrations")
+        .run(&db_pool)
+        .await
+        .expect("Failed to run migrations");
+
     let conf = get_configuration(None).unwrap();
     let addr = conf.leptos_options.site_addr;
     let leptos_options = conf.leptos_options;
-    let app_state = AppState::new(leptos_options.clone());
+    let app_state = AppState::new(leptos_options.clone(), db_pool);
     // Generate the list of routes in your Leptos App
     let routes = generate_route_list(App);
 

@@ -8,6 +8,7 @@ pub struct ServerConfig {
     pub newt_cdn_api_token: String,
     pub newt_api_token: String,
     pub qiita_api_token: String,
+    pub database_url: String,
 }
 
 #[cfg(feature = "ssr")]
