@@ -332,6 +332,7 @@ name = "blog-romira-dev-app"
 version = "0.1.0"
 dependencies = [
  "axum 0.8.8",
+ "blog-romira-dev-cms",
  "chrono",
  "dotenv",
  "envy",
@@ -351,6 +352,18 @@ dependencies = [
  "tokio",
  "tracing",
  "url",
+ "uuid",
+]
+
+[[package]]
+name = "blog-romira-dev-cms"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "serde",
+ "sqlx",
+ "thiserror 2.0.17",
+ "tracing",
  "uuid",
 ]
 
