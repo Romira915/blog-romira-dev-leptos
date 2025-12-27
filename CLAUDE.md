@@ -75,6 +75,7 @@ Uses **Rust nightly** (specified in `rust-toolchain.toml`). Key tools:
 
 ## Development Notes
 
+- **Do NOT use `mod.rs`** - Use modern Rust module style (`foo.rs` + `foo/` directory) instead of `foo/mod.rs`
 - Dev server runs at http://127.0.0.1:3000 with hot reload on port 3001
 - WASM release profile uses aggressive optimizations (LTO, opt-level='z')
 - Images are optimized via imgix CDN (URL transformation in `server/utils/url.rs`)
