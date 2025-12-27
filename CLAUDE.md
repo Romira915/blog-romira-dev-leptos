@@ -75,6 +75,7 @@ Uses **Rust nightly** (specified in `rust-toolchain.toml`). Key tools:
 
 ## Development Notes
 
+- **コミット時は必ず `commit-session` Skill を使う** - 手動で git add/commit しない
 - **Do NOT use `mod.rs`** - Use modern Rust module style (`foo.rs` + `foo/` directory) instead of `foo/mod.rs`
 - Dev server runs at http://127.0.0.1:3000 with hot reload on port 3001
 - WASM release profile uses aggressive optimizations (LTO, opt-level='z')

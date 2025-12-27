@@ -15,6 +15,21 @@ jobs:
     runs-on: ubuntu-24.04
     env:
       SQLX_OFFLINE: true
+      DATABASE_URL: postgres://blog:blog@localhost:5432/blog_romira_dev
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: blog
+          POSTGRES_PASSWORD: blog
+          POSTGRES_DB: blog_romira_dev
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U blog -d blog_romira_dev"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - uses: actions/checkout@v6
 

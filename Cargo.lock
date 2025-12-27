@@ -356,9 +356,11 @@ name = "blog-romira-dev-cms"
 version = "0.1.0"
 dependencies = [
  "chrono",
+ "dotenv",
  "serde",
  "sqlx",
  "thiserror 2.0.17",
+ "tokio",
  "tracing",
  "uuid",
 ]
