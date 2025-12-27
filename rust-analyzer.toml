@@ -1,9 +1,2 @@
-# rust-analyzer configuration for IDE support
-[cargo]
-# allFeaturesは使わない（ssrとhydrateが排他的なため）
-allFeatures = false
-# appクレートのssrフィーチャーを有効化
-features = ["blog-romira-dev-app/ssr"]
-
 [rustfmt]
 overrideCommand = ["leptosfmt", "--stdin", "--rustfmt"]
