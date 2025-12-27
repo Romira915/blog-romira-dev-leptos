@@ -104,8 +104,7 @@ impl DraftArticleService {
         let now = utc_now();
 
         // 公開記事を作成
-        let published_id =
-            PublishedArticleRepository::create_from_draft(pool, &draft, now).await?;
+        let published_id = PublishedArticleRepository::create_from_draft(pool, &draft, now).await?;
 
         // 下書きを削除
         DraftArticleRepository::delete(pool, draft_id).await?;
