@@ -1,6 +1,6 @@
 use leptos::prelude::*;
 
-use super::article_editor::{save_article_action, publish_article_action, ArticleEditData, SaveArticleInput};
+use super::{save_article_action, publish_article_action, ArticleEditData, SaveArticleInput};
 
 #[derive(Clone, Copy, PartialEq, Default)]
 pub enum ViewMode {

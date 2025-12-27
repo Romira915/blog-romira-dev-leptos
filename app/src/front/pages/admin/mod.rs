@@ -1,5 +1,4 @@
 pub mod article_editor;
-mod article_editor_state;
 pub mod article_list;
 pub mod layout;
 
