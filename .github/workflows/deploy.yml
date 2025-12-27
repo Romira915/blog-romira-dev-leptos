@@ -25,7 +25,7 @@ jobs:
         ~/.cargo/git/db/
         ./**/target
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Cache Cargo
         id: cache-cargo
@@ -98,7 +98,7 @@ jobs:
       release_tag: ${{ steps.tag_version.outputs.new_tag }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Download blog-romira-dev-server
         uses: actions/download-artifact@v7
