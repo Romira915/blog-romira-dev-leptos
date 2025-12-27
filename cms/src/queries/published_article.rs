@@ -127,6 +127,7 @@ impl PublishedArticleQuery {
     }
 }
 
+//noinspection NonAsciiCharacters
 #[cfg(test)]
 mod tests {
     use super::*;

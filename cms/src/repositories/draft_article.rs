@@ -87,6 +87,7 @@ impl DraftArticleRepository {
     }
 }
 
+//noinspection NonAsciiCharacters
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -186,7 +187,9 @@ mod tests {
     }
 
     #[sqlx::test]
-    async fn test_存在しない記事をupdateするとnotfoundエラーになること(pool: PgPool) {
+    async fn test_存在しない記事をupdateするとnotfoundエラーになること(
+        pool: PgPool,
+    ) {
         let nonexistent_id = Uuid::new_v4();
         let result = DraftArticleRepository::update(
             &pool,
@@ -233,7 +236,9 @@ mod tests {
     }
 
     #[sqlx::test]
-    async fn test_存在しない記事をdeleteするとnotfoundエラーになること(pool: PgPool) {
+    async fn test_存在しない記事をdeleteするとnotfoundエラーになること(
+        pool: PgPool,
+    ) {
         let nonexistent_id = Uuid::new_v4();
         let result = DraftArticleRepository::delete(&pool, nonexistent_id).await;
 

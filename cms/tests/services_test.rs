@@ -1,3 +1,4 @@
+//noinspection NonAsciiCharacters
 //! Service層の統合テスト
 //! 複数のRepository/Query操作を組み合わせるワークフローをテスト
 
@@ -28,11 +29,14 @@ async fn link_draft_article_category(pool: &PgPool, article_id: Uuid, category_i
     .expect("Failed to link draft article category");
 }
 
+//noinspection NonAsciiCharacters
 /// 下書き記事を公開するワークフローのテスト
 /// - 下書き作成 → カテゴリ紐付け → 公開
 /// - 公開記事が作成され、カテゴリもコピーされ、下書きが削除されることを確認
 #[sqlx::test]
-async fn test_下書き公開で公開記事が作成されカテゴリがコピーされ下書きが削除されること(pool: PgPool) {
+async fn test_下書き公開で公開記事が作成されカテゴリがコピーされ下書きが削除されること(
+    pool: PgPool,
+) {
     let cat_id = create_test_category(&pool, "PublishCat", "publishcat").await;
 
     let draft_id = DraftArticleService::create(
@@ -83,8 +87,11 @@ async fn test_下書き公開で公開記事が作成されカテゴリがコピ
     assert!(draft_after.is_none());
 }
 
+//noinspection NonAsciiCharacters
 #[sqlx::test]
-async fn test_存在しない下書きを公開するとnotfoundエラーになること(pool: PgPool) {
+async fn test_存在しない下書きを公開するとnotfoundエラーになること(
+    pool: PgPool,
+) {
     let nonexistent_id = Uuid::new_v4();
     let result = DraftArticleService::publish(&pool, nonexistent_id).await;
     assert!(matches!(result, Err(CmsError::NotFound)));

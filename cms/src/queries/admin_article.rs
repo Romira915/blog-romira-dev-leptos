@@ -109,6 +109,7 @@ impl AdminArticleQuery {
     }
 }
 
+//noinspection NonAsciiCharacters
 #[cfg(test)]
 mod tests {
     use super::*;

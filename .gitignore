@@ -18,3 +18,7 @@ hash.txt
 
 # IDE
 .idea/
+
+# IDE/Tool generated
+.playwright-mcp/
+.serena/
