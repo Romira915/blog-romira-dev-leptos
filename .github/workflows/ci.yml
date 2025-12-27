@@ -47,19 +47,13 @@ jobs:
           cp .env.example .env
 
       - name: Install leptosfmt
-        run: |
-          just setup_leptosfmt
+        run: just setup_leptosfmt
 
-      - name: cargo fmt
-        run: |
-          cargo fmt --all -- --check
-          leptosfmt --check ./**/*.rs
-        shell: bash
+      - name: Check format
+        run: just check-format
 
-      - name: cargo clippy
-        run: cargo clippy --all-targets --all-features -- -D warnings
-        shell: bash
+      - name: Clippy
+        run: just clippy
 
-      - name: cargo test
-        run: cargo test --all-targets --all-features
-        shell: bash
+      - name: Test
+        run: just test

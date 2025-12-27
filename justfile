@@ -30,3 +30,22 @@ watch:
 
 db-reset:
     docker compose down -v && docker compose up -d
+
+# Format code
+format:
+    cargo fmt --all
+    leptosfmt ./**/*.rs
+
+# Lint and format checks
+check-format:
+    cargo fmt --all -- --check
+    leptosfmt --check ./**/*.rs
+
+clippy:
+    cargo clippy --all-targets --all-features -- -D warnings
+
+test:
+    cargo test --all-targets --all-features
+
+# Run all CI checks
+ci: check-format clippy test
