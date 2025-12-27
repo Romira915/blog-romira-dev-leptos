@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use leptos::prelude::*;
 use leptos_router::hooks::use_params_map;
 use stylance::import_style;
@@ -18,7 +20,7 @@ pub fn ArticleEditorPage() -> impl IntoView {
 
     // Load existing article if editing
     let article_resource = Resource::new(
-        move || article_id(),
+        article_id,
         |id| async move {
             match id {
                 Some(id) => fetch_article_for_edit(id).await,

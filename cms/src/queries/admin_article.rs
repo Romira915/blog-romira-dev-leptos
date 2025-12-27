@@ -61,7 +61,7 @@ impl AdminArticleQuery {
         }
 
         // 更新日時でソート
-        result.sort_by(|a, b| b.updated_at().cmp(&a.updated_at()));
+        result.sort_by_key(|a| std::cmp::Reverse(a.updated_at()));
 
         Ok(result)
     }

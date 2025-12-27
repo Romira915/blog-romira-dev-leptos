@@ -54,7 +54,7 @@ impl ArticleFormState {
     }
 
     /// フォームデータをSaveArticleInputに変換
-    fn to_save_input(&self, id: Option<String>) -> SaveArticleInput {
+    fn as_save_input(&self, id: Option<String>) -> SaveArticleInput {
         let description = self.description.get();
         SaveArticleInput {
             id,
@@ -76,7 +76,7 @@ impl ArticleFormState {
     {
         let form = *self;
         Action::new(move |_: &()| {
-            let input = form.to_save_input(get_article_id());
+            let input = form.as_save_input(get_article_id());
             async move {
                 form.saving.set(true);
                 form.message.set(None);
