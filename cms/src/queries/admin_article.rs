@@ -190,7 +190,9 @@ mod tests {
     }
 
     #[sqlx::test]
-    async fn test_公開記事のみの場合fetch_allで公開記事が取得されること(pool: PgPool) {
+    async fn test_公開記事のみの場合fetch_allで公開記事が取得されること(
+        pool: PgPool,
+    ) {
         let published_id = insert_published_article(
             &pool,
             "pub-slug",
@@ -210,7 +212,9 @@ mod tests {
     }
 
     #[sqlx::test]
-    async fn test_下書きのみの場合fetch_allで下書きが取得されること(pool: PgPool) {
+    async fn test_下書きのみの場合fetch_allで下書きが取得されること(
+        pool: PgPool,
+    ) {
         let draft_id = insert_draft_article(&pool, "draft-slug", "Draft", "Body").await;
 
         let result = AdminArticleQuery::fetch_all(&pool)
