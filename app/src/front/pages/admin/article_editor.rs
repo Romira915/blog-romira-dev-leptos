@@ -2,16 +2,10 @@ use leptos::prelude::*;
 use leptos_router::hooks::use_params_map;
 use stylance::import_style;
 
+use super::article_editor_state::{ArticleFormState, ViewMode};
 use super::AdminLayout;
 
 import_style!(style, "article_editor.module.scss");
-
-#[derive(Clone, Copy, PartialEq)]
-enum ViewMode {
-    Split,
-    Editor,
-    Preview,
-}
 
 #[component]
 pub fn ArticleEditorPage() -> impl IntoView {
@@ -19,15 +13,7 @@ pub fn ArticleEditorPage() -> impl IntoView {
     let article_id = move || params.read().get("id").map(|s| s.to_string());
     let is_new = move || article_id().is_none();
 
-    // Form state
-    let (title, set_title) = signal(String::new());
-    let (slug, set_slug) = signal(String::new());
-    let (body, set_body) = signal(String::new());
-    let (description, set_description) = signal(String::new());
-    let (view_mode, set_view_mode) = signal(ViewMode::Split);
-    let (saving, set_saving) = signal(false);
-    let (publishing, set_publishing) = signal(false);
-    let (message, set_message) = signal(Option::<(bool, String)>::None);
+    let form = ArticleFormState::default();
 
     // Load existing article if editing
     let article_resource = Resource::new(
@@ -43,81 +29,13 @@ pub fn ArticleEditorPage() -> impl IntoView {
     // Populate form when article is loaded
     Effect::new(move || {
         if let Some(Ok(Some(article))) = article_resource.get() {
-            set_title.set(article.title);
-            set_slug.set(article.slug);
-            set_body.set(article.body);
-            set_description.set(article.description.unwrap_or_default());
+            form.populate(&article);
         }
     });
 
-    // Save handler
-    let save_article = Action::new(move |_: &()| {
-        let title_val = title.get();
-        let slug_val = slug.get();
-        let body_val = body.get();
-        let description_val = description.get();
-        let id = article_id();
-
-        async move {
-            set_saving.set(true);
-            set_message.set(None);
-
-            let result = save_article_action(SaveArticleInput {
-                id,
-                title: title_val,
-                slug: slug_val,
-                body: body_val,
-                description: if description_val.is_empty() {
-                    None
-                } else {
-                    Some(description_val)
-                },
-            })
-            .await;
-
-            set_saving.set(false);
-
-            match result {
-                Ok(_) => {
-                    set_message.set(Some((true, "保存しました".to_string())));
-                }
-                Err(e) => {
-                    set_message.set(Some((false, format!("エラー: {}", e))));
-                }
-            }
-        }
-    });
-
-    // Publish handler
-    let publish_article = Action::new(move |_: &()| {
-        let id = article_id();
-
-        async move {
-            let Some(id) = id else {
-                set_message.set(Some((false, "新規記事は先に保存してください".to_string())));
-                return;
-            };
-
-            set_publishing.set(true);
-            set_message.set(None);
-
-            let result = publish_article_action(id).await;
-
-            set_publishing.set(false);
-
-            match result {
-                Ok(_) => {
-                    set_message.set(Some((true, "公開しました".to_string())));
-                    // Redirect to article list after publish
-                    let navigate = leptos_router::hooks::use_navigate();
-                    navigate("/admin/articles", Default::default());
-                }
-                Err(e) => {
-                    set_message.set(Some((false, format!("エラー: {}", e))));
-                }
-            }
-        }
-    });
+    // Actions
+    let save_article = form.create_save_action(article_id);
+    let publish_article = form.create_publish_action(article_id);
 
     view! {
         <AdminLayout>
@@ -135,25 +53,25 @@ pub fn ArticleEditorPage() -> impl IntoView {
                                         <div class=style::actions>
                                             <button
                                                 class=style::save_button
-                                                disabled=move || saving.get() || publishing.get()
+                                                disabled=move || form.is_busy()
                                                 on:click=move |_| { let _ = save_article.dispatch(()); }
                                             >
-                                                {move || if saving.get() { "保存中..." } else { "下書き保存" }}
+                                                {move || if form.saving.get() { "保存中..." } else { "下書き保存" }}
                                             </button>
                                             <Show when=move || !is_new()>
                                                 <button
                                                     class=style::publish_button
-                                                    disabled=move || saving.get() || publishing.get()
+                                                    disabled=move || form.is_busy()
                                                     on:click=move |_| { let _ = publish_article.dispatch(()); }
                                                 >
-                                                    {move || if publishing.get() { "公開中..." } else { "公開" }}
+                                                    {move || if form.publishing.get() { "公開中..." } else { "公開" }}
                                                 </button>
                                             </Show>
                                         </div>
                                     </header>
 
                                     {move || {
-                                        message
+                                        form.message
                                             .get()
                                             .map(|(success, msg)| {
                                                 view! {
@@ -172,10 +90,8 @@ pub fn ArticleEditorPage() -> impl IntoView {
                                             <input
                                                 type="text"
                                                 class=style::input
-                                                prop:value=move || title.get()
-                                                on:input=move |ev| {
-                                                    set_title.set(event_target_value(&ev))
-                                                }
+                                                prop:value=move || form.title.get()
+                                                on:input=move |ev| form.title.set(event_target_value(&ev))
                                             />
                                         </div>
                                         <div class=style::form_row>
@@ -183,8 +99,8 @@ pub fn ArticleEditorPage() -> impl IntoView {
                                             <input
                                                 type="text"
                                                 class=style::input
-                                                prop:value=move || slug.get()
-                                                on:input=move |ev| set_slug.set(event_target_value(&ev))
+                                                prop:value=move || form.slug.get()
+                                                on:input=move |ev| form.slug.set(event_target_value(&ev))
                                             />
                                         </div>
                                         <div class=style::form_row>
@@ -192,10 +108,8 @@ pub fn ArticleEditorPage() -> impl IntoView {
                                             <input
                                                 type="text"
                                                 class=style::input
-                                                prop:value=move || description.get()
-                                                on:input=move |ev| {
-                                                    set_description.set(event_target_value(&ev))
-                                                }
+                                                prop:value=move || form.description.get()
+                                                on:input=move |ev| form.description.set(event_target_value(&ev))
                                             />
                                         </div>
                                         
@@ -205,37 +119,37 @@ pub fn ArticleEditorPage() -> impl IntoView {
                                         <div class=style::view_mode_buttons>
                                             <button
                                                 class=move || {
-                                                    if view_mode.get() == ViewMode::Split {
+                                                    if form.view_mode.get() == ViewMode::Split {
                                                         style::mode_button_active
                                                     } else {
                                                         style::mode_button
                                                     }
                                                 }
-                                                on:click=move |_| set_view_mode.set(ViewMode::Split)
+                                                on:click=move |_| form.view_mode.set(ViewMode::Split)
                                             >
                                                 "Split"
                                             </button>
                                             <button
                                                 class=move || {
-                                                    if view_mode.get() == ViewMode::Editor {
+                                                    if form.view_mode.get() == ViewMode::Editor {
                                                         style::mode_button_active
                                                     } else {
                                                         style::mode_button
                                                     }
                                                 }
-                                                on:click=move |_| set_view_mode.set(ViewMode::Editor)
+                                                on:click=move |_| form.view_mode.set(ViewMode::Editor)
                                             >
                                                 "Editor"
                                             </button>
                                             <button
                                                 class=move || {
-                                                    if view_mode.get() == ViewMode::Preview {
+                                                    if form.view_mode.get() == ViewMode::Preview {
                                                         style::mode_button_active
                                                     } else {
                                                         style::mode_button
                                                     }
                                                 }
-                                                on:click=move |_| set_view_mode.set(ViewMode::Preview)
+                                                on:click=move |_| form.view_mode.set(ViewMode::Preview)
                                             >
                                                 "Preview"
                                             </button>
@@ -244,21 +158,21 @@ pub fn ArticleEditorPage() -> impl IntoView {
 
                                     <div
                                         class=style::editor_container
-                                        class:split=move || view_mode.get() == ViewMode::Split
+                                        class:split=move || form.view_mode.get() == ViewMode::Split
                                     >
-                                        <Show when=move || view_mode.get() != ViewMode::Preview>
+                                        <Show when=move || form.view_mode.get() != ViewMode::Preview>
                                             <div class=style::editor_pane>
                                                 <textarea
                                                     class=style::textarea
-                                                    prop:value=move || body.get()
-                                                    on:input=move |ev| set_body.set(event_target_value(&ev))
+                                                    prop:value=move || form.body.get()
+                                                    on:input=move |ev| form.body.set(event_target_value(&ev))
                                                     placeholder="Markdownで記事を書く..."
                                                 />
                                             </div>
                                         </Show>
-                                        <Show when=move || view_mode.get() != ViewMode::Editor>
+                                        <Show when=move || form.view_mode.get() != ViewMode::Editor>
                                             <div class=style::preview_pane>
-                                                <MarkdownPreview content=body />
+                                                <MarkdownPreview content=form.body />
                                             </div>
                                         </Show>
                                     </div>
@@ -272,7 +186,7 @@ pub fn ArticleEditorPage() -> impl IntoView {
 }
 
 #[component]
-fn MarkdownPreview(content: ReadSignal<String>) -> impl IntoView {
+fn MarkdownPreview(content: RwSignal<String>) -> impl IntoView {
     // TODO: Use comrak-wasm for client-side markdown rendering
     // For now, just show raw markdown
     view! {
