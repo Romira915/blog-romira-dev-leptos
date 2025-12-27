@@ -1,4 +1,4 @@
-pub(crate) mod admin;
+pub(crate) mod admin_page;
 pub(crate) mod article_page;
 pub(crate) mod not_found_page;
 pub(crate) mod preview_article_page;

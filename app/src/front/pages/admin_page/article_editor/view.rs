@@ -4,7 +4,7 @@ use stylance::import_style;
 
 use super::state::{ArticleFormState, ViewMode};
 use super::fetch_article_for_edit;
-use crate::front::pages::admin::AdminLayout;
+use crate::front::pages::admin_page::AdminLayout;
 
 import_style!(style, "article_editor.module.scss");
 
@@ -113,7 +113,7 @@ pub fn ArticleEditorPage() -> impl IntoView {
                                                 on:input=move |ev| form.description.set(event_target_value(&ev))
                                             />
                                         </div>
-                                        
+
                                     </div>
 
                                     <div class=style::editor_toolbar>

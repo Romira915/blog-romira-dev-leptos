@@ -1,4 +1,4 @@
-use crate::front::pages::admin::{ArticleEditorPage, ArticleListPage};
+use crate::front::pages::admin_page::{ArticleEditorPage, ArticleListPage};
 use crate::front::pages::article_page::ArticlePage;
 use crate::front::pages::not_found_page::NotFoundPage;
 use crate::front::pages::preview_article_page::PreviewArticlePage;
@@ -28,7 +28,7 @@ pub fn shell(options: LeptosOptions) -> impl IntoView {
                     {"window.dataLayer = window.dataLayer || [];
                     function gtag(){dataLayer.push(arguments);}
                     gtag('js', new Date());
-                    
+
                     gtag('config', 'G-4P5K3SBG1K');"}
                 </script>
                 <link rel="stylesheet" href=format!("{}/google.min.css", ASSETS_ROOT) />

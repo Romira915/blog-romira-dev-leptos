@@ -2,7 +2,7 @@ use leptos::prelude::*;
 use leptos_router::components::A;
 use stylance::import_style;
 
-use crate::front::pages::admin::{get_auth_user, is_oauth_configured};
+use crate::front::pages::admin_page::{get_auth_user, is_oauth_configured};
 
 import_style!(style, "layout.module.scss");
 
