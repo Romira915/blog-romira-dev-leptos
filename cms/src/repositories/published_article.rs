@@ -83,7 +83,7 @@ mod tests {
     }
 
     #[sqlx::test]
-    async fn test_create_from_draft_without_categories(pool: PgPool) {
+    async fn test_カテゴリなし下書きから公開記事が作成されること(pool: PgPool) {
         let draft_id =
             insert_draft_article(&pool, "draft-slug", "下書きタイトル", "下書き本文").await;
 
@@ -121,7 +121,7 @@ mod tests {
     }
 
     #[sqlx::test]
-    async fn test_create_from_draft_with_categories(pool: PgPool) {
+    async fn test_カテゴリ付き下書きから公開記事とカテゴリが作成されること(pool: PgPool) {
         let cat1_id = create_test_category(&pool, "Cat1", "cat1").await;
         let cat2_id = create_test_category(&pool, "Cat2", "cat2").await;
         let draft_id = insert_draft_article(&pool, "draft-with-cat", "カテゴリ付き", "本文").await;
@@ -168,7 +168,7 @@ mod tests {
     }
 
     #[sqlx::test]
-    async fn test_create_from_draft_sets_published_at(pool: PgPool) {
+    async fn test_公開記事作成時に公開日時が設定されること(pool: PgPool) {
         let draft_id = insert_draft_article(&pool, "time-test", "時刻テスト", "本文").await;
 
         let draft = DraftArticleWithCategories {

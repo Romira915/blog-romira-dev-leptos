@@ -97,7 +97,7 @@ mod tests {
     }
 
     #[sqlx::test]
-    async fn test_create(pool: PgPool) {
+    async fn test_createで記事が作成されること(pool: PgPool) {
         let now = utc_now();
         let id = DraftArticleRepository::create(
             &pool,
@@ -127,7 +127,7 @@ mod tests {
     }
 
     #[sqlx::test]
-    async fn test_create_without_description(pool: PgPool) {
+    async fn test_descriptionがnoneでも記事が作成されること(pool: PgPool) {
         let now = utc_now();
         let id =
             DraftArticleRepository::create(&pool, "説明なし記事", "no-desc", "本文のみ", None, now)
@@ -146,7 +146,7 @@ mod tests {
     }
 
     #[sqlx::test]
-    async fn test_update(pool: PgPool) {
+    async fn test_updateで記事が更新されること(pool: PgPool) {
         let now = utc_now();
         let id = DraftArticleRepository::create(
             &pool,
@@ -186,7 +186,7 @@ mod tests {
     }
 
     #[sqlx::test]
-    async fn test_update_nonexistent_returns_not_found(pool: PgPool) {
+    async fn test_存在しない記事をupdateするとnotfoundエラーになること(pool: PgPool) {
         let nonexistent_id = Uuid::new_v4();
         let result = DraftArticleRepository::update(
             &pool,
@@ -203,7 +203,7 @@ mod tests {
     }
 
     #[sqlx::test]
-    async fn test_delete(pool: PgPool) {
+    async fn test_deleteで記事が削除されること(pool: PgPool) {
         let now = utc_now();
         let id = DraftArticleRepository::create(&pool, "削除対象", "to-delete", "本文", None, now)
             .await
@@ -233,7 +233,7 @@ mod tests {
     }
 
     #[sqlx::test]
-    async fn test_delete_nonexistent_returns_not_found(pool: PgPool) {
+    async fn test_存在しない記事をdeleteするとnotfoundエラーになること(pool: PgPool) {
         let nonexistent_id = Uuid::new_v4();
         let result = DraftArticleRepository::delete(&pool, nonexistent_id).await;
 

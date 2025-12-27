@@ -139,7 +139,7 @@ mod tests {
     }
 
     #[sqlx::test]
-    async fn test_fetch_all_includes_categories(pool: PgPool) {
+    async fn test_fetch_allでカテゴリも取得されること(pool: PgPool) {
         let cat1_id = create_test_category(&pool, "Category1", "category1").await;
         let cat2_id = create_test_category(&pool, "Category2", "category2").await;
         let article_id = insert_draft_article(&pool, "test-slug", "Title", "Body", None).await;
@@ -156,7 +156,7 @@ mod tests {
     }
 
     #[sqlx::test]
-    async fn test_fetch_by_id_returns_article_with_categories(pool: PgPool) {
+    async fn test_fetch_by_idでカテゴリ付き記事が取得されること(pool: PgPool) {
         let cat_id = create_test_category(&pool, "TestCat", "testcat").await;
         let article_id = insert_draft_article(
             &pool,
@@ -183,7 +183,7 @@ mod tests {
     }
 
     #[sqlx::test]
-    async fn test_fetch_by_id_returns_none_for_nonexistent(pool: PgPool) {
+    async fn test_存在しないidでfetch_by_idするとnoneが返ること(pool: PgPool) {
         let nonexistent_id = Uuid::new_v4();
 
         let result = DraftArticleQuery::fetch_by_id(&pool, nonexistent_id)
@@ -194,7 +194,7 @@ mod tests {
     }
 
     #[sqlx::test]
-    async fn test_fetch_by_id_returns_article_without_categories(pool: PgPool) {
+    async fn test_fetch_by_idでカテゴリなし記事が取得されること(pool: PgPool) {
         let article_id =
             insert_draft_article(&pool, "no-cat-slug", "No Cat Title", "Body", None).await;
 

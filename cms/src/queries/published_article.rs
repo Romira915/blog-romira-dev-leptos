@@ -179,7 +179,7 @@ mod tests {
     }
 
     #[sqlx::test]
-    async fn test_fetch_all_returns_only_published_articles(pool: PgPool) {
+    async fn test_fetch_allで未来の記事が除外されること(pool: PgPool) {
         // 過去の公開日の記事
         let past_id = insert_published_article(
             &pool,
@@ -212,7 +212,7 @@ mod tests {
     }
 
     #[sqlx::test]
-    async fn test_fetch_all_includes_categories(pool: PgPool) {
+    async fn test_fetch_allでカテゴリも取得されること(pool: PgPool) {
         let cat_id = create_test_category(&pool, "TestCategory", "testcategory").await;
         let article_id = insert_published_article(
             &pool,
@@ -236,7 +236,7 @@ mod tests {
     }
 
     #[sqlx::test]
-    async fn test_fetch_by_id_returns_article(pool: PgPool) {
+    async fn test_fetch_by_idで記事が取得されること(pool: PgPool) {
         let article_id = insert_published_article(
             &pool,
             "test-slug",
@@ -260,7 +260,7 @@ mod tests {
     }
 
     #[sqlx::test]
-    async fn test_fetch_by_id_returns_none_for_future_article(pool: PgPool) {
+    async fn test_未来の記事はfetch_by_idでnoneが返ること(pool: PgPool) {
         let article_id = insert_published_article(
             &pool,
             "future-slug",
@@ -280,7 +280,7 @@ mod tests {
     }
 
     #[sqlx::test]
-    async fn test_fetch_by_id_returns_none_for_nonexistent(pool: PgPool) {
+    async fn test_存在しないidでfetch_by_idするとnoneが返ること(pool: PgPool) {
         let nonexistent_id = Uuid::new_v4();
         let now = parse_datetime("2025-01-15 12:00:00");
 
@@ -292,7 +292,7 @@ mod tests {
     }
 
     #[sqlx::test]
-    async fn test_fetch_by_slug_returns_article(pool: PgPool) {
+    async fn test_fetch_by_slugで記事が取得されること(pool: PgPool) {
         let article_id = insert_published_article(
             &pool,
             "my-unique-slug",
@@ -313,7 +313,7 @@ mod tests {
     }
 
     #[sqlx::test]
-    async fn test_fetch_by_slug_returns_none_for_future_article(pool: PgPool) {
+    async fn test_未来の記事はfetch_by_slugでnoneが返ること(pool: PgPool) {
         insert_published_article(
             &pool,
             "future-slug",
@@ -333,7 +333,7 @@ mod tests {
     }
 
     #[sqlx::test]
-    async fn test_fetch_by_slug_returns_none_for_nonexistent(pool: PgPool) {
+    async fn test_存在しないslugでfetch_by_slugするとnoneが返ること(pool: PgPool) {
         let now = parse_datetime("2025-01-15 12:00:00");
         let result = PublishedArticleQuery::fetch_by_slug(&pool, "nonexistent-slug", now)
             .await

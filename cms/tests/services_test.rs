@@ -32,7 +32,7 @@ async fn link_draft_article_category(pool: &PgPool, article_id: Uuid, category_i
 /// - 下書き作成 → カテゴリ紐付け → 公開
 /// - 公開記事が作成され、カテゴリもコピーされ、下書きが削除されることを確認
 #[sqlx::test]
-async fn test_publish_workflow(pool: PgPool) {
+async fn test_下書き公開で公開記事が作成されカテゴリがコピーされ下書きが削除されること(pool: PgPool) {
     let cat_id = create_test_category(&pool, "PublishCat", "publishcat").await;
 
     let draft_id = DraftArticleService::create(
@@ -84,7 +84,7 @@ async fn test_publish_workflow(pool: PgPool) {
 }
 
 #[sqlx::test]
-async fn test_publish_nonexistent_draft_returns_not_found(pool: PgPool) {
+async fn test_存在しない下書きを公開するとnotfoundエラーになること(pool: PgPool) {
     let nonexistent_id = Uuid::new_v4();
     let result = DraftArticleService::publish(&pool, nonexistent_id).await;
     assert!(matches!(result, Err(CmsError::NotFound)));

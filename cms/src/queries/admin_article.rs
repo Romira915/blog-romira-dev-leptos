@@ -189,7 +189,7 @@ mod tests {
     }
 
     #[sqlx::test]
-    async fn test_fetch_all_returns_only_published_articles(pool: PgPool) {
+    async fn test_公開記事のみの場合fetch_allで公開記事が取得されること(pool: PgPool) {
         let published_id = insert_published_article(
             &pool,
             "pub-slug",
@@ -209,7 +209,7 @@ mod tests {
     }
 
     #[sqlx::test]
-    async fn test_fetch_all_returns_only_draft_articles(pool: PgPool) {
+    async fn test_下書きのみの場合fetch_allで下書きが取得されること(pool: PgPool) {
         let draft_id = insert_draft_article(&pool, "draft-slug", "Draft", "Body").await;
 
         let result = AdminArticleQuery::fetch_all(&pool)
@@ -222,7 +222,7 @@ mod tests {
     }
 
     #[sqlx::test]
-    async fn test_fetch_all_returns_both_published_and_draft(pool: PgPool) {
+    async fn test_fetch_allで公開と下書き両方が取得されること(pool: PgPool) {
         insert_published_article(
             &pool,
             "pub-slug",
@@ -251,7 +251,7 @@ mod tests {
     }
 
     #[sqlx::test]
-    async fn test_fetch_all_includes_future_published_articles(pool: PgPool) {
+    async fn test_fetch_allで未来の公開記事も取得されること(pool: PgPool) {
         let future_id = insert_published_article(
             &pool,
             "future-slug",
@@ -270,7 +270,7 @@ mod tests {
     }
 
     #[sqlx::test]
-    async fn test_fetch_all_includes_categories_for_published(pool: PgPool) {
+    async fn test_fetch_allで公開記事のカテゴリも取得されること(pool: PgPool) {
         let cat_id = create_test_category(&pool, "PubCat", "pubcat").await;
         let article_id = insert_published_article(
             &pool,
@@ -301,7 +301,7 @@ mod tests {
     }
 
     #[sqlx::test]
-    async fn test_fetch_all_includes_categories_for_draft(pool: PgPool) {
+    async fn test_fetch_allで下書きのカテゴリも取得されること(pool: PgPool) {
         let cat_id = create_test_category(&pool, "DraftCat", "draftcat").await;
         let article_id =
             insert_draft_article(&pool, "cat-draft", "Categorized Draft", "Body").await;
@@ -326,7 +326,7 @@ mod tests {
     }
 
     #[sqlx::test]
-    async fn test_article_list_item_is_draft(pool: PgPool) {
+    async fn test_is_draftで公開と下書きが正しく判定されること(pool: PgPool) {
         let published_id = insert_published_article(
             &pool,
             "pub",
@@ -349,7 +349,7 @@ mod tests {
     }
 
     #[sqlx::test]
-    async fn test_article_list_item_published_at(pool: PgPool) {
+    async fn test_published_atで公開日時が正しく取得されること(pool: PgPool) {
         let publish_time = parse_datetime("2025-06-15 14:30:00");
         let published_id =
             insert_published_article(&pool, "pub", "Published", "Body", publish_time).await;
