@@ -45,7 +45,10 @@ impl PublishedArticleService {
         let mut result = Vec::with_capacity(articles.len());
         for article in articles {
             let categories = self.fetch_categories(article.id).await?;
-            result.push(PublishedArticleWithCategories { article, categories });
+            result.push(PublishedArticleWithCategories {
+                article,
+                categories,
+            });
         }
 
         Ok(result)
@@ -75,7 +78,10 @@ impl PublishedArticleService {
         match article {
             Some(article) => {
                 let categories = self.fetch_categories(article.id).await?;
-                Ok(Some(PublishedArticleWithCategories { article, categories }))
+                Ok(Some(PublishedArticleWithCategories {
+                    article,
+                    categories,
+                }))
             }
             None => Ok(None),
         }
@@ -105,7 +111,10 @@ impl PublishedArticleService {
         match article {
             Some(article) => {
                 let categories = self.fetch_categories(article.id).await?;
-                Ok(Some(PublishedArticleWithCategories { article, categories }))
+                Ok(Some(PublishedArticleWithCategories {
+                    article,
+                    categories,
+                }))
             }
             None => Ok(None),
         }
@@ -154,7 +163,10 @@ impl DraftArticleService {
         let mut result = Vec::with_capacity(articles.len());
         for article in articles {
             let categories = Self::fetch_categories(pool, article.id).await?;
-            result.push(DraftArticleWithCategories { article, categories });
+            result.push(DraftArticleWithCategories {
+                article,
+                categories,
+            });
         }
 
         Ok(result)
@@ -182,7 +194,10 @@ impl DraftArticleService {
         match article {
             Some(article) => {
                 let categories = Self::fetch_categories(pool, article.id).await?;
-                Ok(Some(DraftArticleWithCategories { article, categories }))
+                Ok(Some(DraftArticleWithCategories {
+                    article,
+                    categories,
+                }))
             }
             None => Ok(None),
         }
