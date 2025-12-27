@@ -3,6 +3,7 @@ use leptos_router::components::A;
 use stylance::import_style;
 
 use super::AdminLayout;
+use crate::common::handlers::admin::fetch_admin_articles;
 
 import_style!(style, "article_list.module.scss");
 
@@ -88,35 +89,4 @@ pub fn ArticleListPage() -> impl IntoView {
             </div>
         </AdminLayout>
     }
-}
-
-#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
-pub struct AdminArticleListItem {
-    pub id: String,
-    pub title: String,
-    pub is_draft: bool,
-    pub published_at: Option<String>,
-}
-
-#[server(endpoint = "admin/get_articles")]
-pub async fn fetch_admin_articles() -> Result<Vec<AdminArticleListItem>, ServerFnError> {
-    use blog_romira_dev_cms::AdminArticleService;
-    use crate::server::contexts::AppState;
-
-    let state = expect_context::<AppState>();
-    let articles = AdminArticleService::fetch_all(state.db_pool())
-        .await
-        .map_err(|e| ServerFnError::new(e.to_string()))?;
-
-    Ok(articles
-        .into_iter()
-        .map(|a| AdminArticleListItem {
-            id: a.id().to_string(),
-            title: a.title().to_string(),
-            is_draft: a.is_draft(),
-            published_at: a.published_at().map(|d| {
-                d.format("%Y年%m月%d日").to_string()
-            }),
-        })
-        .collect())
 }

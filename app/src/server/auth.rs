@@ -1,17 +1,18 @@
+use axum::extract::Query;
 use axum::{
     Router,
     response::{IntoResponse, Redirect},
     routing::get,
 };
-use axum::extract::Query;
 use oauth2::{
-    AuthUrl, AuthorizationCode, ClientId, ClientSecret, CsrfToken, EndpointNotSet,
-    EndpointSet, RedirectUrl, Scope, StandardRevocableToken, TokenResponse, TokenUrl,
+    AuthUrl, AuthorizationCode, ClientId, ClientSecret, CsrfToken, EndpointNotSet, EndpointSet,
+    RedirectUrl, Scope, StandardRevocableToken, TokenResponse, TokenUrl,
     basic::{BasicClient, BasicErrorResponseType, BasicTokenType},
 };
 use serde::Deserialize;
 use tower_sessions::Session;
 
+use crate::common::handlers::auth::AuthUser;
 use crate::server::config::SERVER_CONFIG;
 use crate::server::contexts::AppState;
 
@@ -34,13 +35,6 @@ type GoogleOAuthClient = oauth2::Client<
     EndpointNotSet,
     EndpointSet,
 >;
-
-#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
-pub struct AuthUser {
-    pub email: String,
-    pub name: Option<String>,
-    pub picture: Option<String>,
-}
 
 #[derive(Debug, Deserialize)]
 pub struct AuthCallbackQuery {
@@ -85,7 +79,10 @@ pub async fn auth_google(session: Session) -> impl IntoResponse {
         .url();
 
     // Store CSRF token in session
-    if let Err(e) = session.insert(SESSION_CSRF_KEY, csrf_token.secret().clone()).await {
+    if let Err(e) = session
+        .insert(SESSION_CSRF_KEY, csrf_token.secret().clone())
+        .await
+    {
         tracing::error!("Failed to store CSRF token: {}", e);
         return Redirect::to("/admin?error=session_error").into_response();
     }
@@ -186,22 +183,4 @@ pub fn auth_routes() -> Router<AppState> {
         .route("/auth/google", get(auth_google))
         .route("/auth/callback", get(auth_callback))
         .route("/auth/logout", get(auth_logout))
-}
-
-/// Server function to get current authenticated user
-#[leptos::prelude::server(endpoint = "auth/me")]
-pub async fn get_auth_user() -> Result<Option<AuthUser>, leptos::prelude::ServerFnError> {
-    use leptos_axum::extract;
-    use tower_sessions::Session;
-
-    let session: Session = extract().await?;
-    Ok(get_current_user(&session).await)
-}
-
-/// Server function to check if OAuth is configured
-#[leptos::prelude::server(endpoint = "auth/configured")]
-pub async fn is_oauth_configured() -> Result<bool, leptos::prelude::ServerFnError> {
-    Ok(SERVER_CONFIG.google_client_id.is_some()
-        && SERVER_CONFIG.google_client_secret.is_some()
-        && SERVER_CONFIG.app_url.is_some())
 }

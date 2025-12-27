@@ -1,6 +1,6 @@
 use leptos::prelude::*;
 
-use super::{save_article_action, publish_article_action, ArticleEditData, SaveArticleInput};
+use super::{ArticleEditData, SaveArticleInput, publish_article_action, save_article_action};
 
 #[derive(Clone, Copy, PartialEq, Default)]
 pub enum ViewMode {
@@ -44,7 +44,8 @@ impl ArticleFormState {
         self.title.set(article.title.clone());
         self.slug.set(article.slug.clone());
         self.body.set(article.body.clone());
-        self.description.set(article.description.clone().unwrap_or_default());
+        self.description
+            .set(article.description.clone().unwrap_or_default());
     }
 
     /// 操作中かどうか
@@ -60,7 +61,11 @@ impl ArticleFormState {
             title: self.title.get(),
             slug: self.slug.get(),
             body: self.body.get(),
-            description: if description.is_empty() { None } else { Some(description) },
+            description: if description.is_empty() {
+                None
+            } else {
+                Some(description)
+            },
         }
     }
 
@@ -102,7 +107,8 @@ impl ArticleFormState {
             let id = get_article_id();
             async move {
                 let Some(id) = id else {
-                    form.message.set(Some((false, "新規記事は先に保存してください".to_string())));
+                    form.message
+                        .set(Some((false, "新規記事は先に保存してください".to_string())));
                     return;
                 };
 

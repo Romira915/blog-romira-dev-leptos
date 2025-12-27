@@ -2,8 +2,8 @@ use leptos::prelude::*;
 use leptos_router::hooks::use_params_map;
 use stylance::import_style;
 
-use super::state::{ArticleFormState, ViewMode};
 use super::fetch_article_for_edit;
+use super::state::{ArticleFormState, ViewMode};
 use crate::front::pages::admin_page::AdminLayout;
 
 import_style!(style, "article_editor.module.scss");
