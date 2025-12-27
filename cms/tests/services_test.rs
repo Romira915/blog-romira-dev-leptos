@@ -1,4 +1,5 @@
-mod common;
+//! Service層の統合テスト
+//! Repository + Query を組み合わせた実際のビジネスロジックをテスト
 
 use blog_romira_dev_cms::error::CmsError;
 use blog_romira_dev_cms::models::ArticleListItem;
@@ -6,101 +7,123 @@ use blog_romira_dev_cms::services::{
     AdminArticleService, DraftArticleService, PublishedArticleService,
 };
 use chrono::NaiveDateTime;
+use sqlx::PgPool;
+use uuid::Uuid;
 
 fn parse_datetime(s: &str) -> NaiveDateTime {
     NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S").unwrap()
+}
+
+async fn create_test_category(pool: &PgPool, name: &str, slug: &str) -> Uuid {
+    sqlx::query_scalar!(
+        r#"INSERT INTO categories (name, slug) VALUES ($1, $2) RETURNING id"#,
+        name,
+        slug
+    )
+    .fetch_one(pool)
+    .await
+    .expect("Failed to create test category")
+}
+
+async fn link_draft_article_category(pool: &PgPool, article_id: Uuid, category_id: Uuid) {
+    sqlx::query!(
+        "INSERT INTO draft_article_categories (article_id, category_id) VALUES ($1, $2)",
+        article_id,
+        category_id
+    )
+    .execute(pool)
+    .await
+    .expect("Failed to link draft article category");
+}
+
+async fn insert_published_article(
+    pool: &PgPool,
+    slug: &str,
+    title: &str,
+    body: &str,
+    published_at: NaiveDateTime,
+) -> Uuid {
+    sqlx::query_scalar!(
+        r#"INSERT INTO published_articles (slug, title, body, published_at) VALUES ($1, $2, $3, $4) RETURNING id"#,
+        slug,
+        title,
+        body,
+        published_at as _
+    )
+    .fetch_one(pool)
+    .await
+    .expect("Failed to insert published article")
+}
+
+async fn insert_draft_article(pool: &PgPool, slug: &str, title: &str, body: &str) -> Uuid {
+    let now = chrono::Utc::now().naive_utc();
+    sqlx::query_scalar!(
+        r#"INSERT INTO draft_articles (slug, title, body, created_at, updated_at) VALUES ($1, $2, $3, $4, $4) RETURNING id"#,
+        slug,
+        title,
+        body,
+        now as _
+    )
+    .fetch_one(pool)
+    .await
+    .expect("Failed to insert draft article")
 }
 
 // ============================================================
 // DraftArticleService tests
 // ============================================================
 
-#[tokio::test]
-async fn test_draft_service_create_and_fetch() {
-    let pool = common::create_test_pool().await;
-    let prefix = common::unique_prefix();
-
-    // 作成
+#[sqlx::test]
+async fn test_draft_service_create_and_fetch(pool: PgPool) {
     let id = DraftArticleService::create(
         &pool,
         "サービス経由タイトル",
-        &format!("{}-service-slug", prefix),
+        "service-slug",
         "サービス経由本文",
         Some("説明"),
     )
     .await
     .expect("Failed to create draft");
 
-    // 取得
     let fetched = DraftArticleService::fetch_by_id(&pool, id)
         .await
         .expect("Failed to fetch by id")
         .expect("Article not found");
 
     assert_eq!(fetched.article.title, "サービス経由タイトル");
-    assert_eq!(fetched.article.slug, format!("{}-service-slug", prefix));
+    assert_eq!(fetched.article.slug, "service-slug");
     assert_eq!(fetched.article.body, "サービス経由本文");
     assert_eq!(fetched.article.description, Some("説明".to_string()));
 }
 
-#[tokio::test]
-async fn test_draft_service_fetch_all() {
-    let pool = common::create_test_pool().await;
-    let prefix = common::unique_prefix();
+#[sqlx::test]
+async fn test_draft_service_fetch_all(pool: PgPool) {
+    DraftArticleService::create(&pool, "Title 1", "slug1", "Body 1", None)
+        .await
+        .expect("Failed to create draft 1");
 
-    let id1 = DraftArticleService::create(
-        &pool,
-        "Title 1",
-        &format!("{}-slug1", prefix),
-        "Body 1",
-        None,
-    )
-    .await
-    .expect("Failed to create draft 1");
-
-    let id2 = DraftArticleService::create(
-        &pool,
-        "Title 2",
-        &format!("{}-slug2", prefix),
-        "Body 2",
-        None,
-    )
-    .await
-    .expect("Failed to create draft 2");
+    DraftArticleService::create(&pool, "Title 2", "slug2", "Body 2", None)
+        .await
+        .expect("Failed to create draft 2");
 
     let all = DraftArticleService::fetch_all(&pool)
         .await
         .expect("Failed to fetch all");
 
-    let test_articles: Vec<_> = all
-        .iter()
-        .filter(|a| a.article.id == id1 || a.article.id == id2)
-        .collect();
-
-    assert_eq!(test_articles.len(), 2);
+    assert_eq!(all.len(), 2);
 }
 
-#[tokio::test]
-async fn test_draft_service_update() {
-    let pool = common::create_test_pool().await;
-    let prefix = common::unique_prefix();
+#[sqlx::test]
+async fn test_draft_service_update(pool: PgPool) {
+    let id = DraftArticleService::create(&pool, "Original", "original-slug", "Original Body", None)
+        .await
+        .expect("Failed to create draft");
 
-    let id = DraftArticleService::create(
-        &pool,
-        "Original",
-        &format!("{}-original-slug", prefix),
-        "Original Body",
-        None,
-    )
-    .await
-    .expect("Failed to create draft");
-
-    let updated_slug = format!("{}-updated-slug", prefix);
     DraftArticleService::update(
         &pool,
         id,
         "Updated",
-        &updated_slug,
+        "updated-slug",
         "Updated Body",
         Some("New Desc"),
     )
@@ -113,86 +136,58 @@ async fn test_draft_service_update() {
         .expect("Not found");
 
     assert_eq!(fetched.article.title, "Updated");
-    assert_eq!(fetched.article.slug, updated_slug);
+    assert_eq!(fetched.article.slug, "updated-slug");
     assert_eq!(fetched.article.body, "Updated Body");
     assert_eq!(fetched.article.description, Some("New Desc".to_string()));
 }
 
-#[tokio::test]
-async fn test_draft_service_delete() {
-    let pool = common::create_test_pool().await;
-    let prefix = common::unique_prefix();
+#[sqlx::test]
+async fn test_draft_service_delete(pool: PgPool) {
+    let id = DraftArticleService::create(&pool, "To Delete", "to-delete", "Body", None)
+        .await
+        .expect("Failed to create draft");
 
-    let id = DraftArticleService::create(
-        &pool,
-        "To Delete",
-        &format!("{}-to-delete", prefix),
-        "Body",
-        None,
-    )
-    .await
-    .expect("Failed to create draft");
-
-    // 削除前は存在する
     let before = DraftArticleService::fetch_by_id(&pool, id).await.unwrap();
     assert!(before.is_some());
 
-    // 削除
     DraftArticleService::delete(&pool, id)
         .await
         .expect("Failed to delete");
 
-    // 削除後は存在しない
     let after = DraftArticleService::fetch_by_id(&pool, id).await.unwrap();
     assert!(after.is_none());
 }
 
-#[tokio::test]
-async fn test_draft_service_publish() {
-    let pool = common::create_test_pool().await;
-    let prefix = common::unique_prefix();
+#[sqlx::test]
+async fn test_draft_service_publish(pool: PgPool) {
+    let cat_id = create_test_category(&pool, "PublishCat", "publishcat").await;
 
-    // カテゴリを作成
-    let cat_id = common::create_test_category(
-        &pool,
-        &format!("{}-PublishCat", prefix),
-        &format!("{}-publishcat", prefix),
-    )
-    .await;
-
-    // 下書きを作成
     let draft_id = DraftArticleService::create(
         &pool,
         "Draft to Publish",
-        &format!("{}-draft-to-publish", prefix),
+        "draft-to-publish",
         "Draft Body",
         Some("Draft Desc"),
     )
     .await
     .expect("Failed to create draft");
 
-    // カテゴリを関連付け
-    common::link_draft_article_category(&pool, draft_id, cat_id).await;
+    link_draft_article_category(&pool, draft_id, cat_id).await;
 
-    // 公開
     let published_id = DraftArticleService::publish(&pool, draft_id)
         .await
         .expect("Failed to publish");
 
     // 公開記事が作成されている
     let published = sqlx::query!(
-        r#"
-        SELECT slug, title, body, description
-        FROM published_articles
-        WHERE id = $1
-        "#,
+        r#"SELECT slug, title, body, description FROM published_articles WHERE id = $1"#,
         published_id
     )
     .fetch_one(&pool)
     .await
     .expect("Failed to fetch published article");
 
-    assert_eq!(published.slug, format!("{}-draft-to-publish", prefix));
+    assert_eq!(published.slug, "draft-to-publish");
     assert_eq!(published.title, "Draft to Publish");
     assert_eq!(published.body, "Draft Body");
     assert_eq!(published.description, Some("Draft Desc".to_string()));
@@ -215,14 +210,10 @@ async fn test_draft_service_publish() {
     assert!(draft_after.is_none());
 }
 
-#[tokio::test]
-async fn test_draft_service_publish_nonexistent_returns_not_found() {
-    let pool = common::create_test_pool().await;
-
-    let nonexistent_id = uuid::Uuid::new_v4();
-
+#[sqlx::test]
+async fn test_draft_service_publish_nonexistent_returns_not_found(pool: PgPool) {
+    let nonexistent_id = Uuid::new_v4();
     let result = DraftArticleService::publish(&pool, nonexistent_id).await;
-
     assert!(matches!(result, Err(CmsError::NotFound)));
 }
 
@@ -230,77 +221,55 @@ async fn test_draft_service_publish_nonexistent_returns_not_found() {
 // PublishedArticleService tests
 // ============================================================
 
-#[tokio::test]
-async fn test_published_service_fetch_all() {
-    let pool = common::create_test_pool().await;
-    let prefix = common::unique_prefix();
-
-    let id1 = common::insert_published_article_directly(
+#[sqlx::test]
+async fn test_published_service_fetch_all(pool: PgPool) {
+    insert_published_article(
         &pool,
-        &format!("{}-pub1", prefix),
+        "pub1",
         "Published 1",
         "Body",
-        None,
         parse_datetime("2025-01-01 10:00:00"),
     )
     .await;
-
-    let id2 = common::insert_published_article_directly(
+    insert_published_article(
         &pool,
-        &format!("{}-pub2", prefix),
+        "pub2",
         "Published 2",
         "Body",
-        None,
         parse_datetime("2025-01-02 10:00:00"),
     )
     .await;
-
     // 未来の記事
-    let _future_id = common::insert_published_article_directly(
+    insert_published_article(
         &pool,
-        &format!("{}-future", prefix),
+        "future",
         "Future",
         "Body",
-        None,
         parse_datetime("2099-01-01 10:00:00"),
     )
     .await;
 
     let service = PublishedArticleService::new(pool.clone());
-
     let result = service.fetch_all().await.expect("Failed to fetch all");
 
-    // このテスト用のslugでフィルタして確認（未来の記事は含まれない）
-    let test_articles: Vec<_> = result
-        .iter()
-        .filter(|a| a.article.slug.starts_with(&prefix))
-        .collect();
-
-    assert_eq!(test_articles.len(), 2);
-    assert!(test_articles.iter().any(|a| a.article.id == id1));
-    assert!(test_articles.iter().any(|a| a.article.id == id2));
+    // 未来の記事は含まれない
+    assert_eq!(result.len(), 2);
 }
 
-#[tokio::test]
-async fn test_published_service_fetch_by_slug() {
-    let pool = common::create_test_pool().await;
-    let prefix = common::unique_prefix();
-
-    let slug = format!("{}-unique-slug", prefix);
-    let article_id = common::insert_published_article_directly(
+#[sqlx::test]
+async fn test_published_service_fetch_by_slug(pool: PgPool) {
+    let article_id = insert_published_article(
         &pool,
-        &slug,
+        "unique-slug",
         "Unique Article",
         "Body",
-        None,
         parse_datetime("2025-01-01 10:00:00"),
     )
     .await;
 
     let service = PublishedArticleService::new(pool.clone());
-
     let result = service
-        .fetch_by_slug(&slug)
+        .fetch_by_slug("unique-slug")
         .await
         .expect("Failed to fetch by slug");
 
@@ -308,23 +277,18 @@ async fn test_published_service_fetch_by_slug() {
     assert_eq!(result.unwrap().article.id, article_id);
 }
 
-#[tokio::test]
-async fn test_published_service_fetch_by_id() {
-    let pool = common::create_test_pool().await;
-    let prefix = common::unique_prefix();
-
-    let article_id = common::insert_published_article_directly(
+#[sqlx::test]
+async fn test_published_service_fetch_by_id(pool: PgPool) {
+    let article_id = insert_published_article(
         &pool,
-        &format!("{}-test-id-fetch", prefix),
+        "test-id-fetch",
         "Test ID Fetch",
         "Body",
-        None,
         parse_datetime("2025-01-01 10:00:00"),
     )
     .await;
 
     let service = PublishedArticleService::new(pool.clone());
-
     let result = service
         .fetch_by_id(article_id)
         .await
@@ -338,42 +302,31 @@ async fn test_published_service_fetch_by_id() {
 // AdminArticleService tests
 // ============================================================
 
-#[tokio::test]
-async fn test_admin_service_fetch_all() {
-    let pool = common::create_test_pool().await;
-    let prefix = common::unique_prefix();
-
-    // 公開記事と下書き記事を作成
-    common::insert_published_article_directly(
+#[sqlx::test]
+async fn test_admin_service_fetch_all(pool: PgPool) {
+    insert_published_article(
         &pool,
-        &format!("{}-admin-pub", prefix),
+        "admin-pub",
         "Admin Published",
         "Body",
-        None,
         parse_datetime("2025-01-01 10:00:00"),
     )
     .await;
-
-    common::insert_draft_article_directly(
-        &pool,
-        &format!("{}-admin-draft", prefix),
-        "Admin Draft",
-        "Body",
-        None,
-    )
-    .await;
+    insert_draft_article(&pool, "admin-draft", "Admin Draft", "Body").await;
 
     let result = AdminArticleService::fetch_all(&pool)
         .await
         .expect("Failed to fetch all");
 
-    let test_articles: Vec<_> = result
-        .iter()
-        .filter(|a| match a {
-            ArticleListItem::Published(p) => p.article.slug.starts_with(&prefix),
-            ArticleListItem::Draft(d) => d.article.slug.starts_with(&prefix),
-        })
-        .collect();
+    assert_eq!(result.len(), 2);
 
-    assert_eq!(test_articles.len(), 2);
+    let has_published = result
+        .iter()
+        .any(|a| matches!(a, ArticleListItem::Published(_)));
+    let has_draft = result
+        .iter()
+        .any(|a| matches!(a, ArticleListItem::Draft(_)));
+
+    assert!(has_published);
+    assert!(has_draft);
 }
