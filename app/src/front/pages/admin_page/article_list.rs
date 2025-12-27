@@ -57,9 +57,7 @@ pub fn ArticleListPage() -> impl IntoView {
                                                                         </span>
                                                                     </td>
                                                                     <td>
-                                                                        {article
-                                                                            .published_at
-                                                                            .unwrap_or_else(|| "-".to_string())}
+                                                                        {article.published_at.unwrap_or_else(|| "-".to_string())}
                                                                     </td>
                                                                     <td>
                                                                         <A
@@ -79,7 +77,9 @@ pub fn ArticleListPage() -> impl IntoView {
                                             .into_any()
                                     }
                                     Err(e) => {
-                                        view! { <p class=style::error>{format!("エラー: {}", e)}</p> }
+                                        view! {
+                                            <p class=style::error>{format!("エラー: {}", e)}</p>
+                                        }
                                             .into_any()
                                     }
                                 }

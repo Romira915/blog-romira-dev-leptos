@@ -28,7 +28,7 @@ pub fn shell(options: LeptosOptions) -> impl IntoView {
                     {"window.dataLayer = window.dataLayer || [];
                     function gtag(){dataLayer.push(arguments);}
                     gtag('js', new Date());
-
+                    
                     gtag('config', 'G-4P5K3SBG1K');"}
                 </script>
                 <link rel="stylesheet" href=format!("{}/google.min.css", ASSETS_ROOT) />
@@ -78,8 +78,16 @@ pub fn App() -> impl IntoView {
                     // Admin routes
                     <Route path=path!("/admin") view=ArticleListPage ssr=SsrMode::Async />
                     <Route path=path!("/admin/articles") view=ArticleListPage ssr=SsrMode::Async />
-                    <Route path=path!("/admin/articles/new") view=ArticleEditorPage ssr=SsrMode::Async />
-                    <Route path=path!("/admin/articles/:id") view=ArticleEditorPage ssr=SsrMode::Async />
+                    <Route
+                        path=path!("/admin/articles/new")
+                        view=ArticleEditorPage
+                        ssr=SsrMode::Async
+                    />
+                    <Route
+                        path=path!("/admin/articles/:id")
+                        view=ArticleEditorPage
+                        ssr=SsrMode::Async
+                    />
                 </Routes>
             </main>
         </Router>
