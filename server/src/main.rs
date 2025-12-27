@@ -1,15 +1,19 @@
 use axum::Router;
 use axum::extract::MatchedPath;
 use axum::http::Request;
-use blog_romira_dev_app::*;
+use blog_romira_dev_app::{App, AppState, SERVER_CONFIG, auth_routes, shell};
 use leptos::logging::log;
 use leptos::prelude::*;
 use leptos_axum::{LeptosRoutes, generate_route_list};
+use sqlx::postgres::PgPoolOptions;
 use time::macros::offset;
 use tower::ServiceBuilder;
 use tower::layer::util::{Identity, Stack};
 use tower_http::classify::{ServerErrorsAsFailures, SharedClassifier};
+use tower_http::set_header::SetResponseHeaderLayer;
 use tower_http::trace::{MakeSpan, TraceLayer};
+use tower_sessions::SessionManagerLayer;
+use tower_sessions_sqlx_store::PostgresStore;
 use tracing::Span;
 
 #[tokio::main]
@@ -22,14 +26,34 @@ async fn main() {
         .init()
         .expect("Failed to initialize NewRelic");
 
+    // Database connection pool
+    let db_pool = PgPoolOptions::new()
+        .max_connections(5)
+        .connect(&SERVER_CONFIG.database_url)
+        .await
+        .expect("Failed to connect to database");
+
+    // Run migrations
+    sqlx::migrate!("../migrations")
+        .run(&db_pool)
+        .await
+        .expect("Failed to run migrations");
+
+    // Session store
+    let session_store = PostgresStore::new(db_pool.clone());
+    let session_layer = SessionManagerLayer::new(session_store)
+        .with_secure(false) // TODO: Set to true in production with HTTPS
+        .with_same_site(tower_sessions::cookie::SameSite::Lax);
+
     let conf = get_configuration(None).unwrap();
     let addr = conf.leptos_options.site_addr;
     let leptos_options = conf.leptos_options;
-    let app_state = AppState::new(leptos_options.clone());
+    let app_state = AppState::new(leptos_options.clone(), db_pool);
     // Generate the list of routes in your Leptos App
     let routes = generate_route_list(App);
 
     let app = Router::new()
+        .merge(auth_routes())
         .leptos_routes_with_context(
             &app_state,
             routes,
@@ -48,7 +72,12 @@ async fn main() {
         // })
         .fallback(leptos_axum::file_and_error_handler::<AppState, _>(shell))
         .with_state(app_state)
+        .layer(session_layer)
         .layer(MakeSpanForHttp.into_tracing_service());
+
+    // Disable caching in development mode
+    #[cfg(debug_assertions)]
+    let app = app.layer(no_cache_layer());
 
     // run our app with hyper
     // `axum::Server` is a re-export of `hyper::Server`
@@ -86,4 +115,13 @@ impl MakeSpanForHttp {
     {
         ServiceBuilder::new().layer(TraceLayer::new_for_http().make_span_with(self))
     }
+}
+
+/// Returns a layer that disables caching in development mode
+#[cfg(debug_assertions)]
+fn no_cache_layer() -> SetResponseHeaderLayer<http::HeaderValue> {
+    SetResponseHeaderLayer::if_not_present(
+        http::header::CACHE_CONTROL,
+        http::HeaderValue::from_static("no-store, no-cache, must-revalidate"),
+    )
 }

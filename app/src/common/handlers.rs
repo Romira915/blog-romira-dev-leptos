@@ -1,3 +1,6 @@
+pub(crate) mod admin;
+pub(crate) mod auth;
+
 use crate::common::dto::{ArticlePageDto, HomePageArticleDto, HomePageAuthorDto};
 use crate::constants::ROMIRA_NEWT_AUTHOR_ID;
 use crate::error::{GetArticleError, GetArticlesError, GetAuthorError};

@@ -15,3 +15,6 @@ style/stylance/
 
 .env
 hash.txt
+
+# IDE
+.idea/

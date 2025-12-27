@@ -7,6 +7,7 @@ edition = "2024"
 
 [dependencies]
 axum = { workspace = true, optional = true }
+blog-romira-dev-cms = { path = "../cms", optional = true }
 chrono = { workspace = true }
 dotenv = { workspace = true, optional = true }
 envy = { workspace = true, optional = true }
@@ -15,10 +16,14 @@ leptos-use = { workspace = true }
 leptos_axum = { workspace = true, optional = true }
 leptos_meta = { workspace = true }
 leptos_router = { workspace = true }
+oauth2 = { workspace = true, optional = true }
 reqwest = { workspace = true }
 select = { workspace = true, optional = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
+sqlx = { workspace = true, optional = true }
+tower-sessions = { workspace = true, optional = true }
+uuid = { workspace = true }
 stylance = { workspace = true }
 thiserror = { workspace = true }
 tokio = { workspace = true, optional = true }
@@ -42,10 +47,14 @@ ssr = [
     "axum",
     "url",
     "select",
+    "sqlx",
+    "oauth2",
+    "tower-sessions",
+    "blog-romira-dev-cms",
 ]
 
 [package.metadata.cargo-all-features]
-denylist = ["axum", "tower", "tower-http", "tokio", "leptos_axum"]
+denylist = ["axum", "tower", "tower-http", "tokio", "leptos_axum", "sqlx", "blog-romira-dev-cms"]
 skip_feature_sets = [["csr", "ssr"], ["csr", "hydrate"], ["ssr", "hydrate"]]
 
 [package.metadata.stylance]

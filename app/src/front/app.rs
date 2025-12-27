@@ -1,3 +1,4 @@
+use crate::front::pages::admin_page::{ArticleEditorPage, ArticleListPage};
 use crate::front::pages::article_page::ArticlePage;
 use crate::front::pages::not_found_page::NotFoundPage;
 use crate::front::pages::preview_article_page::PreviewArticlePage;
@@ -74,6 +75,19 @@ pub fn App() -> impl IntoView {
                     <Route path=StaticSegment("") view=TopPage ssr=SsrMode::Async />
                     <Route path=path!("/articles/:id") view=ArticlePage ssr=SsrMode::Async />
                     <Route path=path!("/preview/:id") view=PreviewArticlePage ssr=SsrMode::Async />
+                    // Admin routes
+                    <Route path=path!("/admin") view=ArticleListPage ssr=SsrMode::Async />
+                    <Route path=path!("/admin/articles") view=ArticleListPage ssr=SsrMode::Async />
+                    <Route
+                        path=path!("/admin/articles/new")
+                        view=ArticleEditorPage
+                        ssr=SsrMode::Async
+                    />
+                    <Route
+                        path=path!("/admin/articles/:id")
+                        view=ArticleEditorPage
+                        ssr=SsrMode::Async
+                    />
                 </Routes>
             </main>
         </Router>

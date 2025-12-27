@@ -8,6 +8,14 @@ pub struct ServerConfig {
     pub newt_cdn_api_token: String,
     pub newt_api_token: String,
     pub qiita_api_token: String,
+    pub database_url: String,
+    // OAuth (optional - required only for admin authentication)
+    #[serde(default)]
+    pub google_client_id: Option<String>,
+    #[serde(default)]
+    pub google_client_secret: Option<String>,
+    #[serde(default)]
+    pub app_url: Option<String>, // e.g., "http://localhost:3000" or "https://blog.romira.dev"
 }
 
 #[cfg(feature = "ssr")]

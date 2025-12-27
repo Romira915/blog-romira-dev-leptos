@@ -17,6 +17,7 @@ jobs:
     runs-on: ubuntu-24.04
     needs: ci
     env:
+      SQLX_OFFLINE: true
       CACHE_PATH: |
         ~/.cargo/bin/
         ~/.cargo/registry/index/

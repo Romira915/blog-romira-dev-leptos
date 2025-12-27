@@ -9,8 +9,6 @@ crate-type = ["cdylib", "rlib"]
 [dependencies]
 blog-romira-dev-app = { path = "../app", features = ["hydrate"] }
 console_error_panic_hook = { workspace = true }
-console_log = { workspace = true }
 leptos = { workspace = true, features = ["hydrate"] }
-log = { workspace = true }
 tracing-wasm = { workspace = true }
 wasm-bindgen = { workspace = true }

@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|mcp__plugin_serena_serena__replace_content|mcp__plugin_serena_serena__create_text_file|mcp__plugin_serena_serena__replace_symbol_body|mcp__plugin_serena_serena__insert_after_symbol|mcp__plugin_serena_serena__insert_before_symbol",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/check-rust-format.sh"
+          }
+        ]
+      }
+    ]
+  }
+}
