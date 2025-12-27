@@ -19,15 +19,12 @@ pub fn ArticleEditorPage() -> impl IntoView {
     let form = ArticleFormState::default();
 
     // Load existing article if editing
-    let article_resource = Resource::new(
-        article_id,
-        |id| async move {
-            match id {
-                Some(id) => fetch_article_for_edit(id).await,
-                None => Ok(None),
-            }
-        },
-    );
+    let article_resource = Resource::new(article_id, |id| async move {
+        match id {
+            Some(id) => fetch_article_for_edit(id).await,
+            None => Ok(None),
+        }
+    });
 
     // Populate form when article is loaded
     Effect::new(move || {
