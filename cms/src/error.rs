@@ -4,4 +4,7 @@ use thiserror::Error;
 pub enum CmsError {
     #[error(transparent)]
     DatabaseError(#[from] sqlx::Error),
+
+    #[error("Not found")]
+    NotFound,
 }

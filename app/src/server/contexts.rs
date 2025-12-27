@@ -38,4 +38,8 @@ impl AppState {
             qiita_article_service: QiitaArticleService::new(client.clone(), QIITA_BASE_URL),
         }
     }
+
+    pub fn db_pool(&self) -> &PgPool {
+        &self.db_pool
+    }
 }

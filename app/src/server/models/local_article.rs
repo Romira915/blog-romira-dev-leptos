@@ -7,14 +7,20 @@ use crate::constants::{DATE_DISPLAY_FORMAT, HOUR, JST_TZ, THUMBNAIL_NO_IMAGE_URL
 use crate::server::utils::url::{
     to_optimize_cover_image_url, to_optimize_og_image_url, to_optimize_thumbnail_url,
 };
-use blog_romira_dev_cms::ArticleWithCategories;
-use chrono::{DateTime, FixedOffset};
+use blog_romira_dev_cms::PublishedArticleWithCategories;
+use chrono::{FixedOffset, NaiveDateTime, TimeZone, Utc};
 use leptos::prelude::RwSignal;
 use tracing::instrument;
 
-impl From<ArticleWithCategories> for HomePageArticleDto {
+/// NaiveDateTime (UTC) をJSTのDateTimeに変換
+fn to_jst(naive: NaiveDateTime) -> chrono::DateTime<FixedOffset> {
+    let jst = FixedOffset::east_opt(JST_TZ * HOUR).unwrap();
+    Utc.from_utc_datetime(&naive).with_timezone(&jst)
+}
+
+impl From<PublishedArticleWithCategories> for HomePageArticleDto {
     #[instrument(skip(value))]
-    fn from(value: ArticleWithCategories) -> Self {
+    fn from(value: PublishedArticleWithCategories) -> Self {
         let article = value.article;
         Self {
             title: RwSignal::new(article.title),
@@ -31,10 +37,7 @@ impl From<ArticleWithCategories> for HomePageArticleDto {
                 .map(|category| RwSignal::new(category.name.clone()))
                 .collect(),
             first_published_at: RwSignal::new(
-                article
-                    .published_at
-                    .unwrap_or_else(|| DateTime::from_timestamp(0, 0).unwrap())
-                    .with_timezone(&FixedOffset::east_opt(JST_TZ * HOUR).unwrap())
+                to_jst(article.published_at)
                     .format(DATE_DISPLAY_FORMAT)
                     .to_string(),
             ),
@@ -43,9 +46,9 @@ impl From<ArticleWithCategories> for HomePageArticleDto {
     }
 }
 
-impl From<ArticleWithCategories> for ArticlePageDto {
+impl From<PublishedArticleWithCategories> for ArticlePageDto {
     #[instrument(skip(value))]
-    fn from(value: ArticleWithCategories) -> Self {
+    fn from(value: PublishedArticleWithCategories) -> Self {
         let article = value.article;
         let title = RwSignal::new(article.title);
         let cover_image_url = RwSignal::new(to_optimize_cover_image_url(
@@ -61,14 +64,11 @@ impl From<ArticleWithCategories> for ArticlePageDto {
             .map(|category| RwSignal::new(category.name.clone()))
             .collect();
 
-        let published_at_dt = article
-            .published_at
-            .unwrap_or_else(|| DateTime::from_timestamp(0, 0).unwrap())
-            .with_timezone(&FixedOffset::east_opt(JST_TZ * HOUR).unwrap());
-        let published_at_rfc3339 = RwSignal::new(published_at_dt.to_rfc3339());
+        let published_at_jst = to_jst(article.published_at);
+        let published_at_rfc3339 = RwSignal::new(published_at_jst.to_rfc3339());
         let first_published_at =
-            RwSignal::new(published_at_dt.format(DATE_DISPLAY_FORMAT).to_string());
-        let first_published_at_rfc3339 = RwSignal::new(published_at_dt.to_rfc3339());
+            RwSignal::new(published_at_jst.format(DATE_DISPLAY_FORMAT).to_string());
+        let first_published_at_rfc3339 = RwSignal::new(published_at_jst.to_rfc3339());
 
         let id = RwSignal::new(article.id.to_string());
         let description = RwSignal::new(article.description.unwrap_or_default());

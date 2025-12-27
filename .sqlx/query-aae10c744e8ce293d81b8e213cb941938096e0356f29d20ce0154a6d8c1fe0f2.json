@@ -1,0 +1,19 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            UPDATE draft_articles\n            SET title = $1, slug = $2, body = $3, description = $4, updated_at = $5\n            WHERE id = $6\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Varchar",
+        "Varchar",
+        "Text",
+        "Text",
+        "Timestamp",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "aae10c744e8ce293d81b8e213cb941938096e0356f29d20ce0154a6d8c1fe0f2"
+}

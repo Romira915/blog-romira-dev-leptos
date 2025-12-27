@@ -3,5 +3,8 @@ pub mod models;
 pub mod services;
 
 pub use error::CmsError;
-pub use models::{Article, ArticleWithCategories, Category};
-pub use services::ArticleService;
+pub use models::{
+    ArticleListItem, Category, DraftArticle, DraftArticleWithCategories, PublishedArticle,
+    PublishedArticleWithCategories,
+};
+pub use services::{AdminArticleService, DraftArticleService, PublishedArticleService};

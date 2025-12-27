@@ -1,0 +1,112 @@
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    
+    h1 {
+        margin: 0;
+        font-size: 1.5rem;
+    }
+}
+
+.new_button {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    background-color: #4a90d9;
+    color: #fff;
+    text-decoration: none;
+    border-radius: 4px;
+    font-weight: 500;
+    
+    &:hover {
+        background-color: #3a7bc8;
+    }
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    
+    th, td {
+        padding: 1rem;
+        text-align: left;
+        border-bottom: 1px solid #e0e0e0;
+    }
+    
+    th {
+        background-color: #f8f9fa;
+        font-weight: 600;
+        color: #333;
+    }
+    
+    tr:last-child td {
+        border-bottom: none;
+    }
+    
+    tr:hover td {
+        background-color: #f8f9fa;
+    }
+}
+
+.status_draft {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    background-color: #ffc107;
+    color: #333;
+    border-radius: 4px;
+    font-size: 0.875rem;
+}
+
+.status_published {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    background-color: #28a745;
+    color: #fff;
+    border-radius: 4px;
+    font-size: 0.875rem;
+}
+
+.edit_link {
+    color: #4a90d9;
+    text-decoration: none;
+    
+    &:hover {
+        text-decoration: underline;
+    }
+}
+
+.error {
+    color: #dc3545;
+    padding: 1rem;
+    background-color: #f8d7da;
+    border-radius: 4px;
+}
+
+@media (prefers-color-scheme: dark) {
+    .table {
+        background-color: #1a1a2e;
+        
+        th {
+            background-color: #2a2a4e;
+            color: #e0e0e0;
+        }
+        
+        th, td {
+            border-bottom-color: #333;
+        }
+        
+        tr:hover td {
+            background-color: #2a2a4e;
+        }
+    }
+}
