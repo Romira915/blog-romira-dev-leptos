@@ -17,7 +17,7 @@
 }
 
 .x-icon {
-  width: 50px; // SVG全体のサイズ
+  width: 50px;
   height: 50px;
   transition: transform 0.3s ease;
 
@@ -25,15 +25,16 @@
     transform: scale(1.1);
   }
 
+  // X Brand Guidelines: ロゴは黒または白のみ使用可
   .x-icon-circle {
-    stroke: #000; // 通常時の円の枠線色
-    fill: #fff; // 通常時の円の背景色
+    stroke: #000;
+    fill: #fff;
     stroke-width: 2px;
     transition: fill 0.3s ease;
 
     @media (prefers-color-scheme: dark) {
-      stroke: #fff; // ダークモード時の円の枠線色
-      fill: #000; // ダークモード時の円の背景色
+      stroke: #fff;
+      fill: #000;
     }
   }
 
@@ -42,16 +43,11 @@
   }
 
   .x-icon-path {
-    fill: #000; // 通常時のアイコンの色（円と対比）
+    fill: #000;
     transition: fill 0.3s ease;
 
     @media (prefers-color-scheme: dark) {
-      fill: #fff; // ダークモード時のアイコンの色
+      fill: #fff;
     }
   }
-
-
 }
-
-
-
