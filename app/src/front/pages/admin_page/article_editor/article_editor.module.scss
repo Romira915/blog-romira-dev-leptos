@@ -211,13 +211,6 @@
 
 .preview_content {
     padding: 1rem;
-    
-    pre {
-        white-space: pre-wrap;
-        word-wrap: break-word;
-        margin: 0;
-        font-family: inherit;
-    }
 }
 
 @media (prefers-color-scheme: dark) {
