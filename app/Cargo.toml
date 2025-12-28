@@ -29,6 +29,7 @@ thiserror = { workspace = true }
 tokio = { workspace = true, optional = true }
 tracing = { workspace = true }
 url = { workspace = true, optional = true }
+comrak = { workspace = true }
 
 [dev-dependencies]
 mockito = { workspace = true }
