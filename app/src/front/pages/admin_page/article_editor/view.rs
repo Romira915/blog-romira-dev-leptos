@@ -4,7 +4,7 @@ use leptos::prelude::*;
 use leptos_router::hooks::use_params_map;
 use stylance::import_style;
 
-use super::fetch_article_for_edit;
+use super::get_article_for_edit_handler;
 use super::state::{ArticleFormState, ViewMode};
 use crate::front::components::article_detail::article_body_style;
 use crate::front::hooks::use_scroll_sync;
@@ -23,7 +23,7 @@ pub fn ArticleEditorPage() -> impl IntoView {
     // Load existing article if editing
     let article_resource = Resource::new(article_id, |id| async move {
         match id {
-            Some(id) => fetch_article_for_edit(id).await,
+            Some(id) => get_article_for_edit_handler(id).await,
             None => Ok(None),
         }
     });
@@ -57,7 +57,13 @@ pub fn ArticleEditorPage() -> impl IntoView {
                                     <header class=style::header>
                                         <h1>
                                             {move || {
-                                                if is_new() { "新規作成" } else { "下書き編集" }
+                                                if is_new() {
+                                                    "新規作成"
+                                                } else if form.is_draft.get() {
+                                                    "下書き編集"
+                                                } else {
+                                                    "公開記事編集"
+                                                }
                                             }}
                                         </h1>
                                         <div class=style::actions>
@@ -71,12 +77,14 @@ pub fn ArticleEditorPage() -> impl IntoView {
                                                 {move || {
                                                     if form.saving.get() {
                                                         "保存中..."
-                                                    } else {
+                                                    } else if form.is_draft.get() {
                                                         "下書き保存"
+                                                    } else {
+                                                        "保存"
                                                     }
                                                 }}
                                             </button>
-                                            <Show when=move || !is_new()>
+                                            <Show when=move || !is_new() && form.is_draft.get()>
                                                 <button
                                                     class=style::publish_button
                                                     disabled=move || form.is_busy()

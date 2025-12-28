@@ -46,6 +46,37 @@ impl PublishedArticleService {
     ) -> Result<Option<PublishedArticleWithCategories>, CmsError> {
         PublishedArticleQuery::fetch_by_slug(&self.pool, slug, utc_now()).await
     }
+
+    /// 公開済み記事をIDで取得（管理者用、公開日時フィルタなし）
+    #[instrument(skip(pool))]
+    pub async fn fetch_by_id_for_admin(
+        pool: &PgPool,
+        article_id: Uuid,
+    ) -> Result<Option<PublishedArticleWithCategories>, CmsError> {
+        PublishedArticleQuery::fetch_by_id_for_admin(pool, article_id).await
+    }
+
+    /// 公開記事を更新
+    #[instrument(skip(pool))]
+    pub async fn update(
+        pool: &PgPool,
+        article_id: Uuid,
+        title: &str,
+        slug: &str,
+        body: &str,
+        description: Option<&str>,
+    ) -> Result<(), CmsError> {
+        PublishedArticleRepository::update(
+            pool,
+            article_id,
+            title,
+            slug,
+            body,
+            description,
+            utc_now(),
+        )
+        .await
+    }
 }
 
 /// 下書き記事サービス（管理画面用）

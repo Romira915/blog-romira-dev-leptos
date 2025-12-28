@@ -107,6 +107,37 @@ impl PublishedArticleQuery {
         }
     }
 
+    /// 公開済み記事をIDで取得（管理者用、公開日時フィルタなし）
+    #[instrument(skip(pool))]
+    pub async fn fetch_by_id_for_admin(
+        pool: &PgPool,
+        article_id: Uuid,
+    ) -> Result<Option<PublishedArticleWithCategories>, CmsError> {
+        let article = sqlx::query_as!(
+            PublishedArticle,
+            r#"
+            SELECT id, slug, title, body, description, cover_image_url,
+                   published_at as "published_at: _", created_at as "created_at: _", updated_at as "updated_at: _"
+            FROM published_articles
+            WHERE id = $1
+            "#,
+            article_id
+        )
+        .fetch_optional(pool)
+        .await?;
+
+        match article {
+            Some(article) => {
+                let categories = Self::fetch_categories(pool, article.id).await?;
+                Ok(Some(PublishedArticleWithCategories {
+                    article,
+                    categories,
+                }))
+            }
+            None => Ok(None),
+        }
+    }
+
     /// 公開記事のカテゴリを取得
     #[instrument(skip(pool))]
     async fn fetch_categories(pool: &PgPool, article_id: Uuid) -> Result<Vec<Category>, CmsError> {
@@ -339,6 +370,38 @@ mod tests {
         let result = PublishedArticleQuery::fetch_by_slug(&pool, "nonexistent-slug", now)
             .await
             .expect("Failed to fetch by slug");
+
+        assert!(result.is_none());
+    }
+
+    #[sqlx::test]
+    async fn test_fetch_by_id_for_adminで未来の記事も取得できること(pool: PgPool) {
+        let article_id = insert_published_article(
+            &pool,
+            "future-admin",
+            "Future Admin",
+            "Body",
+            None,
+            parse_datetime("2099-01-20 10:00:00"),
+        )
+        .await;
+
+        let result = PublishedArticleQuery::fetch_by_id_for_admin(&pool, article_id)
+            .await
+            .expect("Failed to fetch by id for admin");
+
+        assert!(result.is_some());
+        assert_eq!(result.unwrap().article.id, article_id);
+    }
+
+    #[sqlx::test]
+    async fn test_存在しないidでfetch_by_id_for_adminするとnoneが返ること(
+        pool: PgPool,
+    ) {
+        let nonexistent_id = Uuid::new_v4();
+        let result = PublishedArticleQuery::fetch_by_id_for_admin(&pool, nonexistent_id)
+            .await
+            .expect("Failed to fetch by id for admin");
 
         assert!(result.is_none());
     }

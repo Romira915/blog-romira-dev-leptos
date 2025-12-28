@@ -3,14 +3,14 @@ use leptos_router::components::A;
 use stylance::import_style;
 
 use super::AdminLayout;
-use crate::common::handlers::admin::fetch_admin_articles;
+use crate::common::handlers::admin::get_admin_articles_handler;
 
 import_style!(style, "article_list.module.scss");
 
 #[component]
 pub fn ArticleListPage() -> impl IntoView {
     // TODO: Fetch articles from server
-    let articles = Resource::new(|| (), |_| async move { fetch_admin_articles().await });
+    let articles = Resource::new(|| (), |_| async move { get_admin_articles_handler().await });
 
     view! {
         <AdminLayout>

@@ -12,11 +12,23 @@ pub struct ArticleEditData {
     pub slug: String,
     pub body: String,
     pub description: Option<String>,
+    pub is_draft: bool,
 }
 
+/// 下書き保存用入力（バリデーション緩め）
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct SaveArticleInput {
+pub struct SaveDraftInput {
     pub id: Option<String>,
+    pub title: String,
+    pub slug: String,
+    pub body: String,
+    pub description: Option<String>,
+}
+
+/// 公開記事保存用入力（バリデーション厳格）
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct SavePublishedInput {
+    pub id: String, // 公開記事は既存記事のみ
     pub title: String,
     pub slug: String,
     pub body: String,
@@ -35,7 +47,7 @@ pub struct AdminArticleListItem {
 
 #[instrument]
 #[server(input = GetUrl, endpoint = "admin/get_articles")]
-pub async fn fetch_admin_articles() -> Result<Vec<AdminArticleListItem>, ServerFnError> {
+pub async fn get_admin_articles_handler() -> Result<Vec<AdminArticleListItem>, ServerFnError> {
     use crate::server::contexts::AppState;
     use blog_romira_dev_cms::AdminArticleService;
 
@@ -59,30 +71,53 @@ pub async fn fetch_admin_articles() -> Result<Vec<AdminArticleListItem>, ServerF
 
 #[instrument]
 #[server(input = GetUrl, endpoint = "admin/get_article")]
-pub async fn fetch_article_for_edit(id: String) -> Result<Option<ArticleEditData>, ServerFnError> {
+pub async fn get_article_for_edit_handler(
+    id: String,
+) -> Result<Option<ArticleEditData>, ServerFnError> {
     use crate::server::contexts::AppState;
-    use blog_romira_dev_cms::DraftArticleService;
+    use blog_romira_dev_cms::{DraftArticleService, PublishedArticleService};
     use uuid::Uuid;
 
     let state = expect_context::<AppState>();
     let uuid = Uuid::parse_str(&id).map_err(|e| ServerFnError::new(e.to_string()))?;
 
-    let article = DraftArticleService::fetch_by_id(state.db_pool(), uuid)
+    // まず下書きから検索
+    if let Some(draft) = DraftArticleService::fetch_by_id(state.db_pool(), uuid)
         .await
-        .map_err(|e| ServerFnError::new(e.to_string()))?;
+        .map_err(|e| ServerFnError::new(e.to_string()))?
+    {
+        return Ok(Some(ArticleEditData {
+            id: draft.article.id.to_string(),
+            title: draft.article.title,
+            slug: draft.article.slug,
+            body: draft.article.body,
+            description: draft.article.description,
+            is_draft: true,
+        }));
+    }
 
-    Ok(article.map(|a| ArticleEditData {
-        id: a.article.id.to_string(),
-        title: a.article.title,
-        slug: a.article.slug,
-        body: a.article.body,
-        description: a.article.description,
-    }))
+    // 下書きになければ公開記事から検索
+    if let Some(published) = PublishedArticleService::fetch_by_id_for_admin(state.db_pool(), uuid)
+        .await
+        .map_err(|e| ServerFnError::new(e.to_string()))?
+    {
+        return Ok(Some(ArticleEditData {
+            id: published.article.id.to_string(),
+            title: published.article.title,
+            slug: published.article.slug,
+            body: published.article.body,
+            description: published.article.description,
+            is_draft: false,
+        }));
+    }
+
+    Ok(None)
 }
 
+/// 下書き記事の保存（新規作成または更新）
 #[instrument(skip(input))]
-#[server(endpoint = "admin/save_article")]
-pub async fn save_article_action(input: SaveArticleInput) -> Result<String, ServerFnError> {
+#[server(endpoint = "admin/save_draft")]
+pub async fn save_draft_handler(input: SaveDraftInput) -> Result<String, ServerFnError> {
     use crate::server::contexts::AppState;
     use blog_romira_dev_cms::DraftArticleService;
     use uuid::Uuid;
@@ -118,9 +153,39 @@ pub async fn save_article_action(input: SaveArticleInput) -> Result<String, Serv
     Ok(article_id.to_string())
 }
 
+/// 公開記事の保存（更新のみ）
+#[instrument(skip(input))]
+#[server(endpoint = "admin/save_published")]
+pub async fn save_published_handler(input: SavePublishedInput) -> Result<String, ServerFnError> {
+    use crate::server::contexts::AppState;
+    use blog_romira_dev_cms::PublishedArticleService;
+    use uuid::Uuid;
+
+    // バリデーション: 公開記事はタイトル必須
+    if input.title.trim().is_empty() {
+        return Err(ServerFnError::new("タイトルは必須です"));
+    }
+
+    let state = expect_context::<AppState>();
+    let uuid = Uuid::parse_str(&input.id).map_err(|e| ServerFnError::new(e.to_string()))?;
+
+    PublishedArticleService::update(
+        state.db_pool(),
+        uuid,
+        &input.title,
+        &input.slug,
+        &input.body,
+        input.description.as_deref(),
+    )
+    .await
+    .map_err(|e| ServerFnError::new(e.to_string()))?;
+
+    Ok(uuid.to_string())
+}
+
 #[instrument]
 #[server(endpoint = "admin/publish_article")]
-pub async fn publish_article_action(id: String) -> Result<String, ServerFnError> {
+pub async fn publish_article_handler(id: String) -> Result<String, ServerFnError> {
     use crate::server::contexts::AppState;
     use blog_romira_dev_cms::DraftArticleService;
     use uuid::Uuid;
