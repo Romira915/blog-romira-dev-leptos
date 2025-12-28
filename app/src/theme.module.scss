@@ -1,53 +1,131 @@
 // Light Mode Colors
 $light-primary: #2196f3;
+$light-primary-hover: #1976d2;
 $light-secondary: #f50057;
 $light-background: #ffffff;
 $light-surface: #f5f5f5;
-$light-text-primary: #000000;
+$light-surface-hover: #eeeeee;
+$light-text-primary: #212121;
 $light-text-secondary: #555555;
+$light-text-muted: #888888;
 $light-accent: #ff9800;
 $light-border: #e0e0e0;
 $light-shadow: rgba(0, 0, 0, 0.1);
 
+// Semantic Colors - Light
+$light-success: #28a745;
+$light-success-hover: #218838;
+$light-success-bg: #d4edda;
+$light-success-text: #155724;
+$light-warning: #ffc107;
+$light-warning-text: #333333;
+$light-error: #dc3545;
+$light-error-hover: #c82333;
+$light-error-bg: #f8d7da;
+$light-error-text: #721c24;
+
 // Dark Mode Colors
 $dark-primary: #713FFF;
+$dark-primary-hover: #5a2fd9;
 $dark-secondary: #ba000d;
-$dark-background: #121212;
-$dark-surface: #1e1e1e;
-$dark-text-primary: #ffffff;
+$dark-background: #0f0f1a;
+$dark-surface: #1a1a2e;
+$dark-surface-hover: #2a2a4e;
+$dark-text-primary: #e0e0e0;
 $dark-text-secondary: #bdbdbd;
+$dark-text-muted: #888888;
 $dark-accent: #ff9800;
 $dark-border: #333333;
 $dark-shadow: rgba(0, 0, 0, 0.7);
 
+// Semantic Colors - Dark
+$dark-success: #28a745;
+$dark-success-hover: #218838;
+$dark-success-bg: #1e4620;
+$dark-success-text: #a3d9a5;
+$dark-warning: #ffc107;
+$dark-warning-text: #333333;
+$dark-error: #dc3545;
+$dark-error-hover: #c82333;
+$dark-error-bg: #4a1c1c;
+$dark-error-text: #f5a5a5;
+
+// Sidebar Colors (always dark)
+$sidebar-bg: #1a1a2e;
+$sidebar-text: #ffffff;
+$sidebar-text-muted: #aaaaaa;
+$sidebar-hover: #2a2a4e;
+$sidebar-border: #333333;
+$sidebar-link: #cccccc;
+$sidebar-danger: #ff6b6b;
+
 // Mixins for Color Themes
 @mixin theme-light {
   --primary: #{$light-primary};
+  --primary-hover: #{$light-primary-hover};
   --secondary: #{$light-secondary};
   --background: #{$light-background};
   --surface: #{$light-surface};
+  --surface-hover: #{$light-surface-hover};
   --text-primary: #{$light-text-primary};
   --text-secondary: #{$light-text-secondary};
+  --text-muted: #{$light-text-muted};
   --accent: #{$light-accent};
   --border: #{$light-border};
   --shadow: #{$light-shadow};
+
+  // Semantic
+  --success: #{$light-success};
+  --success-hover: #{$light-success-hover};
+  --success-bg: #{$light-success-bg};
+  --success-text: #{$light-success-text};
+  --warning: #{$light-warning};
+  --warning-text: #{$light-warning-text};
+  --error: #{$light-error};
+  --error-hover: #{$light-error-hover};
+  --error-bg: #{$light-error-bg};
+  --error-text: #{$light-error-text};
 }
 
 @mixin theme-dark {
   --primary: #{$dark-primary};
+  --primary-hover: #{$dark-primary-hover};
   --secondary: #{$dark-secondary};
   --background: #{$dark-background};
   --surface: #{$dark-surface};
+  --surface-hover: #{$dark-surface-hover};
   --text-primary: #{$dark-text-primary};
   --text-secondary: #{$dark-text-secondary};
+  --text-muted: #{$dark-text-muted};
   --accent: #{$dark-accent};
   --border: #{$dark-border};
   --shadow: #{$dark-shadow};
+
+  // Semantic
+  --success: #{$dark-success};
+  --success-hover: #{$dark-success-hover};
+  --success-bg: #{$dark-success-bg};
+  --success-text: #{$dark-success-text};
+  --warning: #{$dark-warning};
+  --warning-text: #{$dark-warning-text};
+  --error: #{$dark-error};
+  --error-hover: #{$dark-error-hover};
+  --error-bg: #{$dark-error-bg};
+  --error-text: #{$dark-error-text};
 }
 
 // Applying Themes
 :root {
   @include theme-light; // Default theme
+
+  // Sidebar (theme-independent, always dark)
+  --sidebar-bg: #{$sidebar-bg};
+  --sidebar-text: #{$sidebar-text};
+  --sidebar-text-muted: #{$sidebar-text-muted};
+  --sidebar-hover: #{$sidebar-hover};
+  --sidebar-border: #{$sidebar-border};
+  --sidebar-link: #{$sidebar-link};
+  --sidebar-danger: #{$sidebar-danger};
 }
 
 // Automatically applying dark theme based on user's system preference
