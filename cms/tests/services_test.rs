@@ -96,3 +96,13 @@ async fn test_存在しない下書きを公開するとnotfoundエラーにな�
     let result = DraftArticleService::publish(&pool, nonexistent_id).await;
     assert!(matches!(result, Err(CmsError::NotFound)));
 }
+
+//noinspection NonAsciiCharacters
+#[sqlx::test]
+async fn test_存在しない下書きをdeleteするとnotfoundエラーになること(
+    pool: PgPool,
+) {
+    let nonexistent_id = Uuid::new_v4();
+    let result = DraftArticleService::delete(&pool, nonexistent_id).await;
+    assert!(matches!(result, Err(CmsError::NotFound)));
+}
