@@ -107,15 +107,32 @@ impl PublishedArticleQuery {
         }
     }
 
-    /// 指定したslugが既に存在するかチェック
+    /// 指定したslugが既に存在するかチェック（exclude_idで指定した記事は除外）
     #[instrument(skip(pool))]
-    pub async fn exists_by_slug(pool: &PgPool, slug: &str) -> Result<bool, CmsError> {
-        let exists = sqlx::query_scalar!(
-            r#"SELECT EXISTS(SELECT 1 FROM published_articles WHERE slug = $1) as "exists!: bool""#,
-            slug
-        )
-        .fetch_one(pool)
-        .await?;
+    pub async fn exists_by_slug(
+        pool: &PgPool,
+        slug: &str,
+        exclude_id: Option<Uuid>,
+    ) -> Result<bool, CmsError> {
+        let exists = match exclude_id {
+            Some(id) => {
+                sqlx::query_scalar!(
+                    r#"SELECT EXISTS(SELECT 1 FROM published_articles WHERE slug = $1 AND id != $2) as "exists!: bool""#,
+                    slug,
+                    id
+                )
+                .fetch_one(pool)
+                .await?
+            }
+            None => {
+                sqlx::query_scalar!(
+                    r#"SELECT EXISTS(SELECT 1 FROM published_articles WHERE slug = $1) as "exists!: bool""#,
+                    slug
+                )
+                .fetch_one(pool)
+                .await?
+            }
+        };
 
         Ok(exists)
     }

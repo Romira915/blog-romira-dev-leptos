@@ -63,15 +63,22 @@ impl PublishedArticleService {
         pool: &PgPool,
         article_id: Uuid,
         title: &ArticleTitle,
-        slug: &str,
+        slug: &ArticleSlug,
         body: &str,
         description: Option<&str>,
     ) -> Result<(), CmsError> {
+        // スラッグ重複チェック（自分自身は除外）
+        if PublishedArticleQuery::exists_by_slug(pool, slug.as_str(), Some(article_id)).await? {
+            return Err(CmsError::ValidationError(
+                "このスラッグは既に使用されています".to_string(),
+            ));
+        }
+
         PublishedArticleRepository::update(
             pool,
             article_id,
             title.as_str(),
-            slug,
+            slug.as_str(),
             body,
             description,
             utc_now(),
@@ -136,8 +143,8 @@ impl DraftArticleService {
         // スラッグのバリデーション
         let slug = ArticleSlug::new(draft.article.slug.clone())?;
 
-        // スラッグ重複チェック
-        if PublishedArticleQuery::exists_by_slug(pool, slug.as_str()).await? {
+        // スラッグ重複チェック（新規公開なので除外IDなし）
+        if PublishedArticleQuery::exists_by_slug(pool, slug.as_str(), None).await? {
             return Err(CmsError::ValidationError(
                 "このスラッグは既に使用されています".to_string(),
             ));
