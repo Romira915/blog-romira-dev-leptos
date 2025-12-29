@@ -434,7 +434,9 @@ async fn test_publish_article_正常系_下書きが公開記事になること(
     let app = build_test_router(app_state);
 
     let input = json!({
-        "id": draft_id.to_string()
+        "input": {
+            "id": draft_id.to_string()
+        }
     });
 
     let request = Request::builder()
@@ -483,7 +485,9 @@ async fn test_publish_article_存在しない下書きの場合notfoundエラー
 
     let nonexistent_id = Uuid::new_v4();
     let input = json!({
-        "id": nonexistent_id.to_string()
+        "input": {
+            "id": nonexistent_id.to_string()
+        }
     });
 
     let request = Request::builder()
@@ -508,7 +512,9 @@ async fn test_publish_article_空スラッグの下書きの場合バリデー�
     let app = build_test_router(app_state);
 
     let input = json!({
-        "id": draft_id.to_string()
+        "input": {
+            "id": draft_id.to_string()
+        }
     });
 
     let request = Request::builder()

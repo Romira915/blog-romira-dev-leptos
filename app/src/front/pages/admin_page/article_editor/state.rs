@@ -1,8 +1,8 @@
 use leptos::prelude::*;
 
 use super::{
-    ArticleEditData, SaveDraftInput, SavePublishedInput, publish_article_handler,
-    save_draft_handler, save_published_handler,
+    ArticleEditData, PublishArticleInput, SaveDraftInput, SavePublishedInput,
+    publish_article_handler, save_draft_handler, save_published_handler,
 };
 
 #[derive(Clone, Copy, PartialEq, Default)]
@@ -162,7 +162,7 @@ impl ArticleFormState {
                 }
 
                 // 次に公開
-                let result = publish_article_handler(id).await;
+                let result = publish_article_handler(PublishArticleInput { id }).await;
 
                 form.publishing.set(false);
 

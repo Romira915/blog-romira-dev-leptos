@@ -35,6 +35,12 @@ pub struct SavePublishedInput {
     pub description: Option<String>,
 }
 
+/// 下書き公開用入力
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct PublishArticleInput {
+    pub id: String,
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct AdminArticleListItem {
     pub id: String,
@@ -121,7 +127,7 @@ pub async fn get_article_for_edit_handler(
 
 /// 下書き記事の保存（新規作成または更新）
 #[instrument(skip(input))]
-#[server(input = Json, output = Json, endpoint = "admin/save_draft")]
+#[server(input = Json, endpoint = "admin/save_draft")]
 pub async fn save_draft_handler(input: SaveDraftInput) -> Result<String, ServerFnError> {
     use crate::server::contexts::AppState;
     use uuid::Uuid;
@@ -160,7 +166,7 @@ pub async fn save_draft_handler(input: SaveDraftInput) -> Result<String, ServerF
 
 /// 公開記事の保存（更新のみ）
 #[instrument(skip(input))]
-#[server(input = Json, output = Json, endpoint = "admin/save_published")]
+#[server(input = Json, endpoint = "admin/save_published")]
 pub async fn save_published_handler(input: SavePublishedInput) -> Result<String, ServerFnError> {
     use crate::server::contexts::AppState;
     use crate::server::http::response::cms_error_to_response;
@@ -193,9 +199,9 @@ pub async fn save_published_handler(input: SavePublishedInput) -> Result<String,
     Ok(uuid.to_string())
 }
 
-#[instrument]
-#[server(input = Json, output = Json, endpoint = "admin/publish_article")]
-pub async fn publish_article_handler(id: String) -> Result<String, ServerFnError> {
+#[instrument(skip(input))]
+#[server(input = Json, endpoint = "admin/publish_article")]
+pub async fn publish_article_handler(input: PublishArticleInput) -> Result<String, ServerFnError> {
     use crate::server::contexts::AppState;
     use crate::server::http::response::cms_error_to_response;
     use leptos_axum::ResponseOptions;
@@ -203,7 +209,7 @@ pub async fn publish_article_handler(id: String) -> Result<String, ServerFnError
 
     let response = expect_context::<ResponseOptions>();
     let state = expect_context::<AppState>();
-    let uuid = Uuid::parse_str(&id).map_err(|e| ServerFnError::new(e.to_string()))?;
+    let uuid = Uuid::parse_str(&input.id).map_err(|e| ServerFnError::new(e.to_string()))?;
 
     let published_id = state
         .draft_article_service()
