@@ -89,6 +89,7 @@ pub fn fetch(id: Uuid) -> Result<ArticleDto>  // ArticleDto.title は String
 ## Development Notes
 
 - **コミット時は必ず `commit-session` Skill を使う** - 手動で git add/commit しない
+- **SQLクエリ変更時は `cargo sqlx prepare` を実行** - `sqlx::query!` マクロで使用するクエリを変更・追加したらコミット前に実行する。生成される `.sqlx/` ディレクトリ内のJSONファイルもコミットに含める
 - **Do NOT use `mod.rs`** - Use modern Rust module style (`foo.rs` + `foo/` directory) instead of `foo/mod.rs`
 - Dev server runs at http://127.0.0.1:3000 with hot reload on port 3001
 - WASM release profile uses aggressive optimizations (LTO, opt-level='z')

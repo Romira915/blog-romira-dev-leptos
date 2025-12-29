@@ -1,22 +1,22 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT EXISTS(SELECT 1 FROM draft_articles WHERE id = $1) as \"exists!\"",
+  "query": "SELECT EXISTS(SELECT 1 FROM published_articles WHERE slug = $1) as \"exists!: bool\"",
   "describe": {
     "columns": [
       {
         "ordinal": 0,
-        "name": "exists!",
+        "name": "exists!: bool",
         "type_info": "Bool"
       }
     ],
     "parameters": {
       "Left": [
-        "Uuid"
+        "Text"
       ]
     },
     "nullable": [
       null
     ]
   },
-  "hash": "750053a5fa97afb5ee3391b680a83be9e07ca735168f39d2c2e2ce6191b7cb89"
+  "hash": "87c31ba0a8f5d8af93bce5fd3d36043910cc3cb2b17d84d6b98758bef8ce60c4"
 }
