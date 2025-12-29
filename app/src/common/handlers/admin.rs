@@ -159,14 +159,18 @@ pub async fn save_draft_handler(input: SaveDraftInput) -> Result<String, ServerF
 pub async fn save_published_handler(input: SavePublishedInput) -> Result<String, ServerFnError> {
     use crate::server::contexts::AppState;
     use crate::server::http::response::cms_error_to_response;
-    use blog_romira_dev_cms::{ArticleSlug, ArticleTitle, PublishedArticleService};
+    use blog_romira_dev_cms::{
+        PublishedArticleService, PublishedArticleSlug, PublishedArticleTitle,
+    };
     use leptos_axum::ResponseOptions;
     use uuid::Uuid;
 
     let response = expect_context::<ResponseOptions>();
 
-    let title = ArticleTitle::new(input.title).map_err(|e| cms_error_to_response(&response, e))?;
-    let slug = ArticleSlug::new(input.slug).map_err(|e| cms_error_to_response(&response, e))?;
+    let title =
+        PublishedArticleTitle::new(input.title).map_err(|e| cms_error_to_response(&response, e))?;
+    let slug =
+        PublishedArticleSlug::new(input.slug).map_err(|e| cms_error_to_response(&response, e))?;
 
     let state = expect_context::<AppState>();
     let uuid = Uuid::parse_str(&input.id).map_err(|e| ServerFnError::new(e.to_string()))?;
