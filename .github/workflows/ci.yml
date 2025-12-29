@@ -62,13 +62,6 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y mold
 
-      - name: Setup swap
-        run: |
-          sudo fallocate -l 4G /swapfile
-          sudo chmod 600 /swapfile
-          sudo mkswap /swapfile
-          sudo swapon /swapfile
-
       - name: Setup .env
         run: |
           cp .env.example .env
