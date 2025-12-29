@@ -40,21 +40,21 @@ async fn test_下書き公開で公開記事が作成されカテゴリがコピ
 ) {
     let cat_id = create_test_category(&pool, "PublishCat", "publishcat").await;
 
-    let draft_id = DraftArticleService::create(
-        &pool,
-        "Draft to Publish",
-        "draft-to-publish",
-        "Draft Body",
-        Some("Draft Desc"),
-    )
-    .await
-    .expect("Failed to create draft");
+    let service = DraftArticleService::new(pool.clone());
+
+    let draft_id = service
+        .create(
+            "Draft to Publish",
+            "draft-to-publish",
+            "Draft Body",
+            Some("Draft Desc"),
+        )
+        .await
+        .expect("Failed to create draft");
 
     link_draft_article_category(&pool, draft_id, cat_id).await;
 
-    let published_id = DraftArticleService::publish(&pool, draft_id)
-        .await
-        .expect("Failed to publish");
+    let published_id = service.publish(draft_id).await.expect("Failed to publish");
 
     // 公開記事が作成されている
     let published = sqlx::query!(
@@ -82,7 +82,8 @@ async fn test_下書き公開で公開記事が作成されカテゴリがコピ
     assert_eq!(category_count, 1);
 
     // 下書きは削除されている
-    let draft_after = DraftArticleService::fetch_by_id(&pool, draft_id)
+    let draft_after = service
+        .fetch_by_id(draft_id)
         .await
         .expect("Failed to fetch draft");
     assert!(draft_after.is_none());
@@ -93,8 +94,9 @@ async fn test_下書き公開で公開記事が作成されカテゴリがコピ
 async fn test_存在しない下書きを公開するとnotfoundエラーになること(
     pool: PgPool,
 ) {
+    let service = DraftArticleService::new(pool);
     let nonexistent_id = Uuid::new_v4();
-    let result = DraftArticleService::publish(&pool, nonexistent_id).await;
+    let result = service.publish(nonexistent_id).await;
     assert!(matches!(result, Err(CmsError::NotFound)));
 }
 
@@ -103,8 +105,9 @@ async fn test_存在しない下書きを公開するとnotfoundエラーにな�
 async fn test_存在しない下書きをdeleteするとnotfoundエラーになること(
     pool: PgPool,
 ) {
+    let service = DraftArticleService::new(pool);
     let nonexistent_id = Uuid::new_v4();
-    let result = DraftArticleService::delete(&pool, nonexistent_id).await;
+    let result = service.delete(nonexistent_id).await;
     assert!(matches!(result, Err(CmsError::NotFound)));
 }
 
@@ -113,15 +116,19 @@ async fn test_存在しない下書きをdeleteするとnotfoundエラーにな�
 async fn test_空スラッグの下書きを公開するとvalidationエラーになること(
     pool: PgPool,
 ) {
-    let draft_id = DraftArticleService::create(&pool, "Title", "", "Body", None)
+    let service = DraftArticleService::new(pool);
+
+    let draft_id = service
+        .create("Title", "", "Body", None)
         .await
         .expect("Failed to create draft");
 
-    let result = DraftArticleService::publish(&pool, draft_id).await;
+    let result = service.publish(draft_id).await;
     assert!(matches!(result, Err(CmsError::ValidationError(_))));
 
     // 下書きは削除されていない
-    let draft = DraftArticleService::fetch_by_id(&pool, draft_id)
+    let draft = service
+        .fetch_by_id(draft_id)
         .await
         .expect("Failed to fetch draft");
     assert!(draft.is_some());
@@ -132,26 +139,30 @@ async fn test_空スラッグの下書きを公開するとvalidationエラー�
 async fn test_重複スラッグの下書きを公開するとvalidationエラーになること(
     pool: PgPool,
 ) {
+    let service = DraftArticleService::new(pool);
+
     // 先に同じスラッグで公開記事を作成
-    let first_draft_id =
-        DraftArticleService::create(&pool, "First", "duplicate-slug", "Body", None)
-            .await
-            .expect("Failed to create first draft");
-    DraftArticleService::publish(&pool, first_draft_id)
+    let first_draft_id = service
+        .create("First", "duplicate-slug", "Body", None)
+        .await
+        .expect("Failed to create first draft");
+    service
+        .publish(first_draft_id)
         .await
         .expect("Failed to publish first draft");
 
     // 同じスラッグで下書きを作成して公開を試みる
-    let second_draft_id =
-        DraftArticleService::create(&pool, "Second", "duplicate-slug", "Body", None)
-            .await
-            .expect("Failed to create second draft");
+    let second_draft_id = service
+        .create("Second", "duplicate-slug", "Body", None)
+        .await
+        .expect("Failed to create second draft");
 
-    let result = DraftArticleService::publish(&pool, second_draft_id).await;
+    let result = service.publish(second_draft_id).await;
     assert!(matches!(result, Err(CmsError::ValidationError(_))));
 
     // 下書きは削除されていない
-    let draft = DraftArticleService::fetch_by_id(&pool, second_draft_id)
+    let draft = service
+        .fetch_by_id(second_draft_id)
         .await
         .expect("Failed to fetch draft");
     assert!(draft.is_some());
@@ -160,20 +171,25 @@ async fn test_重複スラッグの下書きを公開するとvalidationエラ�
 //noinspection NonAsciiCharacters
 #[sqlx::test]
 async fn test_公開記事を同じスラッグで更新すると成功すること(pool: PgPool) {
+    let draft_service = DraftArticleService::new(pool.clone());
+    let published_service = PublishedArticleService::new(pool);
+
     // 公開記事を作成
-    let draft_id = DraftArticleService::create(&pool, "Original", "same-slug", "Body", None)
+    let draft_id = draft_service
+        .create("Original", "same-slug", "Body", None)
         .await
         .expect("Failed to create draft");
-    let published_id = DraftArticleService::publish(&pool, draft_id)
+    let published_id = draft_service
+        .publish(draft_id)
         .await
         .expect("Failed to publish");
 
     // 同じスラッグで更新
     let title = PublishedArticleTitle::new("Updated Title".to_string()).unwrap();
     let slug = PublishedArticleSlug::new("same-slug".to_string()).unwrap();
-    let result =
-        PublishedArticleService::update(&pool, published_id, &title, &slug, "Updated Body", None)
-            .await;
+    let result = published_service
+        .update(published_id, &title, &slug, "Updated Body", None)
+        .await;
 
     assert!(result.is_ok());
 }
@@ -183,27 +199,34 @@ async fn test_公開記事を同じスラッグで更新すると成功するこ
 async fn test_公開記事を他の記事と重複するスラッグで更新するとvalidationエラーになること(
     pool: PgPool,
 ) {
+    let draft_service = DraftArticleService::new(pool.clone());
+    let published_service = PublishedArticleService::new(pool);
+
     // 2つの公開記事を作成
-    let draft1_id = DraftArticleService::create(&pool, "First", "first-slug", "Body", None)
+    let draft1_id = draft_service
+        .create("First", "first-slug", "Body", None)
         .await
         .expect("Failed to create first draft");
-    let _first_published_id = DraftArticleService::publish(&pool, draft1_id)
+    let _first_published_id = draft_service
+        .publish(draft1_id)
         .await
         .expect("Failed to publish first");
 
-    let draft2_id = DraftArticleService::create(&pool, "Second", "second-slug", "Body", None)
+    let draft2_id = draft_service
+        .create("Second", "second-slug", "Body", None)
         .await
         .expect("Failed to create second draft");
-    let second_published_id = DraftArticleService::publish(&pool, draft2_id)
+    let second_published_id = draft_service
+        .publish(draft2_id)
         .await
         .expect("Failed to publish second");
 
     // 2番目の記事を1番目と同じスラッグで更新しようとする
     let title = PublishedArticleTitle::new("Updated".to_string()).unwrap();
     let slug = PublishedArticleSlug::new("first-slug".to_string()).unwrap();
-    let result =
-        PublishedArticleService::update(&pool, second_published_id, &title, &slug, "Body", None)
-            .await;
+    let result = published_service
+        .update(second_published_id, &title, &slug, "Body", None)
+        .await;
 
     assert!(matches!(result, Err(CmsError::ValidationError(_))));
 }
