@@ -17,7 +17,7 @@ impl PublishedArticleSlug {
     }
 
     pub fn as_str(&self) -> &str {
-        &self.0
+        self.0.as_str()
     }
 }
 
@@ -30,7 +30,7 @@ impl PublishedArticleTitle {
     }
 
     pub fn as_str(&self) -> &str {
-        &self.0
+        self.0.as_str()
     }
 }
 
