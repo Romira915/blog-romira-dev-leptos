@@ -73,6 +73,19 @@ Uses **Rust nightly** (specified in `rust-toolchain.toml`). Key tools:
 - `stylance-cli` v0.5.4 - CSS module compiler
 - `wasm-bindgen-cli` v0.2.100 - WASM bindings
 
+## Value Object 運用ルール
+
+- **入力時（Handler → Service）**: Value Object を使ってバリデーションを強制
+- **出力時（Service → DTO）**: プレーンな `String` を使う（DBから取得したデータは信頼する）
+
+```rust
+// 入力: バリデーション強制
+pub fn save(title: ArticleTitle, body: ArticleBody) -> Result<...>
+
+// 出力: プレーンな型で返す
+pub fn fetch(id: Uuid) -> Result<ArticleDto>  // ArticleDto.title は String
+```
+
 ## Development Notes
 
 - **コミット時は必ず `commit-session` Skill を使う** - 手動で git add/commit しない

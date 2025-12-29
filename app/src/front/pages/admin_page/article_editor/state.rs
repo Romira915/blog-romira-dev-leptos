@@ -134,7 +134,7 @@ impl ArticleFormState {
         })
     }
 
-    /// 公開アクションを生成
+    /// 公開アクションを生成（save → publish の順で実行）
     pub fn create_publish_action<F>(&self, get_article_id: F) -> Action<(), ()>
     where
         F: Fn() -> Option<String> + Copy + Send + Sync + 'static,
@@ -152,6 +152,16 @@ impl ArticleFormState {
                 form.publishing.set(true);
                 form.message.set(None);
 
+                // まず下書きを保存
+                let save_input = form.as_draft_input(Some(id.clone()));
+                if let Err(e) = save_draft_handler(save_input).await {
+                    form.publishing.set(false);
+                    form.message
+                        .set(Some((false, format!("保存エラー: {}", e))));
+                    return;
+                }
+
+                // 次に公開
                 let result = publish_article_handler(id).await;
 
                 form.publishing.set(false);
@@ -163,7 +173,8 @@ impl ArticleFormState {
                         navigate("/admin/articles", Default::default());
                     }
                     Err(e) => {
-                        form.message.set(Some((false, format!("エラー: {}", e))));
+                        form.message
+                            .set(Some((false, format!("公開エラー: {}", e))));
                     }
                 }
             }

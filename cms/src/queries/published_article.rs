@@ -107,6 +107,19 @@ impl PublishedArticleQuery {
         }
     }
 
+    /// 指定したslugが既に存在するかチェック
+    #[instrument(skip(pool))]
+    pub async fn exists_by_slug(pool: &PgPool, slug: &str) -> Result<bool, CmsError> {
+        let exists = sqlx::query_scalar!(
+            r#"SELECT EXISTS(SELECT 1 FROM published_articles WHERE slug = $1) as "exists!: bool""#,
+            slug
+        )
+        .fetch_one(pool)
+        .await?;
+
+        Ok(exists)
+    }
+
     /// 公開済み記事をIDで取得（管理者用、公開日時フィルタなし）
     #[instrument(skip(pool))]
     pub async fn fetch_by_id_for_admin(

@@ -2,6 +2,7 @@ use crate::error::CmsError;
 use crate::models::{ArticleListItem, DraftArticleWithCategories, PublishedArticleWithCategories};
 use crate::queries::{AdminArticleQuery, DraftArticleQuery, PublishedArticleQuery};
 use crate::repositories::{DraftArticleRepository, PublishedArticleRepository};
+use crate::value_objects::{ArticleSlug, ArticleTitle};
 use chrono::{NaiveDateTime, Utc};
 use sqlx::PgPool;
 use tracing::instrument;
@@ -61,7 +62,7 @@ impl PublishedArticleService {
     pub async fn update(
         pool: &PgPool,
         article_id: Uuid,
-        title: &str,
+        title: &ArticleTitle,
         slug: &str,
         body: &str,
         description: Option<&str>,
@@ -69,7 +70,7 @@ impl PublishedArticleService {
         PublishedArticleRepository::update(
             pool,
             article_id,
-            title,
+            title.as_str(),
             slug,
             body,
             description,
@@ -131,6 +132,16 @@ impl DraftArticleService {
         let draft = DraftArticleQuery::fetch_by_id(pool, draft_id)
             .await?
             .ok_or(CmsError::NotFound)?;
+
+        // スラッグのバリデーション
+        let slug = ArticleSlug::new(draft.article.slug.clone())?;
+
+        // スラッグ重複チェック
+        if PublishedArticleQuery::exists_by_slug(pool, slug.as_str()).await? {
+            return Err(CmsError::ValidationError(
+                "このスラッグは既に使用されています".to_string(),
+            ));
+        }
 
         let now = utc_now();
 

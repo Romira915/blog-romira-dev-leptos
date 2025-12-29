@@ -158,13 +158,14 @@ pub async fn save_draft_handler(input: SaveDraftInput) -> Result<String, ServerF
 #[server(endpoint = "admin/save_published")]
 pub async fn save_published_handler(input: SavePublishedInput) -> Result<String, ServerFnError> {
     use crate::server::contexts::AppState;
-    use blog_romira_dev_cms::PublishedArticleService;
+    use crate::server::http::response::cms_error_to_response;
+    use blog_romira_dev_cms::{ArticleTitle, PublishedArticleService};
+    use leptos_axum::ResponseOptions;
     use uuid::Uuid;
 
-    // バリデーション: 公開記事はタイトル必須
-    if input.title.trim().is_empty() {
-        return Err(ServerFnError::new("タイトルは必須です"));
-    }
+    let response = expect_context::<ResponseOptions>();
+
+    let title = ArticleTitle::new(input.title).map_err(|e| cms_error_to_response(&response, e))?;
 
     let state = expect_context::<AppState>();
     let uuid = Uuid::parse_str(&input.id).map_err(|e| ServerFnError::new(e.to_string()))?;
@@ -172,7 +173,7 @@ pub async fn save_published_handler(input: SavePublishedInput) -> Result<String,
     PublishedArticleService::update(
         state.db_pool(),
         uuid,
-        &input.title,
+        &title,
         &input.slug,
         &input.body,
         input.description.as_deref(),
