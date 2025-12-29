@@ -1,4 +1,4 @@
-pub(crate) mod admin;
+pub mod admin;
 pub(crate) mod auth;
 
 use crate::common::dto::{ArticlePageDto, HomePageArticleDto, HomePageAuthorDto};
