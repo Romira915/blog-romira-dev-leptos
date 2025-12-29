@@ -60,7 +60,7 @@ impl ArticleFormState {
     }
 
     /// 下書き保存用の入力データを生成
-    fn as_draft_input(&self, id: Option<String>) -> SaveDraftInput {
+    fn as_draft_input(&self, id: String) -> SaveDraftInput {
         let description = self.description.get();
         SaveDraftInput {
             id,
@@ -101,21 +101,22 @@ impl ArticleFormState {
             let id = get_article_id();
             let is_draft = form.is_draft.get();
             async move {
+                // IDは必須（リダイレクト経由で来るため常に存在するはず）
+                let Some(id) = id else {
+                    form.message
+                        .set(Some((false, "記事IDがありません".to_string())));
+                    return;
+                };
+
                 form.saving.set(true);
                 form.message.set(None);
 
                 let result = if is_draft {
-                    // 下書きの保存
+                    // 下書きの保存（Upsert）
                     let input = form.as_draft_input(id);
                     save_draft_handler(input).await
                 } else {
-                    // 公開記事の保存（IDが必須）
-                    let Some(id) = id else {
-                        form.saving.set(false);
-                        form.message
-                            .set(Some((false, "公開記事の保存にはIDが必要です".to_string())));
-                        return;
-                    };
+                    // 公開記事の保存
                     let input = form.as_published_input(id);
                     save_published_handler(input).await
                 };
@@ -153,7 +154,7 @@ impl ArticleFormState {
                 form.message.set(None);
 
                 // まず下書きを保存
-                let save_input = form.as_draft_input(Some(id.clone()));
+                let save_input = form.as_draft_input(id.clone());
                 if let Err(e) = save_draft_handler(save_input).await {
                     form.publishing.set(false);
                     form.message

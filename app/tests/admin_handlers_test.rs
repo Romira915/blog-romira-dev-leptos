@@ -238,9 +238,13 @@ async fn test_save_draft_新規作成の場合記事idを返すこと(pool: PgPo
     let app_state = create_test_app_state(pool.clone());
     let app = build_test_router(app_state);
 
+    // Upsert方式では事前にクライアント側でUUIDを生成する
+    let new_id = Uuid::new_v4();
+
     // Leptosサーバー関数はパラメータ名をJSONフィールド名として使用する
     let input = json!({
         "input": {
+            "id": new_id.to_string(),
             "title": "New Draft",
             "slug": "new-draft",
             "body": "New Body",
@@ -261,6 +265,9 @@ async fn test_save_draft_新規作成の場合記事idを返すこと(pool: PgPo
 
     let body = response.into_body().collect().await.unwrap().to_bytes();
     let article_id: String = serde_json::from_slice(&body).unwrap();
+
+    // 返されたIDが渡したIDと一致することを確認
+    assert_eq!(article_id, new_id.to_string());
 
     // 返されたIDで記事が取得できることを確認
     let uuid = Uuid::parse_str(&article_id).expect("Valid UUID should be returned");

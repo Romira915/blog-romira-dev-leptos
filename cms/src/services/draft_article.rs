@@ -69,6 +69,28 @@ impl DraftArticleService {
         .await
     }
 
+    /// 下書き記事を保存（Upsert: 存在しなければ作成、存在すれば更新）
+    #[instrument(skip(self))]
+    pub async fn save(
+        &self,
+        article_id: Uuid,
+        title: &str,
+        slug: &str,
+        body: &str,
+        description: Option<&str>,
+    ) -> Result<(), CmsError> {
+        DraftArticleRepository::upsert(
+            &self.pool,
+            article_id,
+            title,
+            slug,
+            body,
+            description,
+            utc_now(),
+        )
+        .await
+    }
+
     /// 下書きを公開（draft_articles → published_articles に移動）
     #[instrument(skip(self))]
     pub async fn publish(&self, draft_id: Uuid) -> Result<Uuid, CmsError> {

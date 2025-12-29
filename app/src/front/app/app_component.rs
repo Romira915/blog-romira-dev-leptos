@@ -28,11 +28,6 @@ pub fn App() -> impl IntoView {
                     <Route path=path!("/admin") view=ArticleListPage ssr=SsrMode::Async />
                     <Route path=path!("/admin/articles") view=ArticleListPage ssr=SsrMode::Async />
                     <Route
-                        path=path!("/admin/articles/new")
-                        view=ArticleEditorPage
-                        ssr=SsrMode::Async
-                    />
-                    <Route
                         path=path!("/admin/articles/:id")
                         view=ArticleEditorPage
                         ssr=SsrMode::Async

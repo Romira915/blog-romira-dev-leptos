@@ -1,3 +1,4 @@
+pub mod admin_routes;
 pub mod auth;
 pub mod config;
 pub mod contexts;
