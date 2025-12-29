@@ -47,6 +47,22 @@ cargo leptos build --release --bin-cargo-args="--target=aarch64-unknown-linux-gn
 pub async fn get_articles_handler() -> Result<Vec<ArticleDto>, ServerFnError>
 ```
 
+**Server Function Input Rules**:
+- **Never use primitive types directly** - Always wrap `id: String` etc. in a struct
+- POST handlers should use `input = Json` with a dedicated input struct
+```rust
+// ❌ Bad: primitive type directly
+#[server(input = Json, endpoint = "admin/publish")]
+pub async fn publish_handler(id: String) -> Result<String, ServerFnError>
+
+// ✅ Good: wrapped in struct
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct PublishInput { pub id: String }
+
+#[server(input = Json, endpoint = "admin/publish")]
+pub async fn publish_handler(input: PublishInput) -> Result<String, ServerFnError>
+```
+
 **Context-Based DI**: Services injected via `AppState` and accessed with `expect_context::<AppState>()`
 
 **Stylance CSS Modules**: Component styles in `.module.scss` files, compiled to `style/stylance/_index.scss`

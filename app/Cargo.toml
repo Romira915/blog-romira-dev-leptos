@@ -33,6 +33,9 @@ comrak = { workspace = true }
 
 [dev-dependencies]
 mockito = { workspace = true }
+tower = { workspace = true, features = ["util"] }
+http = { workspace = true }
+http-body-util = "0.1"
 
 [features]
 hydrate = ["leptos/hydrate"]

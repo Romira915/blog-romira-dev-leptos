@@ -1,4 +1,4 @@
-pub(crate) mod common;
+pub mod common;
 pub(crate) mod constants;
 pub(crate) mod error;
 pub(crate) mod front;

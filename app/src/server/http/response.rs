@@ -60,3 +60,31 @@ pub(crate) fn set_preview_article_page_cache_control(response: &ResponseOptions)
         ),
     );
 }
+
+//noinspection NonAsciiCharacters
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_status_code_from_cms_error_validation_errorの場合bad_requestを返すこと() {
+        let error = CmsError::ValidationError("test error".to_string());
+        assert_eq!(status_code_from_cms_error(&error), StatusCode::BAD_REQUEST);
+    }
+
+    #[test]
+    fn test_status_code_from_cms_error_not_foundの場合not_foundを返すこと() {
+        let error = CmsError::NotFound;
+        assert_eq!(status_code_from_cms_error(&error), StatusCode::NOT_FOUND);
+    }
+
+    #[test]
+    fn test_status_code_from_cms_error_database_errorの場合internal_server_errorを返すこと() {
+        // sqlx::Errorを作成するのは複雑なため、RowNotFoundを使用
+        let error = CmsError::DatabaseError(sqlx::Error::RowNotFound);
+        assert_eq!(
+            status_code_from_cms_error(&error),
+            StatusCode::INTERNAL_SERVER_ERROR
+        );
+    }
+}

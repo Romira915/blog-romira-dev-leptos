@@ -46,6 +46,10 @@ impl AppState {
         }
     }
 
+    pub fn leptos_options(&self) -> &LeptosOptions {
+        &self.leptos_options
+    }
+
     pub fn db_pool(&self) -> &PgPool {
         &self.db_pool
     }
