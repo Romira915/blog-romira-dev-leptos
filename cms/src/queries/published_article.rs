@@ -1,5 +1,6 @@
+use super::CategoryQuery;
 use crate::error::CmsError;
-use crate::models::{Category, PublishedArticle, PublishedArticleWithCategories};
+use crate::models::{PublishedArticle, PublishedArticleWithCategories};
 use chrono::NaiveDateTime;
 use sqlx::PgPool;
 use tracing::instrument;
@@ -31,7 +32,7 @@ impl PublishedArticleQuery {
 
         let mut result = Vec::with_capacity(articles.len());
         for article in articles {
-            let categories = Self::fetch_categories(pool, article.id).await?;
+            let categories = CategoryQuery::fetch_for_published(pool, article.id).await?;
             result.push(PublishedArticleWithCategories {
                 article,
                 categories,
@@ -64,7 +65,7 @@ impl PublishedArticleQuery {
 
         match article {
             Some(article) => {
-                let categories = Self::fetch_categories(pool, article.id).await?;
+                let categories = CategoryQuery::fetch_for_published(pool, article.id).await?;
                 Ok(Some(PublishedArticleWithCategories {
                     article,
                     categories,
@@ -97,7 +98,7 @@ impl PublishedArticleQuery {
 
         match article {
             Some(article) => {
-                let categories = Self::fetch_categories(pool, article.id).await?;
+                let categories = CategoryQuery::fetch_for_published(pool, article.id).await?;
                 Ok(Some(PublishedArticleWithCategories {
                     article,
                     categories,
@@ -158,7 +159,7 @@ impl PublishedArticleQuery {
 
         match article {
             Some(article) => {
-                let categories = Self::fetch_categories(pool, article.id).await?;
+                let categories = CategoryQuery::fetch_for_published(pool, article.id).await?;
                 Ok(Some(PublishedArticleWithCategories {
                     article,
                     categories,
@@ -166,25 +167,6 @@ impl PublishedArticleQuery {
             }
             None => Ok(None),
         }
-    }
-
-    /// 公開記事のカテゴリを取得
-    #[instrument(skip(pool))]
-    async fn fetch_categories(pool: &PgPool, article_id: Uuid) -> Result<Vec<Category>, CmsError> {
-        let categories = sqlx::query_as!(
-            Category,
-            r#"
-            SELECT c.id, c.name, c.slug
-            FROM categories c
-            INNER JOIN published_article_categories ac ON c.id = ac.category_id
-            WHERE ac.article_id = $1
-            "#,
-            article_id
-        )
-        .fetch_all(pool)
-        .await?;
-
-        Ok(categories)
     }
 }
 

@@ -1,11 +1,11 @@
+use super::CategoryQuery;
 use crate::error::CmsError;
 use crate::models::{
-    ArticleListItem, Category, DraftArticle, DraftArticleWithCategories, PublishedArticle,
+    ArticleListItem, DraftArticle, DraftArticleWithCategories, PublishedArticle,
     PublishedArticleWithCategories,
 };
 use sqlx::PgPool;
 use tracing::instrument;
-use uuid::Uuid;
 
 /// 管理画面用記事クエリサービス（SELECT操作）
 pub struct AdminArticleQuery;
@@ -44,7 +44,7 @@ impl AdminArticleQuery {
 
         // 公開記事を追加
         for article in published {
-            let categories = Self::fetch_published_categories(pool, article.id).await?;
+            let categories = CategoryQuery::fetch_for_published(pool, article.id).await?;
             result.push(ArticleListItem::Published(PublishedArticleWithCategories {
                 article,
                 categories,
@@ -53,7 +53,7 @@ impl AdminArticleQuery {
 
         // 下書き記事を追加
         for article in drafts {
-            let categories = Self::fetch_draft_categories(pool, article.id).await?;
+            let categories = CategoryQuery::fetch_for_draft(pool, article.id).await?;
             result.push(ArticleListItem::Draft(DraftArticleWithCategories {
                 article,
                 categories,
@@ -65,48 +65,6 @@ impl AdminArticleQuery {
 
         Ok(result)
     }
-
-    #[instrument(skip(pool))]
-    async fn fetch_published_categories(
-        pool: &PgPool,
-        article_id: Uuid,
-    ) -> Result<Vec<Category>, CmsError> {
-        let categories = sqlx::query_as!(
-            Category,
-            r#"
-            SELECT c.id, c.name, c.slug
-            FROM categories c
-            INNER JOIN published_article_categories ac ON c.id = ac.category_id
-            WHERE ac.article_id = $1
-            "#,
-            article_id
-        )
-        .fetch_all(pool)
-        .await?;
-
-        Ok(categories)
-    }
-
-    #[instrument(skip(pool))]
-    async fn fetch_draft_categories(
-        pool: &PgPool,
-        article_id: Uuid,
-    ) -> Result<Vec<Category>, CmsError> {
-        let categories = sqlx::query_as!(
-            Category,
-            r#"
-            SELECT c.id, c.name, c.slug
-            FROM categories c
-            INNER JOIN draft_article_categories ac ON c.id = ac.category_id
-            WHERE ac.article_id = $1
-            "#,
-            article_id
-        )
-        .fetch_all(pool)
-        .await?;
-
-        Ok(categories)
-    }
 }
 
 //noinspection NonAsciiCharacters
@@ -114,6 +72,7 @@ impl AdminArticleQuery {
 mod tests {
     use super::*;
     use chrono::{NaiveDateTime, Utc};
+    use uuid::Uuid;
 
     fn utc_now() -> NaiveDateTime {
         Utc::now().naive_utc()
