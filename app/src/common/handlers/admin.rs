@@ -121,7 +121,7 @@ pub async fn get_article_for_edit_handler(
 
 /// 下書き記事の保存（新規作成または更新）
 #[instrument(skip(input))]
-#[server(input = Json, endpoint = "admin/save_draft")]
+#[server(input = Json, output = Json, endpoint = "admin/save_draft")]
 pub async fn save_draft_handler(input: SaveDraftInput) -> Result<String, ServerFnError> {
     use crate::server::contexts::AppState;
     use uuid::Uuid;
@@ -160,7 +160,7 @@ pub async fn save_draft_handler(input: SaveDraftInput) -> Result<String, ServerF
 
 /// 公開記事の保存（更新のみ）
 #[instrument(skip(input))]
-#[server(input = Json, endpoint = "admin/save_published")]
+#[server(input = Json, output = Json, endpoint = "admin/save_published")]
 pub async fn save_published_handler(input: SavePublishedInput) -> Result<String, ServerFnError> {
     use crate::server::contexts::AppState;
     use crate::server::http::response::cms_error_to_response;
@@ -194,7 +194,7 @@ pub async fn save_published_handler(input: SavePublishedInput) -> Result<String,
 }
 
 #[instrument]
-#[server(input = Json, endpoint = "admin/publish_article")]
+#[server(input = Json, output = Json, endpoint = "admin/publish_article")]
 pub async fn publish_article_handler(id: String) -> Result<String, ServerFnError> {
     use crate::server::contexts::AppState;
     use crate::server::http::response::cms_error_to_response;
