@@ -17,7 +17,7 @@ pub fn ArticleListPage() -> impl IntoView {
             <div class=style::container>
                 <header class=style::header>
                     <h1>"記事一覧"</h1>
-                    <a href="/admin/articles/new" class=style::new_button>
+                    <a href="/admin/articles/new" rel="external" class=style::new_button>
                         "新規作成"
                     </a>
                 </header>
