@@ -79,8 +79,8 @@ Uses **Rust nightly** (specified in `rust-toolchain.toml`). Key tools:
 - **Output (Service → DTO)**: Use plain `String` (trust data retrieved from DB)
 
 ```rust
-// Input: enforce validation
-pub fn save(title: ArticleTitle, body: ArticleBody) -> Result<...>
+// Input: enforce validation (for publishing)
+pub fn save(title: PublishedArticleTitle, slug: PublishedArticleSlug, body: &str) -> Result<...>
 
 // Output: return plain types
 pub fn fetch(id: Uuid) -> Result<ArticleDto>  // ArticleDto.title is String

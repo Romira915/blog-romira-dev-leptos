@@ -4,7 +4,7 @@
 
 use blog_romira_dev_cms::error::CmsError;
 use blog_romira_dev_cms::services::{DraftArticleService, PublishedArticleService};
-use blog_romira_dev_cms::{ArticleSlug, ArticleTitle};
+use blog_romira_dev_cms::{PublishedArticleSlug, PublishedArticleTitle};
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -169,8 +169,8 @@ async fn test_公開記事を同じスラッグで更新すると成功するこ
         .expect("Failed to publish");
 
     // 同じスラッグで更新
-    let title = ArticleTitle::new("Updated Title".to_string()).unwrap();
-    let slug = ArticleSlug::new("same-slug".to_string()).unwrap();
+    let title = PublishedArticleTitle::new("Updated Title".to_string()).unwrap();
+    let slug = PublishedArticleSlug::new("same-slug".to_string()).unwrap();
     let result =
         PublishedArticleService::update(&pool, published_id, &title, &slug, "Updated Body", None)
             .await;
@@ -199,8 +199,8 @@ async fn test_公開記事を他の記事と重複するスラッグで更新す
         .expect("Failed to publish second");
 
     // 2番目の記事を1番目と同じスラッグで更新しようとする
-    let title = ArticleTitle::new("Updated".to_string()).unwrap();
-    let slug = ArticleSlug::new("first-slug".to_string()).unwrap();
+    let title = PublishedArticleTitle::new("Updated".to_string()).unwrap();
+    let slug = PublishedArticleSlug::new("first-slug".to_string()).unwrap();
     let result =
         PublishedArticleService::update(&pool, second_published_id, &title, &slug, "Body", None)
             .await;

@@ -13,4 +13,4 @@ pub use models::{
 pub use queries::{AdminArticleQuery, DraftArticleQuery, PublishedArticleQuery};
 pub use repositories::{DraftArticleRepository, PublishedArticleRepository};
 pub use services::{AdminArticleService, DraftArticleService, PublishedArticleService};
-pub use value_objects::{ArticleSlug, ArticleTitle};
+pub use value_objects::{PublishedArticleSlug, PublishedArticleTitle};
