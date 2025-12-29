@@ -1,0 +1,19 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            INSERT INTO draft_articles (id, slug, title, body, description, created_at, updated_at)\n            VALUES ($1, $2, $3, $4, $5, $6, $6)\n            ON CONFLICT (id) DO UPDATE SET\n                slug = EXCLUDED.slug,\n                title = EXCLUDED.title,\n                body = EXCLUDED.body,\n                description = EXCLUDED.description,\n                updated_at = EXCLUDED.updated_at\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Varchar",
+        "Varchar",
+        "Text",
+        "Text",
+        "Timestamp"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "111d9387dcf3fc13b4810b0e3cd29dca37f88817a370c30e7cbb00a2bbf00209"
+}

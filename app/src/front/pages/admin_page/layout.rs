@@ -27,9 +27,9 @@ pub fn AdminLayout(children: Children) -> impl IntoView {
                         </A>
                     </li>
                     <li>
-                        <A href="/admin/articles/new" attr:class=style::nav_link>
+                        <a href="/admin/articles/new" rel="external" class=style::nav_link>
                             "新規作成"
-                        </A>
+                        </a>
                     </li>
                 </ul>
                 <div class=style::auth_section>
