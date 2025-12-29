@@ -1,6 +1,9 @@
 use leptos::prelude::*;
 
-use super::{ArticleEditData, SaveArticleInput, publish_article_action, save_article_action};
+use super::{
+    ArticleEditData, SaveDraftInput, SavePublishedInput, publish_article_handler,
+    save_draft_handler, save_published_handler,
+};
 
 #[derive(Clone, Copy, PartialEq, Default)]
 pub enum ViewMode {
@@ -17,6 +20,7 @@ pub struct ArticleFormState {
     pub slug: RwSignal<String>,
     pub body: RwSignal<String>,
     pub description: RwSignal<String>,
+    pub is_draft: RwSignal<bool>,
     pub view_mode: RwSignal<ViewMode>,
     pub saving: RwSignal<bool>,
     pub publishing: RwSignal<bool>,
@@ -30,6 +34,7 @@ impl Default for ArticleFormState {
             slug: RwSignal::new(String::new()),
             body: RwSignal::new(String::new()),
             description: RwSignal::new(String::new()),
+            is_draft: RwSignal::new(true), // 新規作成時は下書き
             view_mode: RwSignal::new(ViewMode::default()),
             saving: RwSignal::new(false),
             publishing: RwSignal::new(false),
@@ -46,6 +51,7 @@ impl ArticleFormState {
         self.body.set(article.body.clone());
         self.description
             .set(article.description.clone().unwrap_or_default());
+        self.is_draft.set(article.is_draft);
     }
 
     /// 操作中かどうか
@@ -53,10 +59,10 @@ impl ArticleFormState {
         self.saving.get() || self.publishing.get()
     }
 
-    /// フォームデータをSaveArticleInputに変換
-    fn as_save_input(&self, id: Option<String>) -> SaveArticleInput {
+    /// 下書き保存用の入力データを生成
+    fn as_draft_input(&self, id: Option<String>) -> SaveDraftInput {
         let description = self.description.get();
-        SaveArticleInput {
+        SaveDraftInput {
             id,
             title: self.title.get(),
             slug: self.slug.get(),
@@ -69,19 +75,50 @@ impl ArticleFormState {
         }
     }
 
-    /// 保存アクションを生成
+    /// 公開記事保存用の入力データを生成
+    fn as_published_input(&self, id: String) -> SavePublishedInput {
+        let description = self.description.get();
+        SavePublishedInput {
+            id,
+            title: self.title.get(),
+            slug: self.slug.get(),
+            body: self.body.get(),
+            description: if description.is_empty() {
+                None
+            } else {
+                Some(description)
+            },
+        }
+    }
+
+    /// 保存アクションを生成（下書き/公開で適切なエンドポイントを呼び分け）
     pub fn create_save_action<F>(&self, get_article_id: F) -> Action<(), ()>
     where
         F: Fn() -> Option<String> + Copy + Send + Sync + 'static,
     {
         let form = *self;
         Action::new(move |_: &()| {
-            let input = form.as_save_input(get_article_id());
+            let id = get_article_id();
+            let is_draft = form.is_draft.get();
             async move {
                 form.saving.set(true);
                 form.message.set(None);
 
-                let result = save_article_action(input).await;
+                let result = if is_draft {
+                    // 下書きの保存
+                    let input = form.as_draft_input(id);
+                    save_draft_handler(input).await
+                } else {
+                    // 公開記事の保存（IDが必須）
+                    let Some(id) = id else {
+                        form.saving.set(false);
+                        form.message
+                            .set(Some((false, "公開記事の保存にはIDが必要です".to_string())));
+                        return;
+                    };
+                    let input = form.as_published_input(id);
+                    save_published_handler(input).await
+                };
 
                 form.saving.set(false);
 
@@ -97,7 +134,7 @@ impl ArticleFormState {
         })
     }
 
-    /// 公開アクションを生成
+    /// 公開アクションを生成（save → publish の順で実行）
     pub fn create_publish_action<F>(&self, get_article_id: F) -> Action<(), ()>
     where
         F: Fn() -> Option<String> + Copy + Send + Sync + 'static,
@@ -115,7 +152,17 @@ impl ArticleFormState {
                 form.publishing.set(true);
                 form.message.set(None);
 
-                let result = publish_article_action(id).await;
+                // まず下書きを保存
+                let save_input = form.as_draft_input(Some(id.clone()));
+                if let Err(e) = save_draft_handler(save_input).await {
+                    form.publishing.set(false);
+                    form.message
+                        .set(Some((false, format!("保存エラー: {}", e))));
+                    return;
+                }
+
+                // 次に公開
+                let result = publish_article_handler(id).await;
 
                 form.publishing.set(false);
 
@@ -126,7 +173,8 @@ impl ArticleFormState {
                         navigate("/admin/articles", Default::default());
                     }
                     Err(e) => {
-                        form.message.set(Some((false, format!("エラー: {}", e))));
+                        form.message
+                            .set(Some((false, format!("公開エラー: {}", e))));
                     }
                 }
             }

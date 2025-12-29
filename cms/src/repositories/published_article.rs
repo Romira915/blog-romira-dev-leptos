@@ -45,6 +45,41 @@ impl PublishedArticleRepository {
 
         Ok(published_id)
     }
+
+    /// 公開記事を更新
+    #[instrument(skip(pool))]
+    pub async fn update(
+        pool: &PgPool,
+        article_id: Uuid,
+        title: &str,
+        slug: &str,
+        body: &str,
+        description: Option<&str>,
+        now: NaiveDateTime,
+    ) -> Result<(), CmsError> {
+        let rows = sqlx::query!(
+            r#"
+            UPDATE published_articles
+            SET title = $1, slug = $2, body = $3, description = $4, updated_at = $5
+            WHERE id = $6
+            "#,
+            title,
+            slug,
+            body,
+            description,
+            now as _,
+            article_id
+        )
+        .execute(pool)
+        .await?
+        .rows_affected();
+
+        if rows == 0 {
+            return Err(CmsError::NotFound);
+        }
+
+        Ok(())
+    }
 }
 
 //noinspection NonAsciiCharacters
@@ -213,5 +248,76 @@ mod tests {
         assert_eq!(published.published_at, publish_time);
         assert_eq!(published.created_at, publish_time);
         assert_eq!(published.updated_at, publish_time);
+    }
+
+    #[sqlx::test]
+    async fn test_updateで公開記事が更新されること(pool: PgPool) {
+        let draft_id =
+            insert_draft_article(&pool, "original-slug", "元のタイトル", "元の本文").await;
+
+        let draft = DraftArticleWithCategories {
+            article: DraftArticle {
+                id: draft_id,
+                slug: "original-slug".to_string(),
+                title: "元のタイトル".to_string(),
+                body: "元の本文".to_string(),
+                description: Some("元の説明".to_string()),
+                cover_image_url: None,
+                created_at: utc_now(),
+                updated_at: utc_now(),
+            },
+            categories: vec![],
+        };
+
+        let publish_time = utc_now();
+        let published_id =
+            PublishedArticleRepository::create_from_draft(&pool, &draft, publish_time)
+                .await
+                .expect("Failed to create published article");
+
+        let update_time = utc_now();
+        PublishedArticleRepository::update(
+            &pool,
+            published_id,
+            "更新後のタイトル",
+            "updated-slug",
+            "更新後の本文",
+            Some("更新後の説明"),
+            update_time,
+        )
+        .await
+        .expect("Failed to update published article");
+
+        let updated = sqlx::query!(
+            r#"SELECT title, slug, body, description FROM published_articles WHERE id = $1"#,
+            published_id
+        )
+        .fetch_one(&pool)
+        .await
+        .expect("Failed to fetch updated article");
+
+        assert_eq!(updated.title, "更新後のタイトル");
+        assert_eq!(updated.slug, "updated-slug");
+        assert_eq!(updated.body, "更新後の本文");
+        assert_eq!(updated.description, Some("更新後の説明".to_string()));
+    }
+
+    #[sqlx::test]
+    async fn test_存在しない公開記事をupdateするとnotfoundエラーになること(
+        pool: PgPool,
+    ) {
+        let nonexistent_id = Uuid::new_v4();
+        let result = PublishedArticleRepository::update(
+            &pool,
+            nonexistent_id,
+            "タイトル",
+            "slug",
+            "本文",
+            None,
+            utc_now(),
+        )
+        .await;
+
+        assert!(matches!(result, Err(CmsError::NotFound)));
     }
 }

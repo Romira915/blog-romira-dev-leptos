@@ -2,6 +2,7 @@ use crate::error::CmsError;
 use crate::models::{ArticleListItem, DraftArticleWithCategories, PublishedArticleWithCategories};
 use crate::queries::{AdminArticleQuery, DraftArticleQuery, PublishedArticleQuery};
 use crate::repositories::{DraftArticleRepository, PublishedArticleRepository};
+use crate::value_objects::{ArticleSlug, ArticleTitle};
 use chrono::{NaiveDateTime, Utc};
 use sqlx::PgPool;
 use tracing::instrument;
@@ -45,6 +46,44 @@ impl PublishedArticleService {
         slug: &str,
     ) -> Result<Option<PublishedArticleWithCategories>, CmsError> {
         PublishedArticleQuery::fetch_by_slug(&self.pool, slug, utc_now()).await
+    }
+
+    /// 公開済み記事をIDで取得（管理者用、公開日時フィルタなし）
+    #[instrument(skip(pool))]
+    pub async fn fetch_by_id_for_admin(
+        pool: &PgPool,
+        article_id: Uuid,
+    ) -> Result<Option<PublishedArticleWithCategories>, CmsError> {
+        PublishedArticleQuery::fetch_by_id_for_admin(pool, article_id).await
+    }
+
+    /// 公開記事を更新
+    #[instrument(skip(pool))]
+    pub async fn update(
+        pool: &PgPool,
+        article_id: Uuid,
+        title: &ArticleTitle,
+        slug: &ArticleSlug,
+        body: &str,
+        description: Option<&str>,
+    ) -> Result<(), CmsError> {
+        // スラッグ重複チェック（自分自身は除外）
+        if PublishedArticleQuery::exists_by_slug(pool, slug.as_str(), Some(article_id)).await? {
+            return Err(CmsError::ValidationError(
+                "このスラッグは既に使用されています".to_string(),
+            ));
+        }
+
+        PublishedArticleRepository::update(
+            pool,
+            article_id,
+            title.as_str(),
+            slug.as_str(),
+            body,
+            description,
+            utc_now(),
+        )
+        .await
     }
 }
 
@@ -100,6 +139,16 @@ impl DraftArticleService {
         let draft = DraftArticleQuery::fetch_by_id(pool, draft_id)
             .await?
             .ok_or(CmsError::NotFound)?;
+
+        // スラッグのバリデーション
+        let slug = ArticleSlug::new(draft.article.slug.clone())?;
+
+        // スラッグ重複チェック（新規公開なので除外IDなし）
+        if PublishedArticleQuery::exists_by_slug(pool, slug.as_str(), None).await? {
+            return Err(CmsError::ValidationError(
+                "このスラッグは既に使用されています".to_string(),
+            ));
+        }
 
         let now = utc_now();
 

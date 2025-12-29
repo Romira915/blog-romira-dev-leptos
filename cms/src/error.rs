@@ -7,4 +7,7 @@ pub enum CmsError {
 
     #[error("Not found")]
     NotFound,
+
+    #[error("{0}")]
+    ValidationError(String),
 }

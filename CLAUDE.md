@@ -73,9 +73,23 @@ Uses **Rust nightly** (specified in `rust-toolchain.toml`). Key tools:
 - `stylance-cli` v0.5.4 - CSS module compiler
 - `wasm-bindgen-cli` v0.2.100 - WASM bindings
 
+## Value Object Guidelines
+
+- **Input (Handler → Service)**: Use Value Objects to enforce validation
+- **Output (Service → DTO)**: Use plain `String` (trust data retrieved from DB)
+
+```rust
+// Input: enforce validation
+pub fn save(title: ArticleTitle, body: ArticleBody) -> Result<...>
+
+// Output: return plain types
+pub fn fetch(id: Uuid) -> Result<ArticleDto>  // ArticleDto.title is String
+```
+
 ## Development Notes
 
-- **コミット時は必ず `commit-session` Skill を使う** - 手動で git add/commit しない
+- **Always use `commit-session` Skill for commits** - do not manually git add/commit
+- **Run `cargo sqlx prepare` when modifying SQL queries** - execute `cargo sqlx prepare --workspace -- --all-targets` before committing when adding/changing queries used by `sqlx::query!` macro. Include generated JSON files in `.sqlx/` directory in commits
 - **Do NOT use `mod.rs`** - Use modern Rust module style (`foo.rs` + `foo/` directory) instead of `foo/mod.rs`
 - Dev server runs at http://127.0.0.1:3000 with hot reload on port 3001
 - WASM release profile uses aggressive optimizations (LTO, opt-level='z')
