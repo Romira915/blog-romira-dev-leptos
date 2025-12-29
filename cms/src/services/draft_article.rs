@@ -35,40 +35,6 @@ impl DraftArticleService {
         DraftArticleQuery::fetch_by_id(&self.pool, article_id).await
     }
 
-    /// 下書き記事を作成
-    #[instrument(skip(self))]
-    pub async fn create(
-        &self,
-        title: &str,
-        slug: &str,
-        body: &str,
-        description: Option<&str>,
-    ) -> Result<Uuid, CmsError> {
-        DraftArticleRepository::create(&self.pool, title, slug, body, description, utc_now()).await
-    }
-
-    /// 下書き記事を更新
-    #[instrument(skip(self))]
-    pub async fn update(
-        &self,
-        article_id: Uuid,
-        title: &str,
-        slug: &str,
-        body: &str,
-        description: Option<&str>,
-    ) -> Result<(), CmsError> {
-        DraftArticleRepository::update(
-            &self.pool,
-            article_id,
-            title,
-            slug,
-            body,
-            description,
-            utc_now(),
-        )
-        .await
-    }
-
     /// 下書き記事を保存（Upsert: 存在しなければ作成、存在すれば更新）
     #[instrument(skip(self))]
     pub async fn save(
