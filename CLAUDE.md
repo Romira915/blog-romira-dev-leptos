@@ -73,23 +73,23 @@ Uses **Rust nightly** (specified in `rust-toolchain.toml`). Key tools:
 - `stylance-cli` v0.5.4 - CSS module compiler
 - `wasm-bindgen-cli` v0.2.100 - WASM bindings
 
-## Value Object 運用ルール
+## Value Object Guidelines
 
-- **入力時（Handler → Service）**: Value Object を使ってバリデーションを強制
-- **出力時（Service → DTO）**: プレーンな `String` を使う（DBから取得したデータは信頼する）
+- **Input (Handler → Service)**: Use Value Objects to enforce validation
+- **Output (Service → DTO)**: Use plain `String` (trust data retrieved from DB)
 
 ```rust
-// 入力: バリデーション強制
+// Input: enforce validation
 pub fn save(title: ArticleTitle, body: ArticleBody) -> Result<...>
 
-// 出力: プレーンな型で返す
-pub fn fetch(id: Uuid) -> Result<ArticleDto>  // ArticleDto.title は String
+// Output: return plain types
+pub fn fetch(id: Uuid) -> Result<ArticleDto>  // ArticleDto.title is String
 ```
 
 ## Development Notes
 
-- **コミット時は必ず `commit-session` Skill を使う** - 手動で git add/commit しない
-- **SQLクエリ変更時は `cargo sqlx prepare` を実行** - `sqlx::query!` マクロで使用するクエリを変更・追加したらコミット前に実行する。生成される `.sqlx/` ディレクトリ内のJSONファイルもコミットに含める
+- **Always use `commit-session` Skill for commits** - do not manually git add/commit
+- **Run `cargo sqlx prepare` when modifying SQL queries** - execute before committing when adding/changing queries used by `sqlx::query!` macro. Include generated JSON files in `.sqlx/` directory in commits
 - **Do NOT use `mod.rs`** - Use modern Rust module style (`foo.rs` + `foo/` directory) instead of `foo/mod.rs`
 - Dev server runs at http://127.0.0.1:3000 with hot reload on port 3001
 - WASM release profile uses aggressive optimizations (LTO, opt-level='z')
