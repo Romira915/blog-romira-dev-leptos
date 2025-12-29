@@ -65,10 +65,10 @@ jobs:
           rustup component add --toolchain nightly-x86_64-unknown-linux-gnu rustfmt
           rustup component add --toolchain nightly-x86_64-unknown-linux-gnu clippy
 
-      - name: Install mold linker
+      - name: Install mold linker and clang
         run: |
           sudo apt-get update
-          sudo apt-get install -y mold
+          sudo apt-get install -y mold clang
 
       - name: Setup .env
         run: |
@@ -84,4 +84,4 @@ jobs:
         run: just clippy
 
       - name: Test
-        run: mold -run just test
+        run: just test
