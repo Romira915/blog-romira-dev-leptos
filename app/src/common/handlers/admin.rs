@@ -52,7 +52,9 @@ pub async fn get_admin_articles_handler() -> Result<Vec<AdminArticleListItem>, S
     use blog_romira_dev_cms::AdminArticleService;
 
     let state = expect_context::<AppState>();
-    let articles = AdminArticleService::fetch_all(state.db_pool())
+    let service = AdminArticleService::new(state.db_pool().clone());
+    let articles = service
+        .fetch_all()
         .await
         .map_err(|e| ServerFnError::new(e.to_string()))?;
 
@@ -81,8 +83,12 @@ pub async fn get_article_for_edit_handler(
     let state = expect_context::<AppState>();
     let uuid = Uuid::parse_str(&id).map_err(|e| ServerFnError::new(e.to_string()))?;
 
+    let draft_service = DraftArticleService::new(state.db_pool().clone());
+    let published_service = PublishedArticleService::new(state.db_pool().clone());
+
     // まず下書きから検索
-    if let Some(draft) = DraftArticleService::fetch_by_id(state.db_pool(), uuid)
+    if let Some(draft) = draft_service
+        .fetch_by_id(uuid)
         .await
         .map_err(|e| ServerFnError::new(e.to_string()))?
     {
@@ -97,7 +103,8 @@ pub async fn get_article_for_edit_handler(
     }
 
     // 下書きになければ公開記事から検索
-    if let Some(published) = PublishedArticleService::fetch_by_id_for_admin(state.db_pool(), uuid)
+    if let Some(published) = published_service
+        .fetch_by_id_for_admin(uuid)
         .await
         .map_err(|e| ServerFnError::new(e.to_string()))?
     {
@@ -123,31 +130,32 @@ pub async fn save_draft_handler(input: SaveDraftInput) -> Result<String, ServerF
     use uuid::Uuid;
 
     let state = expect_context::<AppState>();
+    let service = DraftArticleService::new(state.db_pool().clone());
 
     let article_id = match input.id {
         Some(id) => {
             let uuid = Uuid::parse_str(&id).map_err(|e| ServerFnError::new(e.to_string()))?;
-            DraftArticleService::update(
-                state.db_pool(),
-                uuid,
+            service
+                .update(
+                    uuid,
+                    &input.title,
+                    &input.slug,
+                    &input.body,
+                    input.description.as_deref(),
+                )
+                .await
+                .map_err(|e| ServerFnError::new(e.to_string()))?;
+            uuid
+        }
+        None => service
+            .create(
                 &input.title,
                 &input.slug,
                 &input.body,
                 input.description.as_deref(),
             )
             .await
-            .map_err(|e| ServerFnError::new(e.to_string()))?;
-            uuid
-        }
-        None => DraftArticleService::create(
-            state.db_pool(),
-            &input.title,
-            &input.slug,
-            &input.body,
-            input.description.as_deref(),
-        )
-        .await
-        .map_err(|e| ServerFnError::new(e.to_string()))?,
+            .map_err(|e| ServerFnError::new(e.to_string()))?,
     };
 
     Ok(article_id.to_string())
@@ -175,16 +183,17 @@ pub async fn save_published_handler(input: SavePublishedInput) -> Result<String,
     let state = expect_context::<AppState>();
     let uuid = Uuid::parse_str(&input.id).map_err(|e| ServerFnError::new(e.to_string()))?;
 
-    PublishedArticleService::update(
-        state.db_pool(),
-        uuid,
-        &title,
-        &slug,
-        &input.body,
-        input.description.as_deref(),
-    )
-    .await
-    .map_err(|e| cms_error_to_response(&response, e))?;
+    let service = PublishedArticleService::new(state.db_pool().clone());
+    service
+        .update(
+            uuid,
+            &title,
+            &slug,
+            &input.body,
+            input.description.as_deref(),
+        )
+        .await
+        .map_err(|e| cms_error_to_response(&response, e))?;
 
     Ok(uuid.to_string())
 }
@@ -202,7 +211,9 @@ pub async fn publish_article_handler(id: String) -> Result<String, ServerFnError
     let state = expect_context::<AppState>();
     let uuid = Uuid::parse_str(&id).map_err(|e| ServerFnError::new(e.to_string()))?;
 
-    let published_id = DraftArticleService::publish(state.db_pool(), uuid)
+    let service = DraftArticleService::new(state.db_pool().clone());
+    let published_id = service
+        .publish(uuid)
         .await
         .map_err(|e| cms_error_to_response(&response, e))?;
 
