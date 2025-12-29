@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO draft_article_categories (article_id, category_id) VALUES ($1, $2)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "caf3a0334c9be0062b54114ee8f7b65ca0cc56e2cc23a89a0a6f222978dde18e"
+}
