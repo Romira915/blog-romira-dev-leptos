@@ -306,7 +306,7 @@ mod tests {
     async fn test_存在しない公開記事をupdateするとnotfoundエラーになること(
         pool: PgPool,
     ) {
-        let nonexistent_id = Uuid::new_v4();
+        let nonexistent_id = Uuid::now_v7();
         let result = PublishedArticleRepository::update(
             &pool,
             nonexistent_id,

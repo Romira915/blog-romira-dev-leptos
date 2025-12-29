@@ -42,7 +42,7 @@ async fn test_下書き公開で公開記事が作成されカテゴリがコピ
 
     let service = DraftArticleService::new(pool.clone());
 
-    let draft_id = Uuid::new_v4();
+    let draft_id = Uuid::now_v7();
     service
         .save(
             draft_id,
@@ -97,7 +97,7 @@ async fn test_存在しない下書きを公開するとnotfoundエラーにな�
     pool: PgPool,
 ) {
     let service = DraftArticleService::new(pool);
-    let nonexistent_id = Uuid::new_v4();
+    let nonexistent_id = Uuid::now_v7();
     let result = service.publish(nonexistent_id).await;
     assert!(matches!(result, Err(CmsError::NotFound)));
 }
@@ -108,7 +108,7 @@ async fn test_存在しない下書きをdeleteするとnotfoundエラーにな�
     pool: PgPool,
 ) {
     let service = DraftArticleService::new(pool);
-    let nonexistent_id = Uuid::new_v4();
+    let nonexistent_id = Uuid::now_v7();
     let result = service.delete(nonexistent_id).await;
     assert!(matches!(result, Err(CmsError::NotFound)));
 }
@@ -120,7 +120,7 @@ async fn test_空スラッグの下書きを公開するとvalidationエラー�
 ) {
     let service = DraftArticleService::new(pool);
 
-    let draft_id = Uuid::new_v4();
+    let draft_id = Uuid::now_v7();
     service
         .save(draft_id, "Title", "", "Body", None)
         .await
@@ -145,7 +145,7 @@ async fn test_重複スラッグの下書きを公開するとvalidationエラ�
     let service = DraftArticleService::new(pool);
 
     // 先に同じスラッグで公開記事を作成
-    let first_draft_id = Uuid::new_v4();
+    let first_draft_id = Uuid::now_v7();
     service
         .save(first_draft_id, "First", "duplicate-slug", "Body", None)
         .await
@@ -156,7 +156,7 @@ async fn test_重複スラッグの下書きを公開するとvalidationエラ�
         .expect("Failed to publish first draft");
 
     // 同じスラッグで下書きを作成して公開を試みる
-    let second_draft_id = Uuid::new_v4();
+    let second_draft_id = Uuid::now_v7();
     service
         .save(second_draft_id, "Second", "duplicate-slug", "Body", None)
         .await
@@ -180,7 +180,7 @@ async fn test_公開記事を同じスラッグで更新すると成功するこ
     let published_service = PublishedArticleService::new(pool);
 
     // 公開記事を作成
-    let draft_id = Uuid::new_v4();
+    let draft_id = Uuid::now_v7();
     draft_service
         .save(draft_id, "Original", "same-slug", "Body", None)
         .await
@@ -209,7 +209,7 @@ async fn test_公開記事を他の記事と重複するスラッグで更新す
     let published_service = PublishedArticleService::new(pool);
 
     // 2つの公開記事を作成
-    let draft1_id = Uuid::new_v4();
+    let draft1_id = Uuid::now_v7();
     draft_service
         .save(draft1_id, "First", "first-slug", "Body", None)
         .await
@@ -219,7 +219,7 @@ async fn test_公開記事を他の記事と重複するスラッグで更新す
         .await
         .expect("Failed to publish first");
 
-    let draft2_id = Uuid::new_v4();
+    let draft2_id = Uuid::now_v7();
     draft_service
         .save(draft2_id, "Second", "second-slug", "Body", None)
         .await

@@ -7,7 +7,7 @@ use super::contexts::AppState;
 
 /// 新規記事作成エンドポイント - UUIDを生成してリダイレクト
 pub async fn new_article_redirect() -> impl IntoResponse {
-    let new_id = Uuid::new_v4();
+    let new_id = Uuid::now_v7();
     Redirect::to(&format!("/admin/articles/{}", new_id))
 }
 
