@@ -325,7 +325,7 @@ mod tests {
 
     #[sqlx::test]
     async fn test_存在しないidでfetch_by_idするとnoneが返ること(pool: PgPool) {
-        let nonexistent_id = Uuid::new_v4();
+        let nonexistent_id = Uuid::now_v7();
         let now = parse_datetime("2025-01-15 12:00:00");
 
         let result = PublishedArticleQuery::fetch_by_id(&pool, nonexistent_id, now)
@@ -410,7 +410,7 @@ mod tests {
     async fn test_存在しないidでfetch_by_id_for_adminするとnoneが返ること(
         pool: PgPool,
     ) {
-        let nonexistent_id = Uuid::new_v4();
+        let nonexistent_id = Uuid::now_v7();
         let result = PublishedArticleQuery::fetch_by_id_for_admin(&pool, nonexistent_id)
             .await
             .expect("Failed to fetch by id for admin");

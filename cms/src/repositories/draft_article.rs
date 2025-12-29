@@ -72,7 +72,7 @@ mod tests {
     #[sqlx::test]
     async fn test_deleteで記事が削除されること(pool: PgPool) {
         let now = utc_now();
-        let id = Uuid::new_v4();
+        let id = Uuid::now_v7();
         DraftArticleRepository::upsert(&pool, id, "削除対象", "to-delete", "本文", None, now)
             .await
             .expect("Failed to create draft article");
@@ -104,7 +104,7 @@ mod tests {
     async fn test_存在しない記事をdeleteするとnotfoundエラーになること(
         pool: PgPool,
     ) {
-        let nonexistent_id = Uuid::new_v4();
+        let nonexistent_id = Uuid::now_v7();
         let result = DraftArticleRepository::delete(&pool, nonexistent_id).await;
 
         assert!(matches!(result, Err(CmsError::NotFound)));
@@ -113,7 +113,7 @@ mod tests {
     #[sqlx::test]
     async fn test_upsertで新規記事が作成されること(pool: PgPool) {
         let now = utc_now();
-        let id = Uuid::new_v4();
+        let id = Uuid::now_v7();
 
         DraftArticleRepository::upsert(
             &pool,
@@ -144,7 +144,7 @@ mod tests {
     #[sqlx::test]
     async fn test_upsertで既存記事が更新されること(pool: PgPool) {
         let now = utc_now();
-        let id = Uuid::new_v4();
+        let id = Uuid::now_v7();
 
         // 1回目のupsert（作成）
         DraftArticleRepository::upsert(
@@ -189,7 +189,7 @@ mod tests {
     #[sqlx::test]
     async fn test_upsertで連打しても1件だけ存在すること(pool: PgPool) {
         let now = utc_now();
-        let id = Uuid::new_v4();
+        let id = Uuid::now_v7();
 
         // 3回連続でupsert（連打シミュレーション）
         for i in 0..3 {

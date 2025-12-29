@@ -167,7 +167,7 @@ mod tests {
 
     #[sqlx::test]
     async fn test_存在しないidでfetch_by_idするとnoneが返ること(pool: PgPool) {
-        let nonexistent_id = Uuid::new_v4();
+        let nonexistent_id = Uuid::now_v7();
 
         let result = DraftArticleQuery::fetch_by_id(&pool, nonexistent_id)
             .await

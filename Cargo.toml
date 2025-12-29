@@ -34,7 +34,7 @@ tower-http = { version = "0.6.8", features = ["fs"] }
 tracing = "0.1.44"
 tracing-wasm = "0.2.1"
 url = "2.5.7"
-uuid = { version = "1", features = ["v4", "serde", "js"] }
+uuid = { version = "1", features = ["v7", "serde", "js"] }
 wasm-bindgen = "0.2.106"
 comrak = { version = "0.49", default-features = false }
 

@@ -196,7 +196,7 @@ async fn test_get_article_for_edit_記事が見つからない場合noneを返�
     let app_state = create_test_app_state(pool);
     let app = build_test_router(app_state);
 
-    let nonexistent_id = Uuid::new_v4();
+    let nonexistent_id = Uuid::now_v7();
     let request = Request::builder()
         .method("GET")
         .uri(format!("/api/admin/get_article?id={}", nonexistent_id))
@@ -239,7 +239,7 @@ async fn test_save_draft_新規作成の場合記事idを返すこと(pool: PgPo
     let app = build_test_router(app_state);
 
     // Upsert方式では事前にクライアント側でUUIDを生成する
-    let new_id = Uuid::new_v4();
+    let new_id = Uuid::now_v7();
 
     // Leptosサーバー関数はパラメータ名をJSONフィールド名として使用する
     let input = json!({
@@ -490,7 +490,7 @@ async fn test_publish_article_存在しない下書きの場合notfoundエラー
     let app_state = create_test_app_state(pool);
     let app = build_test_router(app_state);
 
-    let nonexistent_id = Uuid::new_v4();
+    let nonexistent_id = Uuid::now_v7();
     let input = json!({
         "input": {
             "id": nonexistent_id.to_string()
