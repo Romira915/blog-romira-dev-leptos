@@ -49,10 +49,9 @@ pub struct AdminArticleListItem {
 #[server(input = GetUrl, endpoint = "admin/get_articles")]
 pub async fn get_admin_articles_handler() -> Result<Vec<AdminArticleListItem>, ServerFnError> {
     use crate::server::contexts::AppState;
-    use blog_romira_dev_cms::AdminArticleService;
 
     let state = expect_context::<AppState>();
-    let service = AdminArticleService::new(state.db_pool().clone());
+    let service = state.admin_article_service();
     let articles = service
         .fetch_all()
         .await
@@ -77,14 +76,13 @@ pub async fn get_article_for_edit_handler(
     id: String,
 ) -> Result<Option<ArticleEditData>, ServerFnError> {
     use crate::server::contexts::AppState;
-    use blog_romira_dev_cms::{DraftArticleService, PublishedArticleService};
     use uuid::Uuid;
 
     let state = expect_context::<AppState>();
     let uuid = Uuid::parse_str(&id).map_err(|e| ServerFnError::new(e.to_string()))?;
 
-    let draft_service = DraftArticleService::new(state.db_pool().clone());
-    let published_service = PublishedArticleService::new(state.db_pool().clone());
+    let draft_service = state.draft_article_service();
+    let published_service = state.published_article_service();
 
     // まず下書きから検索
     if let Some(draft) = draft_service
@@ -126,11 +124,10 @@ pub async fn get_article_for_edit_handler(
 #[server(endpoint = "admin/save_draft")]
 pub async fn save_draft_handler(input: SaveDraftInput) -> Result<String, ServerFnError> {
     use crate::server::contexts::AppState;
-    use blog_romira_dev_cms::DraftArticleService;
     use uuid::Uuid;
 
     let state = expect_context::<AppState>();
-    let service = DraftArticleService::new(state.db_pool().clone());
+    let service = state.draft_article_service();
 
     let article_id = match input.id {
         Some(id) => {
@@ -167,9 +164,7 @@ pub async fn save_draft_handler(input: SaveDraftInput) -> Result<String, ServerF
 pub async fn save_published_handler(input: SavePublishedInput) -> Result<String, ServerFnError> {
     use crate::server::contexts::AppState;
     use crate::server::http::response::cms_error_to_response;
-    use blog_romira_dev_cms::{
-        PublishedArticleService, PublishedArticleSlug, PublishedArticleTitle,
-    };
+    use blog_romira_dev_cms::{PublishedArticleSlug, PublishedArticleTitle};
     use leptos_axum::ResponseOptions;
     use uuid::Uuid;
 
@@ -183,8 +178,8 @@ pub async fn save_published_handler(input: SavePublishedInput) -> Result<String,
     let state = expect_context::<AppState>();
     let uuid = Uuid::parse_str(&input.id).map_err(|e| ServerFnError::new(e.to_string()))?;
 
-    let service = PublishedArticleService::new(state.db_pool().clone());
-    service
+    state
+        .published_article_service()
         .update(
             uuid,
             &title,
@@ -203,7 +198,6 @@ pub async fn save_published_handler(input: SavePublishedInput) -> Result<String,
 pub async fn publish_article_handler(id: String) -> Result<String, ServerFnError> {
     use crate::server::contexts::AppState;
     use crate::server::http::response::cms_error_to_response;
-    use blog_romira_dev_cms::DraftArticleService;
     use leptos_axum::ResponseOptions;
     use uuid::Uuid;
 
@@ -211,8 +205,8 @@ pub async fn publish_article_handler(id: String) -> Result<String, ServerFnError
     let state = expect_context::<AppState>();
     let uuid = Uuid::parse_str(&id).map_err(|e| ServerFnError::new(e.to_string()))?;
 
-    let service = DraftArticleService::new(state.db_pool().clone());
-    let published_id = service
+    let published_id = state
+        .draft_article_service()
         .publish(uuid)
         .await
         .map_err(|e| cms_error_to_response(&response, e))?;
