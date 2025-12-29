@@ -89,7 +89,7 @@ pub fn fetch(id: Uuid) -> Result<ArticleDto>  // ArticleDto.title is String
 ## Development Notes
 
 - **Always use `commit-session` Skill for commits** - do not manually git add/commit
-- **Run `cargo sqlx prepare` when modifying SQL queries** - execute before committing when adding/changing queries used by `sqlx::query!` macro. Include generated JSON files in `.sqlx/` directory in commits
+- **Run `cargo sqlx prepare` when modifying SQL queries** - execute `cargo sqlx prepare --workspace -- --all-targets` before committing when adding/changing queries used by `sqlx::query!` macro. Include generated JSON files in `.sqlx/` directory in commits
 - **Do NOT use `mod.rs`** - Use modern Rust module style (`foo.rs` + `foo/` directory) instead of `foo/mod.rs`
 - Dev server runs at http://127.0.0.1:3000 with hot reload on port 3001
 - WASM release profile uses aggressive optimizations (LTO, opt-level='z')
