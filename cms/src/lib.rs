@@ -1,3 +1,6 @@
+#[cfg(any(test, feature = "test-utils"))]
+pub mod test_utils;
+
 pub mod error;
 pub mod models;
 pub mod queries;

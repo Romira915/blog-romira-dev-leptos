@@ -11,6 +11,9 @@ thiserror = { workspace = true }
 tracing = { workspace = true }
 uuid = { workspace = true }
 
+[features]
+test-utils = []
+
 [dev-dependencies]
 tokio = { workspace = true }
 dotenv = { workspace = true }

@@ -174,52 +174,10 @@ impl PublishedArticleQuery {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::test_utils::*;
 
     fn parse_datetime(s: &str) -> NaiveDateTime {
         NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S").unwrap()
-    }
-
-    async fn create_test_category(pool: &PgPool, name: &str, slug: &str) -> Uuid {
-        sqlx::query_scalar!(
-            r#"INSERT INTO categories (name, slug) VALUES ($1, $2) RETURNING id"#,
-            name,
-            slug
-        )
-        .fetch_one(pool)
-        .await
-        .expect("Failed to create test category")
-    }
-
-    async fn insert_published_article(
-        pool: &PgPool,
-        slug: &str,
-        title: &str,
-        body: &str,
-        description: Option<&str>,
-        published_at: NaiveDateTime,
-    ) -> Uuid {
-        sqlx::query_scalar!(
-            r#"INSERT INTO published_articles (slug, title, body, description, published_at) VALUES ($1, $2, $3, $4, $5) RETURNING id"#,
-            slug,
-            title,
-            body,
-            description,
-            published_at as _
-        )
-        .fetch_one(pool)
-        .await
-        .expect("Failed to insert published article")
-    }
-
-    async fn link_published_article_category(pool: &PgPool, article_id: Uuid, category_id: Uuid) {
-        sqlx::query!(
-            "INSERT INTO published_article_categories (article_id, category_id) VALUES ($1, $2)",
-            article_id,
-            category_id
-        )
-        .execute(pool)
-        .await
-        .expect("Failed to link published article category");
     }
 
     #[sqlx::test]

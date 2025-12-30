@@ -87,43 +87,14 @@ impl PublishedArticleRepository {
 mod tests {
     use super::*;
     use crate::models::{Category, DraftArticle};
-    use chrono::Utc;
-
-    fn utc_now() -> NaiveDateTime {
-        Utc::now().naive_utc()
-    }
-
-    async fn create_test_category(pool: &PgPool, name: &str, slug: &str) -> Uuid {
-        sqlx::query_scalar!(
-            r#"INSERT INTO categories (name, slug) VALUES ($1, $2) RETURNING id"#,
-            name,
-            slug
-        )
-        .fetch_one(pool)
-        .await
-        .expect("Failed to create test category")
-    }
-
-    async fn insert_draft_article(pool: &PgPool, slug: &str, title: &str, body: &str) -> Uuid {
-        let now = utc_now();
-        sqlx::query_scalar!(
-            r#"INSERT INTO draft_articles (slug, title, body, created_at, updated_at) VALUES ($1, $2, $3, $4, $4) RETURNING id"#,
-            slug,
-            title,
-            body,
-            now as _
-        )
-        .fetch_one(pool)
-        .await
-        .expect("Failed to insert draft article")
-    }
+    use crate::test_utils::*;
 
     #[sqlx::test]
     async fn test_カテゴリなし下書きから公開記事が作成されること(
         pool: PgPool,
     ) {
         let draft_id =
-            insert_draft_article(&pool, "draft-slug", "下書きタイトル", "下書き本文").await;
+            insert_draft_article(&pool, "draft-slug", "下書きタイトル", "下書き本文", None).await;
 
         let draft = DraftArticleWithCategories {
             article: DraftArticle {
@@ -164,7 +135,8 @@ mod tests {
     ) {
         let cat1_id = create_test_category(&pool, "Cat1", "cat1").await;
         let cat2_id = create_test_category(&pool, "Cat2", "cat2").await;
-        let draft_id = insert_draft_article(&pool, "draft-with-cat", "カテゴリ付き", "本文").await;
+        let draft_id =
+            insert_draft_article(&pool, "draft-with-cat", "カテゴリ付き", "本文", None).await;
 
         let draft = DraftArticleWithCategories {
             article: DraftArticle {
@@ -209,7 +181,7 @@ mod tests {
 
     #[sqlx::test]
     async fn test_公開記事作成時に公開日時が設定されること(pool: PgPool) {
-        let draft_id = insert_draft_article(&pool, "time-test", "時刻テスト", "本文").await;
+        let draft_id = insert_draft_article(&pool, "time-test", "時刻テスト", "本文", None).await;
 
         let draft = DraftArticleWithCategories {
             article: DraftArticle {
@@ -253,7 +225,7 @@ mod tests {
     #[sqlx::test]
     async fn test_updateで公開記事が更新されること(pool: PgPool) {
         let draft_id =
-            insert_draft_article(&pool, "original-slug", "元のタイトル", "元の本文").await;
+            insert_draft_article(&pool, "original-slug", "元のタイトル", "元の本文", None).await;
 
         let draft = DraftArticleWithCategories {
             article: DraftArticle {
