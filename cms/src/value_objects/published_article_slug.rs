@@ -6,8 +6,17 @@ pub struct PublishedArticleSlug(String);
 
 impl PublishedArticleSlug {
     pub fn new(value: String) -> Result<Self, CmsError> {
-        if value.trim().is_empty() {
+        if value.is_empty() {
             return Err(CmsError::ValidationError("スラッグは必須です".to_string()));
+        }
+        if !value
+            .chars()
+            .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '-' || c == '_')
+        {
+            return Err(CmsError::ValidationError(
+                "スラッグは半角英小文字、数字、ハイフン、アンダースコアのみ使用できます"
+                    .to_string(),
+            ));
         }
         Ok(Self(value))
     }
@@ -39,5 +48,29 @@ mod tests {
     fn test_空白のみスラッグはエラーになること() {
         let slug = PublishedArticleSlug::new("   ".to_string());
         assert!(slug.is_err());
+    }
+
+    #[test]
+    fn test_大文字を含むスラッグはエラーになること() {
+        let slug = PublishedArticleSlug::new("Test-Slug".to_string());
+        assert!(slug.is_err());
+    }
+
+    #[test]
+    fn test_日本語を含むスラッグはエラーになること() {
+        let slug = PublishedArticleSlug::new("テスト".to_string());
+        assert!(slug.is_err());
+    }
+
+    #[test]
+    fn test_数字とハイフンのみでも有効() {
+        let slug = PublishedArticleSlug::new("123-456".to_string());
+        assert!(slug.is_ok());
+    }
+
+    #[test]
+    fn test_アンダースコアを含むスラッグは有効() {
+        let slug = PublishedArticleSlug::new("test_slug".to_string());
+        assert!(slug.is_ok());
     }
 }
