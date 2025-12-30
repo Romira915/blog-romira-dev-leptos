@@ -68,84 +68,15 @@ impl AdminArticleQuery {
 }
 
 //noinspection NonAsciiCharacters
+//noinspection NonAsciiCharacters
 #[cfg(test)]
 mod tests {
     use super::*;
-    use chrono::{NaiveDateTime, Utc};
-    use uuid::Uuid;
-
-    fn utc_now() -> NaiveDateTime {
-        Utc::now().naive_utc()
-    }
+    use crate::test_utils::*;
+    use chrono::NaiveDateTime;
 
     fn parse_datetime(s: &str) -> NaiveDateTime {
         NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S").unwrap()
-    }
-
-    async fn create_test_category(pool: &PgPool, name: &str, slug: &str) -> Uuid {
-        sqlx::query_scalar!(
-            r#"INSERT INTO categories (name, slug) VALUES ($1, $2) RETURNING id"#,
-            name,
-            slug
-        )
-        .fetch_one(pool)
-        .await
-        .expect("Failed to create test category")
-    }
-
-    async fn insert_published_article(
-        pool: &PgPool,
-        slug: &str,
-        title: &str,
-        body: &str,
-        published_at: NaiveDateTime,
-    ) -> Uuid {
-        sqlx::query_scalar!(
-            r#"INSERT INTO published_articles (slug, title, body, published_at) VALUES ($1, $2, $3, $4) RETURNING id"#,
-            slug,
-            title,
-            body,
-            published_at as _
-        )
-        .fetch_one(pool)
-        .await
-        .expect("Failed to insert published article")
-    }
-
-    async fn insert_draft_article(pool: &PgPool, slug: &str, title: &str, body: &str) -> Uuid {
-        let now = utc_now();
-        sqlx::query_scalar!(
-            r#"INSERT INTO draft_articles (slug, title, body, created_at, updated_at) VALUES ($1, $2, $3, $4, $4) RETURNING id"#,
-            slug,
-            title,
-            body,
-            now as _
-        )
-        .fetch_one(pool)
-        .await
-        .expect("Failed to insert draft article")
-    }
-
-    async fn link_published_article_category(pool: &PgPool, article_id: Uuid, category_id: Uuid) {
-        sqlx::query!(
-            "INSERT INTO published_article_categories (article_id, category_id) VALUES ($1, $2)",
-            article_id,
-            category_id
-        )
-        .execute(pool)
-        .await
-        .expect("Failed to link published article category");
-    }
-
-    async fn link_draft_article_category(pool: &PgPool, article_id: Uuid, category_id: Uuid) {
-        sqlx::query!(
-            "INSERT INTO draft_article_categories (article_id, category_id) VALUES ($1, $2)",
-            article_id,
-            category_id
-        )
-        .execute(pool)
-        .await
-        .expect("Failed to link draft article category");
     }
 
     #[sqlx::test]
@@ -157,6 +88,7 @@ mod tests {
             "pub-slug",
             "Published",
             "Body",
+            None,
             parse_datetime("2020-01-01 10:00:00"),
         )
         .await;
@@ -174,7 +106,7 @@ mod tests {
     async fn test_下書きのみの場合fetch_allで下書きが取得されること(
         pool: PgPool,
     ) {
-        let draft_id = insert_draft_article(&pool, "draft-slug", "Draft", "Body").await;
+        let draft_id = insert_draft_article(&pool, "draft-slug", "Draft", "Body", None).await;
 
         let result = AdminArticleQuery::fetch_all(&pool)
             .await
@@ -192,10 +124,11 @@ mod tests {
             "pub-slug",
             "Published",
             "Body",
+            None,
             parse_datetime("2020-01-01 10:00:00"),
         )
         .await;
-        insert_draft_article(&pool, "draft-slug", "Draft", "Body").await;
+        insert_draft_article(&pool, "draft-slug", "Draft", "Body", None).await;
 
         let result = AdminArticleQuery::fetch_all(&pool)
             .await
@@ -221,6 +154,7 @@ mod tests {
             "future-slug",
             "Future Article",
             "Body",
+            None,
             parse_datetime("2099-01-01 10:00:00"),
         )
         .await;
@@ -241,6 +175,7 @@ mod tests {
             "cat-pub",
             "Categorized Published",
             "Body",
+            None,
             parse_datetime("2020-01-01 10:00:00"),
         )
         .await;
@@ -268,7 +203,7 @@ mod tests {
     async fn test_fetch_allで下書きのカテゴリも取得されること(pool: PgPool) {
         let cat_id = create_test_category(&pool, "DraftCat", "draftcat").await;
         let article_id =
-            insert_draft_article(&pool, "cat-draft", "Categorized Draft", "Body").await;
+            insert_draft_article(&pool, "cat-draft", "Categorized Draft", "Body", None).await;
 
         link_draft_article_category(&pool, article_id, cat_id).await;
 
@@ -296,10 +231,11 @@ mod tests {
             "pub",
             "Published",
             "Body",
+            None,
             parse_datetime("2020-01-01 10:00:00"),
         )
         .await;
-        let draft_id = insert_draft_article(&pool, "draft", "Draft", "Body").await;
+        let draft_id = insert_draft_article(&pool, "draft", "Draft", "Body", None).await;
 
         let result = AdminArticleQuery::fetch_all(&pool)
             .await
@@ -316,8 +252,8 @@ mod tests {
     async fn test_published_atで公開日時が正しく取得されること(pool: PgPool) {
         let publish_time = parse_datetime("2025-06-15 14:30:00");
         let published_id =
-            insert_published_article(&pool, "pub", "Published", "Body", publish_time).await;
-        let draft_id = insert_draft_article(&pool, "draft", "Draft", "Body").await;
+            insert_published_article(&pool, "pub", "Published", "Body", None, publish_time).await;
+        let draft_id = insert_draft_article(&pool, "draft", "Draft", "Body", None).await;
 
         let result = AdminArticleQuery::fetch_all(&pool)
             .await

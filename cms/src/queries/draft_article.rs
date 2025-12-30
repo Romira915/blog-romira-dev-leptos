@@ -72,54 +72,7 @@ impl DraftArticleQuery {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use chrono::{NaiveDateTime, Utc};
-
-    fn utc_now() -> NaiveDateTime {
-        Utc::now().naive_utc()
-    }
-
-    async fn create_test_category(pool: &PgPool, name: &str, slug: &str) -> Uuid {
-        sqlx::query_scalar!(
-            r#"INSERT INTO categories (name, slug) VALUES ($1, $2) RETURNING id"#,
-            name,
-            slug
-        )
-        .fetch_one(pool)
-        .await
-        .expect("Failed to create test category")
-    }
-
-    async fn insert_draft_article(
-        pool: &PgPool,
-        slug: &str,
-        title: &str,
-        body: &str,
-        description: Option<&str>,
-    ) -> Uuid {
-        let now = utc_now();
-        sqlx::query_scalar!(
-            r#"INSERT INTO draft_articles (slug, title, body, description, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $5) RETURNING id"#,
-            slug,
-            title,
-            body,
-            description,
-            now as _
-        )
-        .fetch_one(pool)
-        .await
-        .expect("Failed to insert draft article")
-    }
-
-    async fn link_draft_article_category(pool: &PgPool, article_id: Uuid, category_id: Uuid) {
-        sqlx::query!(
-            "INSERT INTO draft_article_categories (article_id, category_id) VALUES ($1, $2)",
-            article_id,
-            category_id
-        )
-        .execute(pool)
-        .await
-        .expect("Failed to link draft article category");
-    }
+    use crate::test_utils::*;
 
     #[sqlx::test]
     async fn test_fetch_allでカテゴリも取得されること(pool: PgPool) {

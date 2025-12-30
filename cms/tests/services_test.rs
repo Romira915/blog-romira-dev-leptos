@@ -4,31 +4,10 @@
 
 use blog_romira_dev_cms::error::CmsError;
 use blog_romira_dev_cms::services::{DraftArticleService, PublishedArticleService};
+use blog_romira_dev_cms::test_utils::*;
 use blog_romira_dev_cms::{PublishedArticleSlug, PublishedArticleTitle};
 use sqlx::PgPool;
 use uuid::Uuid;
-
-async fn create_test_category(pool: &PgPool, name: &str, slug: &str) -> Uuid {
-    sqlx::query_scalar!(
-        r#"INSERT INTO categories (name, slug) VALUES ($1, $2) RETURNING id"#,
-        name,
-        slug
-    )
-    .fetch_one(pool)
-    .await
-    .expect("Failed to create test category")
-}
-
-async fn link_draft_article_category(pool: &PgPool, article_id: Uuid, category_id: Uuid) {
-    sqlx::query!(
-        "INSERT INTO draft_article_categories (article_id, category_id) VALUES ($1, $2)",
-        article_id,
-        category_id
-    )
-    .execute(pool)
-    .await
-    .expect("Failed to link draft article category");
-}
 
 //noinspection NonAsciiCharacters
 /// 下書き記事を公開するワークフローのテスト

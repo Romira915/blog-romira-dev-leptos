@@ -63,11 +63,7 @@ impl DraftArticleRepository {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use chrono::Utc;
-
-    fn utc_now() -> NaiveDateTime {
-        Utc::now().naive_utc()
-    }
+    use crate::test_utils::utc_now;
 
     #[sqlx::test]
     async fn test_deleteで記事が削除されること(pool: PgPool) {
