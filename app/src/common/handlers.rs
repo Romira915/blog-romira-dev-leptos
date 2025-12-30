@@ -13,19 +13,29 @@ use tracing::instrument;
 
 #[instrument]
 #[server(input = GetUrl, endpoint = "get_articles_handler")]
-pub(crate) async fn get_articles_handler()
--> Result<Vec<HomePageArticleDto>, ServerFnError<GetArticlesError>> {
+pub(crate) async fn get_articles_handler(
+    preview: Option<String>,
+) -> Result<Vec<HomePageArticleDto>, ServerFnError<GetArticlesError>> {
     use crate::AppState;
-    use crate::server::http::response::set_top_page_cache_control;
+    use crate::server::http::response::{
+        set_preview_article_page_cache_control, set_top_page_cache_control,
+    };
     use leptos_axum::ResponseOptions;
 
     let app_state = expect_context::<AppState>();
     let newt_article_service = app_state.newt_article_service;
     let wordpress_article_service = app_state.word_press_article_service;
     let qiita_article_service = app_state.qiita_article_service;
+    let published_article_service = app_state.published_article_service;
     let response = expect_context::<ResponseOptions>();
 
-    set_top_page_cache_control(&response);
+    let show_local = preview.as_deref() == Some("local");
+
+    if show_local {
+        set_preview_article_page_cache_control(&response);
+    } else {
+        set_top_page_cache_control(&response);
+    }
 
     let newt_articles = newt_article_service.fetch_published_articles().await;
     let newt_articles = match newt_articles {
@@ -84,6 +94,19 @@ pub(crate) async fn get_articles_handler()
 
     articles.extend(wordpress_articles.into_iter().map(HomePageArticleDto::from));
     articles.extend(qiita_articles.into_iter().map(HomePageArticleDto::from));
+
+    // preview=local の場合、DB記事も含める
+    if show_local {
+        match published_article_service.fetch_all().await {
+            Ok(local_articles) => {
+                articles.extend(local_articles.into_iter().map(HomePageArticleDto::from));
+            }
+            Err(err) => {
+                tracing::warn!(error = err.to_string(), "Failed to get local articles");
+            }
+        }
+    }
+
     articles.sort_unstable_by_key(|a| Reverse(a.first_published_at.get()));
 
     Ok(articles)
