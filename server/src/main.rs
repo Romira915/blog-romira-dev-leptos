@@ -59,8 +59,12 @@ async fn main() {
             &app_state,
             routes,
             {
+                use blog_romira_dev_app::common::response::CacheControlSet;
                 let app_state = app_state.clone();
-                move || provide_context(app_state.clone())
+                move || {
+                    provide_context(app_state.clone());
+                    provide_context(CacheControlSet::new());
+                }
             },
             {
                 let leptos_options = leptos_options.clone();

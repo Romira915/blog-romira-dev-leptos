@@ -104,6 +104,7 @@ pub fn fetch(id: Uuid) -> Result<ArticleDto>  // ArticleDto.title is String
 
 ## Development Notes
 
+- **Use Playwright for manual testing** - verify UI behavior with `mcp__plugin_playwright_playwright__browser_*` tools before committing
 - **Always use `commit-session` Skill for commits** - do not manually git add/commit
 - **Run `cargo sqlx prepare` when modifying SQL queries** - execute `cargo sqlx prepare --workspace -- --all-targets` before committing when adding/changing queries used by `sqlx::query!` macro. Include generated JSON files in `.sqlx/` directory in commits
 - **Do NOT use `mod.rs`** - Use modern Rust module style (`foo.rs` + `foo/` directory) instead of `foo/mod.rs`

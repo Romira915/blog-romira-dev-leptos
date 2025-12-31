@@ -16,6 +16,7 @@ pub(crate) enum ArticleSource {
     Newt,
     WordPress,
     Qiita,
+    Local,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

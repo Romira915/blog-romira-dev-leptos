@@ -41,7 +41,7 @@ impl From<PublishedArticleWithCategories> for HomePageArticleDto {
                     .format(DATE_DISPLAY_FORMAT)
                     .to_string(),
             ),
-            article_source: ArticleSource::Newt, // TODO: ArticleSource::Localを追加
+            article_source: ArticleSource::Local,
         }
     }
 }

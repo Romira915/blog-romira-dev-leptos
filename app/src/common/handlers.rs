@@ -13,19 +13,28 @@ use tracing::instrument;
 
 #[instrument]
 #[server(input = GetUrl, endpoint = "get_articles_handler")]
-pub(crate) async fn get_articles_handler()
--> Result<Vec<HomePageArticleDto>, ServerFnError<GetArticlesError>> {
+pub(crate) async fn get_articles_handler(
+    features: Option<String>,
+) -> Result<Vec<HomePageArticleDto>, ServerFnError<GetArticlesError>> {
     use crate::AppState;
-    use crate::server::http::response::set_top_page_cache_control;
+    use crate::common::response::{set_feature_page_cache_control, set_top_page_cache_control};
     use leptos_axum::ResponseOptions;
 
     let app_state = expect_context::<AppState>();
     let newt_article_service = app_state.newt_article_service;
     let wordpress_article_service = app_state.word_press_article_service;
     let qiita_article_service = app_state.qiita_article_service;
+    let published_article_service = app_state.published_article_service;
     let response = expect_context::<ResponseOptions>();
 
-    set_top_page_cache_control(&response);
+    let show_local = features.as_deref() == Some("local");
+
+    // キャッシュコントロールを設定（既に設定済みならスキップ）
+    if show_local {
+        set_feature_page_cache_control();
+    } else {
+        set_top_page_cache_control();
+    }
 
     let newt_articles = newt_article_service.fetch_published_articles().await;
     let newt_articles = match newt_articles {
@@ -84,6 +93,19 @@ pub(crate) async fn get_articles_handler()
 
     articles.extend(wordpress_articles.into_iter().map(HomePageArticleDto::from));
     articles.extend(qiita_articles.into_iter().map(HomePageArticleDto::from));
+
+    // features=local の場合、DB記事も含める
+    if show_local {
+        match published_article_service.fetch_all().await {
+            Ok(local_articles) => {
+                articles.extend(local_articles.into_iter().map(HomePageArticleDto::from));
+            }
+            Err(err) => {
+                tracing::warn!(error = err.to_string(), "Failed to get local articles");
+            }
+        }
+    }
+
     articles.sort_unstable_by_key(|a| Reverse(a.first_published_at.get()));
 
     Ok(articles)
@@ -91,17 +113,23 @@ pub(crate) async fn get_articles_handler()
 
 #[instrument]
 #[server(input = GetUrl, endpoint = "get_author_handler")]
-pub(crate) async fn get_author_handler() -> Result<HomePageAuthorDto, ServerFnError<GetAuthorError>>
-{
+pub(crate) async fn get_author_handler(
+    features: Option<String>,
+) -> Result<HomePageAuthorDto, ServerFnError<GetAuthorError>> {
     use crate::AppState;
-    use crate::server::http::response::set_top_page_cache_control;
+    use crate::common::response::{set_feature_page_cache_control, set_top_page_cache_control};
     use leptos_axum::ResponseOptions;
 
     let app_state = expect_context::<AppState>();
     let newt_article_service = app_state.newt_article_service;
     let response = expect_context::<ResponseOptions>();
 
-    set_top_page_cache_control(&response);
+    // キャッシュコントロールを設定（既に設定済みならスキップ）
+    if features == Some("local".to_string()) {
+        set_feature_page_cache_control();
+    } else {
+        set_top_page_cache_control();
+    }
 
     let author = newt_article_service
         .fetch_author(ROMIRA_NEWT_AUTHOR_ID)
