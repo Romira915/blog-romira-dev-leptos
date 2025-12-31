@@ -155,16 +155,22 @@ pub(crate) async fn get_article_handler(
 ) -> Result<ArticleResponse, ServerFnError<GetArticleError>> {
     use crate::AppState;
     use crate::common::dto::ArticleResponse;
+    use crate::common::response::{set_article_page_cache_control, set_feature_page_cache_control};
     use crate::constants::get_newt_redirect_slug;
     use crate::server::http::request::is_local_features;
-    use crate::server::http::response::set_article_page_cache_control;
     use leptos_axum::ResponseOptions;
 
     let app_state = expect_context::<AppState>();
     let published_article_service = app_state.published_article_service;
     let response = expect_context::<ResponseOptions>();
 
-    set_article_page_cache_control(&response);
+    // キャッシュコントロールを設定（features=localの場合はキャッシュ無効化）
+    let is_local = is_local_features().await;
+    if is_local {
+        set_feature_page_cache_control();
+    } else {
+        set_article_page_cache_control();
+    }
 
     // 1. DB記事をslugで検索
     match published_article_service.fetch_by_slug(&id).await {
@@ -184,7 +190,6 @@ pub(crate) async fn get_article_handler(
     }
 
     // 2. Newtリダイレクトマッピングを確認（features=localの場合のみ）
-    let is_local = is_local_features().await;
     if let Some(slug) = is_local.then(|| get_newt_redirect_slug(&id)).flatten() {
         let redirect_url = format!("/articles/{}", slug);
 
