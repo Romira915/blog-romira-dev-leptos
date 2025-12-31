@@ -6,17 +6,17 @@ use crate::front::components::author_card::AuthorCard;
 use crate::front::components::header::Header;
 use leptos::prelude::*;
 use leptos_meta::Meta;
-use leptos_router::hooks::use_query_map;
 
 use super::TopPageMeta;
 use super::top_page_style;
 
 #[component]
 pub(crate) fn TopPage() -> impl IntoView {
-    let query = use_query_map();
+    use ::codee::string::FromToStringCodec;
+    use leptos_use::use_cookie;
 
-    let features = move || query.read().get("features").map(|s| s.to_string());
-    let show_local = move || features() == Some("local".to_string());
+    let (features, _set_features) = use_cookie::<String, FromToStringCodec>("features");
+    let show_local = move || features.get().as_deref() == Some("local");
 
     // キャッシュコントロールを設定（既に設定済みならスキップ）
     if show_local() {
@@ -25,12 +25,8 @@ pub(crate) fn TopPage() -> impl IntoView {
         set_top_page_cache_control();
     }
 
-    let articles = Resource::new(features, |features| async move {
-        get_articles_handler(features).await
-    });
-    let author = Resource::new(features, |features| async move {
-        get_author_handler(features).await
-    });
+    let articles = Resource::new(|| (), |_| async move { get_articles_handler().await });
+    let author = Resource::new(|| (), |_| async move { get_author_handler().await });
 
     view! {
         <TopPageMeta />

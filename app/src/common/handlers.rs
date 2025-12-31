@@ -13,11 +13,11 @@ use tracing::instrument;
 
 #[instrument]
 #[server(input = GetUrl, endpoint = "get_articles_handler")]
-pub(crate) async fn get_articles_handler(
-    features: Option<String>,
-) -> Result<Vec<HomePageArticleDto>, ServerFnError<GetArticlesError>> {
+pub(crate) async fn get_articles_handler()
+-> Result<Vec<HomePageArticleDto>, ServerFnError<GetArticlesError>> {
     use crate::AppState;
     use crate::common::response::{set_feature_page_cache_control, set_top_page_cache_control};
+    use crate::server::http::request::is_local_features;
     use leptos_axum::ResponseOptions;
 
     let app_state = expect_context::<AppState>();
@@ -27,7 +27,7 @@ pub(crate) async fn get_articles_handler(
     let published_article_service = app_state.published_article_service;
     let response = expect_context::<ResponseOptions>();
 
-    let show_local = features.as_deref() == Some("local");
+    let show_local = is_local_features().await;
 
     // キャッシュコントロールを設定（既に設定済みならスキップ）
     if show_local {
@@ -113,11 +113,11 @@ pub(crate) async fn get_articles_handler(
 
 #[instrument]
 #[server(input = GetUrl, endpoint = "get_author_handler")]
-pub(crate) async fn get_author_handler(
-    features: Option<String>,
-) -> Result<HomePageAuthorDto, ServerFnError<GetAuthorError>> {
+pub(crate) async fn get_author_handler() -> Result<HomePageAuthorDto, ServerFnError<GetAuthorError>>
+{
     use crate::AppState;
     use crate::common::response::{set_feature_page_cache_control, set_top_page_cache_control};
+    use crate::server::http::request::is_local_features;
     use leptos_axum::ResponseOptions;
 
     let app_state = expect_context::<AppState>();
@@ -125,7 +125,7 @@ pub(crate) async fn get_author_handler(
     let response = expect_context::<ResponseOptions>();
 
     // キャッシュコントロールを設定（既に設定済みならスキップ）
-    if features == Some("local".to_string()) {
+    if is_local_features().await {
         set_feature_page_cache_control();
     } else {
         set_top_page_cache_control();
@@ -152,82 +152,61 @@ pub(crate) async fn get_author_handler(
 #[server(input = GetUrl, endpoint = "get_article_handler")]
 pub(crate) async fn get_article_handler(
     id: String,
-    features: Option<String>,
 ) -> Result<ArticleResponse, ServerFnError<GetArticleError>> {
     use crate::AppState;
     use crate::common::dto::ArticleResponse;
     use crate::constants::get_newt_redirect_slug;
+    use crate::server::http::request::is_local_features;
     use crate::server::http::response::set_article_page_cache_control;
     use leptos_axum::ResponseOptions;
 
     let app_state = expect_context::<AppState>();
+    let published_article_service = app_state.published_article_service;
     let response = expect_context::<ResponseOptions>();
 
     set_article_page_cache_control(&response);
 
-    let is_local = features.as_deref() == Some("local");
-
-    if is_local {
-        // features=local: DB記事表示 + Newtアクセス時リダイレクト
-        let published_article_service = app_state.published_article_service;
-
-        // 1. DB記事をslugで検索
-        match published_article_service.fetch_by_slug(&id).await {
-            Ok(Some(article)) => {
-                return Ok(ArticleResponse::Found(ArticlePageDto::from(article)));
-            }
-            Ok(None) => {}
-            Err(err) => {
-                response.set_status(StatusCode::INTERNAL_SERVER_ERROR);
-                tracing::error!(error = err.to_string(), "Failed to get article from DB");
-                return Err(ServerFnError::from(GetArticleError::DatabaseError(
-                    "Failed to get article from DB".to_string(),
-                )));
-            }
+    // 1. DB記事をslugで検索
+    match published_article_service.fetch_by_slug(&id).await {
+        Ok(Some(article)) => {
+            return Ok(ArticleResponse::Found(ArticlePageDto::from(article)));
         }
-
-        // 2. Newtリダイレクトマッピングを確認
-        if let Some(slug) = get_newt_redirect_slug(&id) {
-            let redirect_url = format!("/articles/{}", slug);
-
-            if crate::server::http::request::is_ssr_request().await {
-                response.set_status(StatusCode::MOVED_PERMANENTLY);
-                response.insert_header(
-                    axum::http::header::LOCATION,
-                    axum::http::HeaderValue::from_str(&redirect_url).unwrap(),
-                );
-            }
-
-            return Ok(ArticleResponse::Redirect(redirect_url));
+        Ok(None) => {
+            // DB記事が見つからない場合、リダイレクトマッピングを確認
         }
-    } else {
-        // featuresなし: Newtから取得のみ
-        let newt_article_service = app_state.newt_article_service;
-
-        match newt_article_service.fetch_published_article(&id).await {
-            Ok(Some(article)) => {
-                return Ok(ArticleResponse::Found(ArticlePageDto::from(article)));
-            }
-            Ok(None) => {}
-            Err(err) => {
-                response.set_status(StatusCode::INTERNAL_SERVER_ERROR);
-                tracing::error!(error = err.to_string(), "Failed to get article from Newt");
-                return Err(ServerFnError::from(
-                    GetArticleError::NewtArticleServiceGetArticle(
-                        "Failed to get article from Newt".to_string(),
-                    ),
-                ));
-            }
+        Err(err) => {
+            response.set_status(StatusCode::INTERNAL_SERVER_ERROR);
+            tracing::error!(error = err.to_string(), "Failed to get article from DB");
+            return Err(ServerFnError::from(GetArticleError::DatabaseError(
+                "Failed to get article from DB".to_string(),
+            )));
         }
     }
 
-    // 見つからない場合は404
+    // 2. Newtリダイレクトマッピングを確認（features=localの場合のみ）
+    let is_local = is_local_features().await;
+    if let Some(slug) = is_local.then(|| get_newt_redirect_slug(&id)).flatten() {
+        let redirect_url = format!("/articles/{}", slug);
+
+        // SSR時（Accept: text/html）のみ301リダイレクト
+        if crate::server::http::request::is_ssr_request().await {
+            response.set_status(StatusCode::MOVED_PERMANENTLY);
+            response.insert_header(
+                axum::http::header::LOCATION,
+                axum::http::HeaderValue::from_str(&redirect_url).unwrap(),
+            );
+        }
+
+        // クライアントナビゲーション時：ClientRedirectで処理
+        return Ok(ArticleResponse::Redirect(redirect_url));
+    }
+
+    // 3. 見つからない場合は404（SSR時のみステータス設定）
     if crate::server::http::request::is_ssr_request().await {
         response.set_status(StatusCode::NOT_FOUND);
     }
     Ok(ArticleResponse::NotFound(()))
 }
-
 #[instrument]
 #[server(input = GetUrl, endpoint = "get_preview_article_handler")]
 pub(crate) async fn get_preview_article_handler(
