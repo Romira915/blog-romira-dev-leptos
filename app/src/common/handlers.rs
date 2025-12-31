@@ -152,6 +152,7 @@ pub(crate) async fn get_author_handler(
 #[server(input = GetUrl, endpoint = "get_article_handler")]
 pub(crate) async fn get_article_handler(
     id: String,
+    features: Option<String>,
 ) -> Result<ArticleResponse, ServerFnError<GetArticleError>> {
     use crate::AppState;
     use crate::common::dto::ArticleResponse;
@@ -182,8 +183,9 @@ pub(crate) async fn get_article_handler(
         }
     }
 
-    // 2. Newtリダイレクトマッピングを確認
-    if let Some(slug) = get_newt_redirect_slug(&id) {
+    // 2. Newtリダイレクトマッピングを確認（features=localの場合のみ）
+    let is_local = features.as_deref() == Some("local");
+    if let Some(slug) = is_local.then(|| get_newt_redirect_slug(&id)).flatten() {
         let redirect_url = format!("/articles/{}", slug);
 
         // SSR時（Accept: text/html）のみ301リダイレクト
