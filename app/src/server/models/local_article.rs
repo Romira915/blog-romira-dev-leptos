@@ -30,7 +30,7 @@ impl From<PublishedArticleWithCategories> for HomePageArticleDto {
                     .as_deref()
                     .unwrap_or(THUMBNAIL_NO_IMAGE_URL),
             )),
-            src: RwSignal::new(format!("/articles/{}", article.id)),
+            src: RwSignal::new(format!("/articles/{}", article.slug)),
             category: value
                 .categories
                 .iter()
