@@ -19,3 +19,15 @@ pub(crate) const DATE_DISPLAY_FORMAT: &str = "%Y年%m月%d日";
 pub(crate) const ROMIRA_GITHUB_URL: &str = "https://github.com/Romira915";
 pub(crate) const ROMIRA_X_URL: &str = "https://x.com/Romira915";
 pub(crate) const QIITA_BASE_URL: &str = "https://qiita.com";
+
+/// Newt記事IDからDB記事のslugへのマッピング
+/// 旧Newt記事URLを新しいDB記事URLにリダイレクトするために使用
+pub(crate) fn get_newt_redirect_slug(newt_id: &str) -> Option<&'static str> {
+    match newt_id {
+        "643a5bed729275004e0392ce" => Some("i-created-a-blog-site-in-rust"),
+        "65a38cfdcc42e4d4373f7ef0" => Some("rust-dioxus-axum-ssr"),
+        "67602c172e1a9fe4e94472af" => Some("managing-wsl-development-environment-with-ansible"),
+        "678b18b1cfd7179e06d90285" => Some("reimplemented-my-blog-site-using-leptos"),
+        _ => None,
+    }
+}

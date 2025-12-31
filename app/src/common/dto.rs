@@ -32,6 +32,14 @@ pub struct ArticlePageDto {
     pub(crate) article_meta_dto: ArticleMetaDto,
 }
 
+/// 記事取得の結果
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum ArticleResponse {
+    Found(ArticlePageDto),
+    Redirect(String),
+    NotFound(()),
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ArticleDetailDto {
     pub(crate) title: RwSignal<String>,

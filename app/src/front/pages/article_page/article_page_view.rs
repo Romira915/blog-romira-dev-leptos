@@ -1,11 +1,12 @@
+use crate::common::dto::ArticleResponse;
 use crate::common::handlers::get_article_handler;
 use crate::common::response::set_article_page_cache_control;
 use crate::front::components::article_detail::ArticleDetail;
 use crate::front::components::header::Header;
 use crate::front::components::not_found::NotFound;
 use leptos::prelude::*;
-use leptos_router::hooks::use_params_map;
-use std::error::Error;
+use leptos_router::NavigateOptions;
+use leptos_router::hooks::{use_navigate, use_params_map};
 
 use super::ArticlePageMeta;
 
@@ -25,9 +26,9 @@ pub(crate) fn ArticlePage() -> impl IntoView {
         }>
             {move || {
                 article
-                    .map(|article| {
-                        match article {
-                            Ok(Some(article)) => {
+                    .map(|response| {
+                        match response {
+                            Ok(ArticleResponse::Found(article)) => {
                                 view! {
                                     <ArticlePageMeta meta=article.article_meta_dto.clone() />
                                     <ArticleDetail article=article.article_detail_dto.clone() />
@@ -37,13 +38,31 @@ pub(crate) fn ArticlePage() -> impl IntoView {
                                 }
                                     .into_any()
                             }
-                            Ok(None) => view! { <NotFound /> }.into_any(),
-                            Err(e) => {
-                                view! { <p>{format!("Error: {:?}", e.source())}</p> }.into_any()
+                            Ok(ArticleResponse::Redirect(url)) => {
+                                view! { <ClientRedirect url=url.clone() /> }.into_any()
                             }
+                            Ok(ArticleResponse::NotFound(())) => view! { <NotFound /> }.into_any(),
+                            Err(e) => view! { <p>{format!("Error: {}", e)}</p> }.into_any(),
                         }
                     })
             }}
         </Suspense>
     }
+}
+
+/// クライアントサイドリダイレクト（replace: trueで履歴を置き換え）
+#[allow(clippy::unused_unit)]
+#[component]
+fn ClientRedirect(url: String) -> impl IntoView {
+    let navigate = use_navigate();
+    Effect::new(move |_| {
+        navigate(
+            &url,
+            NavigateOptions {
+                replace: true,
+                ..Default::default()
+            },
+        );
+    });
+    ()
 }
