@@ -100,6 +100,7 @@ impl NewtArticleService {
         Ok(Some(article))
     }
 
+    #[allow(dead_code)] // TODO: Newt終了後に削除
     #[instrument]
     pub(crate) async fn fetch_published_article<T>(
         &self,

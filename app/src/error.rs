@@ -66,6 +66,8 @@ impl FromStr for GetAuthorError {
 pub enum GetArticleError {
     #[error("Failed to get article from NewtArticleService: {0}")]
     NewtArticleServiceGetArticle(String),
+    #[error("Failed to get article from DB: {0}")]
+    DatabaseError(String),
     #[error("Unknown error: {0}")]
     Unknown(String),
 }

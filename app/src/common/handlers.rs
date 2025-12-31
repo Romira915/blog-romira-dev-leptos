@@ -1,7 +1,7 @@
 pub mod admin;
 pub(crate) mod auth;
 
-use crate::common::dto::{ArticlePageDto, HomePageArticleDto, HomePageAuthorDto};
+use crate::common::dto::{ArticlePageDto, ArticleResponse, HomePageArticleDto, HomePageAuthorDto};
 use crate::constants::ROMIRA_NEWT_AUTHOR_ID;
 use crate::error::{GetArticleError, GetArticlesError, GetAuthorError};
 use leptos::prelude::*;
@@ -152,39 +152,56 @@ pub(crate) async fn get_author_handler(
 #[server(input = GetUrl, endpoint = "get_article_handler")]
 pub(crate) async fn get_article_handler(
     id: String,
-) -> Result<Option<ArticlePageDto>, ServerFnError<GetArticleError>> {
+) -> Result<ArticleResponse, ServerFnError<GetArticleError>> {
     use crate::AppState;
+    use crate::common::dto::ArticleResponse;
+    use crate::constants::get_newt_redirect_slug;
     use crate::server::http::response::set_article_page_cache_control;
     use leptos_axum::ResponseOptions;
 
     let app_state = expect_context::<AppState>();
-    let newt_article_service = app_state.newt_article_service;
+    let published_article_service = app_state.published_article_service;
     let response = expect_context::<ResponseOptions>();
 
     set_article_page_cache_control(&response);
 
-    let article = newt_article_service.fetch_published_article(&id).await;
-    let article = match article {
-        Ok(article) => article,
+    // 1. DB記事をslugで検索
+    match published_article_service.fetch_by_slug(&id).await {
+        Ok(Some(article)) => {
+            return Ok(ArticleResponse::Found(ArticlePageDto::from(article)));
+        }
+        Ok(None) => {
+            // DB記事が見つからない場合、リダイレクトマッピングを確認
+        }
         Err(err) => {
             response.set_status(StatusCode::INTERNAL_SERVER_ERROR);
-            tracing::error!(
-                error = err.to_string(),
-                "Failed to get article from NewtArticleService",
-            );
-            return Err(ServerFnError::from(
-                GetArticleError::NewtArticleServiceGetArticle(
-                    "Failed to get article from NewtArticleService".to_string(),
-                ),
-            ));
+            tracing::error!(error = err.to_string(), "Failed to get article from DB");
+            return Err(ServerFnError::from(GetArticleError::DatabaseError(
+                "Failed to get article from DB".to_string(),
+            )));
         }
-    };
-
-    if article.is_none() {
-        response.set_status(StatusCode::NOT_FOUND);
     }
 
-    Ok(article.map(ArticlePageDto::from))
+    // 2. Newtリダイレクトマッピングを確認
+    if let Some(slug) = get_newt_redirect_slug(&id) {
+        let redirect_url = format!("/articles/{}", slug);
+
+        // SSR時（Accept: text/html）のみ301リダイレクト
+        if crate::server::http::request::is_ssr_request().await {
+            response.set_status(StatusCode::MOVED_PERMANENTLY);
+            response.insert_header(
+                axum::http::header::LOCATION,
+                axum::http::HeaderValue::from_str(&redirect_url).unwrap(),
+            );
+        }
+
+        // クライアントナビゲーション時：ClientRedirectで処理
+        return Ok(ArticleResponse::Redirect(redirect_url));
+    }
+
+    // 3. 見つからない場合は404
+    response.set_status(StatusCode::NOT_FOUND);
+    Ok(ArticleResponse::NotFound(()))
 }
 
 #[instrument]
