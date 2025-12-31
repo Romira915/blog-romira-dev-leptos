@@ -14,12 +14,10 @@ use tracing::instrument;
 #[instrument]
 #[server(input = GetUrl, endpoint = "get_articles_handler")]
 pub(crate) async fn get_articles_handler(
-    preview: Option<String>,
+    features: Option<String>,
 ) -> Result<Vec<HomePageArticleDto>, ServerFnError<GetArticlesError>> {
     use crate::AppState;
-    use crate::server::http::response::{
-        set_preview_article_page_cache_control, set_top_page_cache_control,
-    };
+    use crate::common::response::{set_feature_page_cache_control, set_top_page_cache_control};
     use leptos_axum::ResponseOptions;
 
     let app_state = expect_context::<AppState>();
@@ -29,12 +27,13 @@ pub(crate) async fn get_articles_handler(
     let published_article_service = app_state.published_article_service;
     let response = expect_context::<ResponseOptions>();
 
-    let show_local = preview.as_deref() == Some("local");
+    let show_local = features.as_deref() == Some("local");
 
+    // キャッシュコントロールを設定（既に設定済みならスキップ）
     if show_local {
-        set_preview_article_page_cache_control(&response);
+        set_feature_page_cache_control();
     } else {
-        set_top_page_cache_control(&response);
+        set_top_page_cache_control();
     }
 
     let newt_articles = newt_article_service.fetch_published_articles().await;
@@ -95,7 +94,7 @@ pub(crate) async fn get_articles_handler(
     articles.extend(wordpress_articles.into_iter().map(HomePageArticleDto::from));
     articles.extend(qiita_articles.into_iter().map(HomePageArticleDto::from));
 
-    // preview=local の場合、DB記事も含める
+    // features=local の場合、DB記事も含める
     if show_local {
         match published_article_service.fetch_all().await {
             Ok(local_articles) => {
@@ -114,17 +113,23 @@ pub(crate) async fn get_articles_handler(
 
 #[instrument]
 #[server(input = GetUrl, endpoint = "get_author_handler")]
-pub(crate) async fn get_author_handler() -> Result<HomePageAuthorDto, ServerFnError<GetAuthorError>>
-{
+pub(crate) async fn get_author_handler(
+    features: Option<String>,
+) -> Result<HomePageAuthorDto, ServerFnError<GetAuthorError>> {
     use crate::AppState;
-    use crate::server::http::response::set_top_page_cache_control;
+    use crate::common::response::{set_feature_page_cache_control, set_top_page_cache_control};
     use leptos_axum::ResponseOptions;
 
     let app_state = expect_context::<AppState>();
     let newt_article_service = app_state.newt_article_service;
     let response = expect_context::<ResponseOptions>();
 
-    set_top_page_cache_control(&response);
+    // キャッシュコントロールを設定（既に設定済みならスキップ）
+    if features == Some("local".to_string()) {
+        set_feature_page_cache_control();
+    } else {
+        set_top_page_cache_control();
+    }
 
     let author = newt_article_service
         .fetch_author(ROMIRA_NEWT_AUTHOR_ID)
