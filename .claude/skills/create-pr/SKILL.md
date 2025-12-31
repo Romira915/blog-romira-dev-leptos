@@ -12,7 +12,9 @@ allowed-tools: Bash(git:*), Bash(gh:*)
 
 1. 現在のブランチとmainの差分を確認
 2. 変更内容を要約したPRタイトル・本文を作成
-3. `gh pr create`でPRを作成
+3. pushされていなければ先にpushする
+4. `gh pr create --assignee @me` でPRを作成（Assignee は必ず @me を設定）
+5. PRのURLを表示する
 
 ## PR Format
 
@@ -30,6 +32,4 @@ Title: 簡潔な日本語タイトル
 
 - ベースブランチは `main`
 - タイトル・本文は日本語
-- pushされていなければ先にpushする
-- `--assignee @me` でauthorを自分に設定
-- PRのURLを最後に表示する
+- **Assignee は必ず `@me` を設定すること**
