@@ -156,12 +156,12 @@ pub(crate) async fn get_article_handler(
     use crate::AppState;
     use crate::common::dto::ArticleResponse;
     use crate::common::response::{set_article_page_cache_control, set_feature_page_cache_control};
-    use crate::constants::get_newt_redirect_slug;
     use crate::server::http::request::is_local_features;
     use leptos_axum::ResponseOptions;
 
     let app_state = expect_context::<AppState>();
     let published_article_service = app_state.published_article_service;
+    let newt_article_service = app_state.newt_article_service;
     let response = expect_context::<ResponseOptions>();
 
     // キャッシュコントロールを設定（features=localの場合はキャッシュ無効化）
@@ -189,21 +189,18 @@ pub(crate) async fn get_article_handler(
         }
     }
 
-    // 2. Newtリダイレクトマッピングを確認（features=localの場合のみ）
-    if let Some(slug) = is_local.then(|| get_newt_redirect_slug(&id)).flatten() {
-        let redirect_url = format!("/articles/{}", slug);
-
-        // SSR時（Accept: text/html）のみ301リダイレクト
-        if crate::server::http::request::is_ssr_request().await {
-            response.set_status(StatusCode::MOVED_PERMANENTLY);
-            response.insert_header(
-                axum::http::header::LOCATION,
-                axum::http::HeaderValue::from_str(&redirect_url).unwrap(),
-            );
+    // 2. Newtから記事を取得（フォールバック）
+    match newt_article_service.fetch_published_article(&id).await {
+        Ok(Some(article)) => {
+            return Ok(ArticleResponse::Found(ArticlePageDto::from(article)));
         }
-
-        // クライアントナビゲーション時：ClientRedirectで処理
-        return Ok(ArticleResponse::Redirect(redirect_url));
+        Ok(None) => {
+            // Newt記事も見つからない場合は404
+        }
+        Err(err) => {
+            tracing::warn!(error = err.to_string(), "Failed to get article from Newt");
+            // Newtエラーは404として扱う
+        }
     }
 
     // 3. 見つからない場合は404（SSR時のみステータス設定）
