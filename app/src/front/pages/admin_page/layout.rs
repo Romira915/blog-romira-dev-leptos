@@ -8,8 +8,38 @@ import_style!(style, "layout.module.scss");
 
 #[component]
 pub fn AdminLayout(children: Children) -> impl IntoView {
+    use ::codee::string::FromToStringCodec;
+    use leptos_use::UseCookieOptions;
+    use leptos_use::use_cookie_with_options;
+
     let auth_user = OnceResource::new(get_auth_user());
     let oauth_configured = OnceResource::new(is_oauth_configured());
+
+    // features Cookie管理
+    let (features, set_features) = use_cookie_with_options::<String, FromToStringCodec>(
+        "features",
+        UseCookieOptions::default().path("/"),
+    );
+    let is_local = move || features.get().as_deref() == Some("local");
+
+    let toggle_local = move |_| {
+        use leptos::prelude::document;
+        use leptos::wasm_bindgen::JsCast;
+        use leptos::web_sys::HtmlDocument;
+        if is_local() {
+            set_features.set(None);
+            // 直接DOMでCookieを削除
+            if let Some(doc) = document().dyn_ref::<HtmlDocument>() {
+                let _ = doc.set_cookie("features=; path=/; max-age=0");
+            }
+        } else {
+            set_features.set(Some("local".to_string()));
+            // 直接DOMでCookieを設定
+            if let Some(doc) = document().dyn_ref::<HtmlDocument>() {
+                let _ = doc.set_cookie("features=local; path=/");
+            }
+        }
+    };
 
     // Store children to use multiple times
     let children_view = children();
@@ -32,6 +62,17 @@ pub fn AdminLayout(children: Children) -> impl IntoView {
                         </a>
                     </li>
                 </ul>
+                <div class=style::features_toggle>
+                    <label class=style::toggle_label>
+                        <input
+                            type="checkbox"
+                            checked=is_local
+                            on:change=toggle_local
+                            class=style::toggle_checkbox
+                        />
+                        <span class=style::toggle_text>"ローカル記事表示"</span>
+                    </label>
+                </div>
                 <div class=style::auth_section>
                     <Suspense fallback=|| ()>
                         {move || {

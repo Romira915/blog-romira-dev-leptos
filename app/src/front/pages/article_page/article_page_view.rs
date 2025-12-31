@@ -6,7 +6,7 @@ use crate::front::components::header::Header;
 use crate::front::components::not_found::NotFound;
 use leptos::prelude::*;
 use leptos_router::NavigateOptions;
-use leptos_router::hooks::{use_navigate, use_params_map, use_query_map};
+use leptos_router::hooks::{use_navigate, use_params_map};
 
 use super::ArticlePageMeta;
 
@@ -15,14 +15,9 @@ pub(crate) fn ArticlePage() -> impl IntoView {
     set_article_page_cache_control();
 
     let params = use_params_map();
-    let query = use_query_map();
     let id = move || params.read().get("id").unwrap_or_default();
-    let features = move || query.read().get("features");
 
-    let article = Resource::new(
-        move || (id(), features()),
-        move |(id, features)| async move { get_article_handler(id, features).await },
-    );
+    let article = Resource::new(id, move |id| async move { get_article_handler(id).await });
 
     view! {
         <Header is_h1=false />
