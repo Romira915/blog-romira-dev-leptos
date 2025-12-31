@@ -51,6 +51,31 @@
     overflow-y: auto;
 }
 
+.features_toggle {
+    margin-top: 1.5rem;
+    padding: 0.75rem;
+    background-color: var(--sidebar-hover);
+    border-radius: 4px;
+}
+
+.toggle_label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+}
+
+.toggle_checkbox {
+    width: 1rem;
+    height: 1rem;
+    cursor: pointer;
+}
+
+.toggle_text {
+    font-size: 0.875rem;
+    color: var(--sidebar-text);
+}
+
 .auth_section {
     margin-top: auto;
     padding-top: 2rem;
