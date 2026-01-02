@@ -1,23 +1,12 @@
 use leptos::prelude::*;
 
 use super::style;
+use crate::common::markdown::convert_markdown_to_html;
 use crate::front::components::article_detail::article_body_style;
 
 #[component]
 pub fn MarkdownPreview(content: RwSignal<String>) -> impl IntoView {
-    let html_content = move || {
-        use comrak::{Options, markdown_to_html};
-
-        let markdown = content.get();
-        let mut options = Options::default();
-        options.extension.strikethrough = true;
-        options.extension.table = true;
-        options.extension.autolink = true;
-        options.extension.tasklist = true;
-        options.extension.header_ids = None;
-
-        markdown_to_html(&markdown, &options)
-    };
+    let html_content = move || convert_markdown_to_html(&content.get());
 
     view! {
         <div
