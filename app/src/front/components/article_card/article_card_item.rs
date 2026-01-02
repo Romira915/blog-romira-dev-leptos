@@ -6,7 +6,7 @@ use super::article_card_style;
 #[component]
 pub(crate) fn ArticleCard(article: HomePageArticleDto) -> impl IntoView {
     let (a_target, a_ref) = match article.article_source {
-        ArticleSource::Newt => ("", ""),
+        ArticleSource::Newt | ArticleSource::Local => ("", ""),
         _ => ("_blank", "noopener noreferrer"),
     };
 
