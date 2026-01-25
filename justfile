@@ -23,6 +23,7 @@ setup_leptosfmt:
 
 watch:
     #!/bin/bash -eux
+    docker compose up -d
     stylance --watch ./app &
     RUST_BACKTRACE=1 cargo leptos watch --hot-reload &
     trap "kill %1; kill %2" EXIT

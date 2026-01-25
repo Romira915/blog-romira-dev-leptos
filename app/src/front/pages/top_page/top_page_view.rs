@@ -1,28 +1,24 @@
 use crate::common::handlers::{get_articles_handler, get_author_handler};
-use crate::common::response::{set_feature_page_cache_control, set_top_page_cache_control};
 use crate::constants::{ROMIRA_GITHUB_URL, ROMIRA_X_URL};
 use crate::front::components::article_card::ArticleCardList;
 use crate::front::components::author_card::AuthorCard;
 use crate::front::components::header::Header;
 use leptos::prelude::*;
-use leptos_meta::Meta;
 
 use super::TopPageMeta;
 use super::top_page_style;
 
 #[component]
 pub(crate) fn TopPage() -> impl IntoView {
-    use ::codee::string::FromToStringCodec;
-    use leptos_use::use_cookie;
-
-    let (features, _set_features) = use_cookie::<String, FromToStringCodec>("features");
-    let show_local = move || features.get().as_deref() == Some("local");
-
-    // キャッシュコントロールを設定（既に設定済みならスキップ）
-    if show_local() {
-        set_feature_page_cache_control();
-    } else {
-        set_top_page_cache_control();
+    // SSR時のみキャッシュコントロールを設定
+    #[cfg(feature = "ssr")]
+    {
+        use crate::common::response::{set_feature_page_cache_control, set_top_page_cache_control};
+        if crate::server::http::request::is_local_features_sync() {
+            set_feature_page_cache_control();
+        } else {
+            set_top_page_cache_control();
+        }
     }
 
     let articles = Resource::new(|| (), |_| async move { get_articles_handler().await });
@@ -30,9 +26,6 @@ pub(crate) fn TopPage() -> impl IntoView {
 
     view! {
         <TopPageMeta />
-        <Show when=show_local>
-            <Meta name="robots" content="noindex, nofollow" />
-        </Show>
         <Header is_h1=true />
         <section class=top_page_style::home_page>
             <Suspense fallback=|| {
