@@ -19,6 +19,26 @@ pub(crate) async fn is_local_features() -> bool {
     get_features_cookie().await.as_deref() == Some("local")
 }
 
+/// features=local Cookieが設定されているかを同期的に判定する
+/// leptos_axumが提供するリクエストPartsコンテキストから読み取る
+pub(crate) fn is_local_features_sync() -> bool {
+    use leptos::prelude::use_context;
+
+    use_context::<axum::http::request::Parts>()
+        .and_then(|parts| {
+            let cookie_header = parts.headers.get(axum::http::header::COOKIE)?;
+            let cookie_str = cookie_header.to_str().ok()?;
+            for part in cookie_str.split(';') {
+                let part = part.trim();
+                if part.strip_prefix("features=") == Some("local") {
+                    return Some(true);
+                }
+            }
+            None
+        })
+        .unwrap_or(false)
+}
+
 /// SSRリクエストかどうかを判定する
 /// Accept: text/html を含む場合はSSR（ブラウザからの直接アクセス）
 pub(crate) async fn is_ssr_request() -> bool {
