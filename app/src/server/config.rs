@@ -16,6 +16,10 @@ pub struct ServerConfig {
     pub google_client_secret: Option<String>,
     #[serde(default)]
     pub app_url: Option<String>, // e.g., "http://localhost:3000" or "https://blog.romira.dev"
+    // GCS / imgix (required for image upload)
+    pub gcs_bucket: String,
+    pub gcs_service_account_key_json: String,
+    pub imgix_domain: String, // e.g., "blog-romira.imgix.net"
 }
 
 #[cfg(feature = "ssr")]

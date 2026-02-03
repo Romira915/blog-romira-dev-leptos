@@ -1,0 +1,58 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT filename, gcs_path, mime_type, size_bytes, width, height, alt_text FROM images WHERE id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "filename",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 1,
+        "name": "gcs_path",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "mime_type",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 3,
+        "name": "size_bytes",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 4,
+        "name": "width",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 5,
+        "name": "height",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 6,
+        "name": "alt_text",
+        "type_info": "Varchar"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "73feab4609d701a9983e5cfc3d61ed5f140b03d70d640609aa37c4a89f1e8959"
+}

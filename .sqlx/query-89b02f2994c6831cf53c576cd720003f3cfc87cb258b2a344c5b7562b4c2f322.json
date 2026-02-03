@@ -1,0 +1,68 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT id, filename, gcs_path, mime_type, size_bytes, width, height, alt_text,\n                   created_at as \"created_at: _\"\n            FROM images\n            ORDER BY created_at DESC\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "filename",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "gcs_path",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 3,
+        "name": "mime_type",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 4,
+        "name": "size_bytes",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 5,
+        "name": "width",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 6,
+        "name": "height",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 7,
+        "name": "alt_text",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 8,
+        "name": "created_at: _",
+        "type_info": "Timestamp"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      false
+    ]
+  },
+  "hash": "89b02f2994c6831cf53c576cd720003f3cfc87cb258b2a344c5b7562b4c2f322"
+}

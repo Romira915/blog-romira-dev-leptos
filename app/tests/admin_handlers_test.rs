@@ -40,7 +40,7 @@ fn build_test_router(app_state: AppState) -> Router {
 /// テスト用のAppStateを作成
 fn create_test_app_state(pool: PgPool) -> AppState {
     let conf = get_configuration(Some("../Cargo.toml")).expect("Failed to get configuration");
-    AppState::new(conf.leptos_options, pool)
+    AppState::new_for_test(conf.leptos_options, pool)
 }
 
 // =====================================

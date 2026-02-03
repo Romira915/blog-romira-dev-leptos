@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "INSERT INTO draft_articles (slug, title, body, created_at, updated_at) VALUES ($1, $2, $3, $4, $4) RETURNING id",
+  "query": "INSERT INTO images (filename, gcs_path, mime_type, size_bytes, created_at) VALUES ($1, $2, $3, $4, $5) RETURNING id",
   "describe": {
     "columns": [
       {
@@ -13,7 +13,8 @@
       "Left": [
         "Varchar",
         "Varchar",
-        "Text",
+        "Varchar",
+        "Int8",
         "Timestamp"
       ]
     },
@@ -21,5 +22,5 @@
       false
     ]
   },
-  "hash": "ca4a2affa915ae76a10320d895063156d3e696137f7c01d0ca21dab56050040c"
+  "hash": "7d0c1f11ece91d43b7674ea4752679f43774ebd2e567a8cada547125780b8dbc"
 }

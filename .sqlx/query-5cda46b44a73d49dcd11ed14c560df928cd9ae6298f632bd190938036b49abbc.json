@@ -1,0 +1,34 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT width, height, alt_text FROM images WHERE id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "width",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 1,
+        "name": "height",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 2,
+        "name": "alt_text",
+        "type_info": "Varchar"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "5cda46b44a73d49dcd11ed14c560df928cd9ae6298f632bd190938036b49abbc"
+}

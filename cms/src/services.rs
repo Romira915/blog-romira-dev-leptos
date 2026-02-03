@@ -1,9 +1,11 @@
 mod admin_article;
 mod draft_article;
+mod image;
 mod published_article;
 
 pub use admin_article::AdminArticleService;
 pub use draft_article::DraftArticleService;
+pub use image::ImageService;
 pub use published_article::PublishedArticleService;
 
 use chrono::{NaiveDateTime, Utc};

@@ -10,10 +10,12 @@ pub mod value_objects;
 
 pub use error::CmsError;
 pub use models::{
-    ArticleListItem, Category, DraftArticle, DraftArticleWithCategories, PublishedArticle,
+    ArticleListItem, Category, DraftArticle, DraftArticleWithCategories, Image, PublishedArticle,
     PublishedArticleWithCategories,
 };
-pub use queries::{AdminArticleQuery, DraftArticleQuery, PublishedArticleQuery};
-pub use repositories::{DraftArticleRepository, PublishedArticleRepository};
-pub use services::{AdminArticleService, DraftArticleService, PublishedArticleService};
+pub use queries::{AdminArticleQuery, DraftArticleQuery, ImageQuery, PublishedArticleQuery};
+pub use repositories::{DraftArticleRepository, ImageRepository, PublishedArticleRepository};
+pub use services::{
+    AdminArticleService, DraftArticleService, ImageService, PublishedArticleService,
+};
 pub use value_objects::{PublishedArticleSlug, PublishedArticleTitle};
