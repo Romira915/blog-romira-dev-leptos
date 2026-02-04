@@ -61,7 +61,7 @@ impl AppState {
             published_article_service: PublishedArticleService::new(db_pool.clone()),
             draft_article_service: DraftArticleService::new(db_pool.clone()),
             admin_article_service: AdminArticleService::new(db_pool.clone()),
-            image_service: ImageService::new(db_pool),
+            image_service: ImageService::new(db_pool, SERVER_CONFIG.gcs_path_prefix.clone()),
             gcs_signing_service,
             imgix_service,
         }
@@ -120,7 +120,7 @@ impl AppState {
             published_article_service: PublishedArticleService::new(db_pool.clone()),
             draft_article_service: DraftArticleService::new(db_pool.clone()),
             admin_article_service: AdminArticleService::new(db_pool.clone()),
-            image_service: ImageService::new(db_pool),
+            image_service: ImageService::new(db_pool, "test".to_string()),
             gcs_signing_service: GcsSigningService::new_stub("test-bucket".to_string()),
             imgix_service: ImgixService::new("test.imgix.net".to_string()),
         }

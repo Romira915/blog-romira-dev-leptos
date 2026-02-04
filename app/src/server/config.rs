@@ -19,7 +19,8 @@ pub struct ServerConfig {
     // GCS / imgix (required for image upload)
     pub gcs_bucket: String,
     pub gcs_service_account_key_json: String,
-    pub imgix_domain: String, // e.g., "blog-romira.imgix.net"
+    pub imgix_domain: String,    // e.g., "blog-romira.imgix.net"
+    pub gcs_path_prefix: String, // e.g., "dev" or "prod"
 }
 
 #[cfg(feature = "ssr")]

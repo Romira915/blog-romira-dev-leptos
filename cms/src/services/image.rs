@@ -18,11 +18,12 @@ const MAX_FILE_SIZE: i64 = 10 * 1024 * 1024;
 #[derive(Debug, Clone)]
 pub struct ImageService {
     pool: PgPool,
+    path_prefix: String,
 }
 
 impl ImageService {
-    pub fn new(pool: PgPool) -> Self {
-        Self { pool }
+    pub fn new(pool: PgPool, path_prefix: String) -> Self {
+        Self { pool, path_prefix }
     }
 
     /// 全画像を取得
@@ -65,10 +66,10 @@ impl ImageService {
         Ok(())
     }
 
-    /// ファイル名からGCSオブジェクトパスを生成（UUID v7 + 元のファイル名）
-    pub fn generate_gcs_path(filename: &str) -> String {
+    /// ファイル名からGCSオブジェクトパスを生成（prefix + UUID v7 + 元のファイル名）
+    pub fn generate_gcs_path(&self, filename: &str) -> String {
         let uuid = Uuid::now_v7();
-        format!("images/{}/{}", uuid, filename)
+        format!("{}/images/{}/{}", self.path_prefix, uuid, filename)
     }
 
     /// 画像を登録（バリデーション付き）
@@ -160,20 +161,24 @@ mod tests {
         assert!(matches!(result, Err(CmsError::ValidationError(_))));
     }
 
-    #[test]
-    fn test_generate_gcs_pathでuuid付きパスが生成されること() {
-        let path = ImageService::generate_gcs_path("test.jpg");
-        assert!(path.starts_with("images/"));
+    #[sqlx::test]
+    async fn test_generate_gcs_pathでprefix付きuuidパスが生成されること(pool: PgPool) {
+        let service = ImageService::new(pool, "dev".to_string());
+        let path = service.generate_gcs_path("test.jpg");
+        assert!(path.starts_with("dev/images/"));
         assert!(path.ends_with("/test.jpg"));
-        // UUID v7部分が存在する（images/ と /test.jpg の間）
+        // {prefix}/images/{uuid}/{filename} の4パート
         let parts: Vec<&str> = path.split('/').collect();
-        assert_eq!(parts.len(), 3);
-        assert!(Uuid::parse_str(parts[1]).is_ok());
+        assert_eq!(parts.len(), 4);
+        assert_eq!(parts[0], "dev");
+        assert_eq!(parts[1], "images");
+        assert!(Uuid::parse_str(parts[2]).is_ok());
+        assert_eq!(parts[3], "test.jpg");
     }
 
     #[sqlx::test]
     async fn test_createで画像が作成されること(pool: PgPool) {
-        let service = ImageService::new(pool.clone());
+        let service = ImageService::new(pool.clone(), "test".to_string());
 
         let image_id = service
             .create(
@@ -199,7 +204,7 @@ mod tests {
 
     #[sqlx::test]
     async fn test_createで重複gcs_pathがエラーになること(pool: PgPool) {
-        let service = ImageService::new(pool.clone());
+        let service = ImageService::new(pool.clone(), "test".to_string());
 
         service
             .create(
@@ -234,7 +239,7 @@ mod tests {
         let image_id =
             insert_test_image(&pool, "test.jpg", "images/test.jpg", "image/jpeg", 1024).await;
 
-        let service = ImageService::new(pool.clone());
+        let service = ImageService::new(pool.clone(), "test".to_string());
         service
             .delete(image_id)
             .await

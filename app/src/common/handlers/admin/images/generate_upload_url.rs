@@ -37,9 +37,10 @@ pub async fn generate_upload_url_handler(
     ImageService::validate_file_size(input.size_bytes)
         .map_err(|e| ServerFnError::new(e.to_string()))?;
 
+    let image_service = state.image_service();
     let gcs_signing_service = state.gcs_signing_service();
 
-    let gcs_path = ImageService::generate_gcs_path(&input.filename);
+    let gcs_path = image_service.generate_gcs_path(&input.filename);
 
     // 署名付きURL生成（有効期限: 15分）
     let upload_url = gcs_signing_service
