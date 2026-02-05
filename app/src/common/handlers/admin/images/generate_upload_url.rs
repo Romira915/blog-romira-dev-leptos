@@ -27,6 +27,7 @@ pub async fn generate_upload_url_handler(
     input: GenerateUploadUrlInput,
 ) -> Result<GenerateUploadUrlResponse, ServerFnError> {
     use crate::server::contexts::AppState;
+    use crate::server::services::signing::SigningService;
     use blog_romira_dev_cms::ImageService;
 
     let state = expect_context::<AppState>();
@@ -38,12 +39,12 @@ pub async fn generate_upload_url_handler(
         .map_err(|e| ServerFnError::new(e.to_string()))?;
 
     let image_service = state.image_service();
-    let gcs_signing_service = state.gcs_signing_service();
+    let signing_service = state.signing_service();
 
     let gcs_path = image_service.generate_gcs_path(&input.filename);
 
     // 署名付きURL生成（有効期限: 15分）
-    let upload_url = gcs_signing_service
+    let upload_url = signing_service
         .generate_upload_url(&gcs_path, &input.content_type, 15 * 60)
         .await
         .map_err(|e| ServerFnError::new(e.to_string()))?;

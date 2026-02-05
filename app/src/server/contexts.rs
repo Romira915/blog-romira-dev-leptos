@@ -2,10 +2,10 @@ use crate::constants::{
     NEWT_BASE_URL, NEWT_CDN_BASE_URL, PRTIMES_WORD_PRESS_BASE_URL, QIITA_BASE_URL,
 };
 use crate::server::config::SERVER_CONFIG;
-use crate::server::services::gcs_signing::GcsSigningService;
 use crate::server::services::imgix::ImgixService;
 use crate::server::services::newt::NewtArticleService;
 use crate::server::services::qiita::QiitaArticleService;
+use crate::server::services::signing::GcsSigningService;
 use crate::server::services::word_press::WordPressArticleService;
 use axum::extract::FromRef;
 use blog_romira_dev_cms::{
@@ -26,7 +26,7 @@ pub struct AppState {
     pub(crate) draft_article_service: DraftArticleService,
     pub(crate) admin_article_service: AdminArticleService,
     pub(crate) image_service: ImageService,
-    pub(crate) gcs_signing_service: GcsSigningService,
+    pub(crate) signing_service: GcsSigningService,
     pub(crate) imgix_service: ImgixService,
 }
 
@@ -35,8 +35,8 @@ impl AppState {
     pub fn new(leptos_options: LeptosOptions, db_pool: PgPool) -> Self {
         let client = reqwest::Client::new();
 
-        // GCS署名サービスの初期化
-        let gcs_signing_service = GcsSigningService::from_service_account_key(
+        // 署名サービスの初期化
+        let signing_service = GcsSigningService::from_service_account_key(
             SERVER_CONFIG.gcs_bucket.clone(),
             &SERVER_CONFIG.gcs_service_account_key_json,
         )
@@ -62,7 +62,7 @@ impl AppState {
             draft_article_service: DraftArticleService::new(db_pool.clone()),
             admin_article_service: AdminArticleService::new(db_pool.clone()),
             image_service: ImageService::new(db_pool, SERVER_CONFIG.gcs_path_prefix.clone()),
-            gcs_signing_service,
+            signing_service,
             imgix_service,
         }
     }
@@ -91,15 +91,15 @@ impl AppState {
         &self.image_service
     }
 
-    pub fn gcs_signing_service(&self) -> &GcsSigningService {
-        &self.gcs_signing_service
+    pub fn signing_service(&self) -> &GcsSigningService {
+        &self.signing_service
     }
 
     pub fn imgix_service(&self) -> &ImgixService {
         &self.imgix_service
     }
 
-    /// テスト用のインスタンスを作成（GCS署名サービスはスタブ）
+    /// テスト用のインスタンスを作成（署名サービスはスタブ）
     #[cfg(any(test, feature = "test-utils"))]
     pub fn new_for_test(leptos_options: LeptosOptions, db_pool: PgPool) -> Self {
         let client = reqwest::Client::new();
@@ -121,7 +121,7 @@ impl AppState {
             draft_article_service: DraftArticleService::new(db_pool.clone()),
             admin_article_service: AdminArticleService::new(db_pool.clone()),
             image_service: ImageService::new(db_pool, "test".to_string()),
-            gcs_signing_service: GcsSigningService::new_stub("test-bucket".to_string()),
+            signing_service: GcsSigningService::new_stub("test-bucket".to_string()),
             imgix_service: ImgixService::new("test.imgix.net".to_string()),
         }
     }
