@@ -3,6 +3,21 @@ use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
 
+/// 画像ライブラリ
+/// タイムスタンプはUTCで保存
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+pub struct Image {
+    pub id: Uuid,
+    pub filename: String,
+    pub gcs_path: String,
+    pub mime_type: String,
+    pub size_bytes: i64,
+    pub width: Option<i32>,
+    pub height: Option<i32>,
+    pub alt_text: Option<String>,
+    pub created_at: NaiveDateTime,
+}
+
 /// 公開済み記事
 /// タイムスタンプはUTCで保存
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]

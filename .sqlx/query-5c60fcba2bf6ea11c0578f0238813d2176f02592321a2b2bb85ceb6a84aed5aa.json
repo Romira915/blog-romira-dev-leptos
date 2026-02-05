@@ -1,0 +1,29 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            INSERT INTO images (filename, gcs_path, mime_type, size_bytes, width, height, alt_text, created_at)\n            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)\n            RETURNING id\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Varchar",
+        "Varchar",
+        "Varchar",
+        "Int8",
+        "Int4",
+        "Int4",
+        "Varchar",
+        "Timestamp"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "5c60fcba2bf6ea11c0578f0238813d2176f02592321a2b2bb85ceb6a84aed5aa"
+}

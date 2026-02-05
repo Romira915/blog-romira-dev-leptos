@@ -20,6 +20,10 @@ pub(crate) const ROMIRA_GITHUB_URL: &str = "https://github.com/Romira915";
 pub(crate) const ROMIRA_X_URL: &str = "https://x.com/Romira915";
 pub(crate) const QIITA_BASE_URL: &str = "https://qiita.com";
 
+/// レスポンシブ画像用のサイズ (srcset用)
+#[allow(dead_code)]
+pub const IMAGE_WIDTHS: [u32; 3] = [400, 800, 1200];
+
 /// Newt記事IDからDB記事のslugへのマッピング
 /// 旧Newt記事URLを新しいDB記事URLにリダイレクトするために使用
 pub(crate) fn get_newt_redirect_slug(newt_id: &str) -> Option<&'static str> {

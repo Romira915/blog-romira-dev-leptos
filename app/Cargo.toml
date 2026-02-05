@@ -9,6 +9,7 @@ edition = "2024"
 axum = { workspace = true, optional = true }
 blog-romira-dev-cms = { path = "../cms", optional = true }
 chrono = { workspace = true }
+http = { workspace = true, optional = true }
 dotenv = { workspace = true, optional = true }
 envy = { workspace = true, optional = true }
 leptos = { workspace = true }
@@ -24,6 +25,8 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 sqlx = { workspace = true, optional = true }
 tower-sessions = { workspace = true, optional = true }
+google-cloud-storage = { workspace = true, optional = true }
+google-cloud-auth = { workspace = true, optional = true }
 uuid = { workspace = true }
 stylance = { workspace = true }
 thiserror = { workspace = true }
@@ -37,9 +40,11 @@ mockito = { workspace = true }
 tower = { workspace = true, features = ["util"] }
 http = { workspace = true }
 http-body-util = "0.1"
+blog-romira-dev-app = { path = ".", features = ["test-utils"] }
 
 [features]
 hydrate = ["leptos/hydrate"]
+test-utils = ["ssr"]
 ssr = [
     "leptos/ssr",
     "leptos_meta/ssr",
@@ -55,6 +60,9 @@ ssr = [
     "sqlx",
     "oauth2",
     "tower-sessions",
+    "google-cloud-storage",
+    "google-cloud-auth",
+    "http",
     "blog-romira-dev-cms",
 ]
 

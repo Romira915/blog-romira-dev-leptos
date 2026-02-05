@@ -17,3 +17,4 @@ test-utils = []
 [dev-dependencies]
 tokio = { workspace = true }
 dotenv = { workspace = true }
+blog-romira-dev-cms = { path = ".", features = ["test-utils"] }

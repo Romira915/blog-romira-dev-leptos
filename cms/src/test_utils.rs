@@ -90,3 +90,51 @@ pub async fn link_published_article_category(pool: &PgPool, article_id: Uuid, ca
     .await
     .expect("Failed to link published article category");
 }
+
+/// テスト用画像を作成
+pub async fn insert_test_image(
+    pool: &PgPool,
+    filename: &str,
+    gcs_path: &str,
+    mime_type: &str,
+    size_bytes: i64,
+) -> Uuid {
+    let now = utc_now();
+    sqlx::query_scalar!(
+        r#"INSERT INTO images (filename, gcs_path, mime_type, size_bytes, created_at) VALUES ($1, $2, $3, $4, $5) RETURNING id"#,
+        filename,
+        gcs_path,
+        mime_type,
+        size_bytes,
+        now as _
+    )
+    .fetch_one(pool)
+    .await
+    .expect("Failed to insert test image")
+}
+
+/// テスト用画像を作成（サイズ指定あり）
+pub async fn insert_test_image_with_dimensions(
+    pool: &PgPool,
+    filename: &str,
+    gcs_path: &str,
+    mime_type: &str,
+    size_bytes: i64,
+    width: i32,
+    height: i32,
+) -> Uuid {
+    let now = utc_now();
+    sqlx::query_scalar!(
+        r#"INSERT INTO images (filename, gcs_path, mime_type, size_bytes, width, height, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id"#,
+        filename,
+        gcs_path,
+        mime_type,
+        size_bytes,
+        width,
+        height,
+        now as _
+    )
+    .fetch_one(pool)
+    .await
+    .expect("Failed to insert test image with dimensions")
+}
