@@ -34,6 +34,26 @@ tokio = { workspace = true, optional = true }
 tracing = { workspace = true }
 url = { workspace = true, optional = true }
 comrak = { workspace = true }
+gloo-net = { workspace = true, optional = true }
+web-sys = { version = "0.3", optional = true, features = [
+    "Clipboard",
+    "File",
+    "FileList",
+    "FileReader",
+    "DataTransfer",
+    "DragEvent",
+    "Headers",
+    "HtmlInputElement",
+    "Navigator",
+    "Request",
+    "RequestInit",
+    "RequestMode",
+    "Response",
+    "Window",
+] }
+js-sys = { version = "0.3", optional = true }
+wasm-bindgen = { workspace = true, optional = true }
+wasm-bindgen-futures = { version = "0.4", optional = true }
 
 [dev-dependencies]
 mockito = { workspace = true }
@@ -43,7 +63,7 @@ http-body-util = "0.1"
 blog-romira-dev-app = { path = ".", features = ["test-utils"] }
 
 [features]
-hydrate = ["leptos/hydrate"]
+hydrate = ["leptos/hydrate", "gloo-net", "web-sys", "js-sys", "wasm-bindgen", "wasm-bindgen-futures"]
 test-utils = ["ssr"]
 ssr = [
     "leptos/ssr",
