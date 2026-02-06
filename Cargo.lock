@@ -333,10 +333,12 @@ dependencies = [
  "comrak",
  "dotenv",
  "envy",
+ "gloo-net",
  "google-cloud-auth",
  "google-cloud-storage",
  "http",
  "http-body-util",
+ "js-sys",
  "leptos",
  "leptos-use",
  "leptos_axum",
@@ -357,6 +359,8 @@ dependencies = [
  "tracing",
  "url",
  "uuid",
+ "wasm-bindgen",
+ "web-sys",
 ]
 
 [[package]]
