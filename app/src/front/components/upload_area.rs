@@ -159,7 +159,17 @@ where
         }
     };
 
-    let on_click = move |_| {
+    let on_click = move |ev: leptos::ev::MouseEvent| {
+        // input要素自体のクリックは無視（バブルアップによる再帰を防止）
+        #[cfg(feature = "hydrate")]
+        {
+            use wasm_bindgen::JsCast;
+            if let Some(target) = ev.target()
+                && target.dyn_ref::<web_sys::HtmlInputElement>().is_some()
+            {
+                return;
+            }
+        }
         if let Some(input) = input_ref.get() {
             input.click();
         }
