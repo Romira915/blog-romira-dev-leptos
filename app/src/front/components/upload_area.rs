@@ -47,13 +47,18 @@ where
                 {
                     use wasm_bindgen::JsCast;
                     use wasm_bindgen_futures::JsFuture;
-                    use web_sys::{RequestInit, RequestMode};
+                    use web_sys::{Headers, RequestInit, RequestMode};
 
                     let body = js_sys::Uint8Array::from(file_data.as_slice());
+
+                    // gloo-netと同じ方法：RequestInitにヘッダーを設定
+                    let headers = Headers::new().unwrap();
+                    headers.set("Content-Type", &content_type).unwrap();
 
                     let opts = RequestInit::new();
                     opts.set_method("PUT");
                     opts.set_mode(RequestMode::Cors);
+                    opts.set_headers(&headers);
                     opts.set_body(&body.into());
 
                     let request = match web_sys::Request::new_with_str_and_init(
@@ -68,24 +73,7 @@ where
                         }
                     };
 
-                    if let Err(e) = request.headers().set("Content-Type", &content_type) {
-                        message.set(Some((false, format!("ヘッダー設定エラー: {:?}", e))));
-                        uploading.set(false);
-                        return;
-                    }
-
-                    let window = match web_sys::window() {
-                        Some(w) => w,
-                        None => {
-                            message.set(Some((
-                                false,
-                                "windowオブジェクトが取得できません".to_string(),
-                            )));
-                            uploading.set(false);
-                            return;
-                        }
-                    };
-
+                    let window = web_sys::window().expect("window should exist");
                     let resp_value = match JsFuture::from(window.fetch_with_request(&request)).await
                     {
                         Ok(v) => v,
@@ -96,15 +84,7 @@ where
                         }
                     };
 
-                    let response: web_sys::Response = match resp_value.dyn_into() {
-                        Ok(r) => r,
-                        Err(_) => {
-                            message.set(Some((false, "レスポンスの変換に失敗".to_string())));
-                            uploading.set(false);
-                            return;
-                        }
-                    };
-
+                    let response: web_sys::Response = resp_value.unchecked_into();
                     if !response.ok() {
                         message.set(Some((
                             false,
