@@ -1,0 +1,133 @@
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.card {
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    transition: box-shadow 0.2s ease;
+
+    &:hover {
+        box-shadow: 0 4px 12px var(--shadow);
+    }
+}
+
+.thumbnail {
+    width: 100%;
+    aspect-ratio: 1;
+    background-color: var(--surface-hover);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+
+    img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+}
+
+.info {
+    padding: 0.75rem;
+}
+
+.filename {
+    margin: 0;
+    font-size: 0.875rem;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.meta {
+    margin: 0.25rem 0 0 0;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.actions {
+    display: flex;
+    padding: 0.5rem 0.75rem;
+    gap: 0.5rem;
+    border-top: 1px solid var(--border);
+}
+
+.copy_button,
+.delete_button {
+    flex: 1;
+    padding: 0.5rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background-color 0.2s ease;
+}
+
+.copy_button {
+    background-color: var(--surface-hover);
+    color: var(--text-primary);
+
+    &:hover {
+        background-color: var(--primary-light, rgba(59, 130, 246, 0.1));
+    }
+}
+
+.delete_button {
+    background-color: var(--surface-hover);
+    color: var(--error-text, #ef4444);
+
+    &:hover:not(:disabled) {
+        background-color: var(--error-bg, rgba(239, 68, 68, 0.1));
+    }
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+}
+
+.loading {
+    text-align: center;
+    color: var(--text-secondary);
+    padding: 2rem;
+}
+
+.empty {
+    text-align: center;
+    color: var(--text-secondary);
+    padding: 2rem;
+    background-color: var(--surface);
+    border-radius: 8px;
+}
+
+.error {
+    text-align: center;
+    color: var(--error-text, #ef4444);
+    padding: 1rem;
+    background-color: var(--error-bg, rgba(239, 68, 68, 0.1));
+    border-radius: 4px;
+}
+
+.message_success {
+    margin-bottom: 1rem;
+    padding: 0.75rem 1rem;
+    background-color: var(--success-bg, rgba(34, 197, 94, 0.1));
+    color: var(--success, #22c55e);
+    border-radius: 4px;
+    text-align: center;
+}
+
+.message_error {
+    margin-bottom: 1rem;
+    padding: 0.75rem 1rem;
+    background-color: var(--error-bg, rgba(239, 68, 68, 0.1));
+    color: var(--error-text, #ef4444);
+    border-radius: 4px;
+    text-align: center;
+}

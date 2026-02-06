@@ -2,7 +2,7 @@ use leptos::prelude::*;
 use stylance::import_style;
 
 use super::AdminLayout;
-use crate::front::components::UploadArea;
+use crate::front::components::{ImageList, UploadArea};
 
 import_style!(style, "images_page.module.scss");
 
@@ -24,12 +24,9 @@ pub fn ImagesPage() -> impl IntoView {
                 <section class=style::upload_section>
                     <UploadArea on_upload_complete=on_upload_complete />
                 </section>
-                // ImageList will be added in Step 3
                 <section class=style::images_section>
-                    <p>
-                        "画像一覧は Step 3 で実装予定 (refresh_trigger: "
-                        {move || refresh_trigger.get()} ")"
-                    </p>
+                    <h2>"アップロード済み画像"</h2>
+                    <ImageList refresh_trigger=refresh_trigger />
                 </section>
             </div>
         </AdminLayout>

@@ -36,12 +36,15 @@ url = { workspace = true, optional = true }
 comrak = { workspace = true }
 gloo-net = { workspace = true, optional = true }
 web-sys = { version = "0.3", optional = true, features = [
+    "Clipboard",
     "File",
     "FileList",
     "FileReader",
     "DataTransfer",
     "DragEvent",
     "HtmlInputElement",
+    "Navigator",
+    "Window",
 ] }
 js-sys = { version = "0.3", optional = true }
 wasm-bindgen = { workspace = true, optional = true }
