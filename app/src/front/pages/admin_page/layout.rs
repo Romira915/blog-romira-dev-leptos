@@ -71,6 +71,11 @@ pub fn AdminLayout(children: Children) -> impl IntoView {
                             "新規作成"
                         </a>
                     </li>
+                    <li>
+                        <A href="/admin/images" attr:class=style::nav_link>
+                            "画像管理"
+                        </A>
+                    </li>
                 </ul>
                 <div class=style::features_toggle>
                     <label class=style::toggle_label>

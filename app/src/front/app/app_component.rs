@@ -1,4 +1,4 @@
-use crate::front::pages::admin_page::{ArticleEditorPage, ArticleListPage};
+use crate::front::pages::admin_page::{ArticleEditorPage, ArticleListPage, ImagesPage};
 use crate::front::pages::article_page::ArticlePage;
 use crate::front::pages::not_found_page::NotFoundPage;
 use crate::front::pages::preview_article_page::PreviewArticlePage;
@@ -32,6 +32,7 @@ pub fn App() -> impl IntoView {
                         view=ArticleEditorPage
                         ssr=SsrMode::Async
                     />
+                    <Route path=path!("/admin/images") view=ImagesPage ssr=SsrMode::Async />
                 </Routes>
             </main>
         </Router>
