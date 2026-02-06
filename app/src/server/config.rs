@@ -21,6 +21,13 @@ pub struct ServerConfig {
     pub gcs_service_account_key_json: String,
     pub imgix_domain: String,    // e.g., "blog-romira.imgix.net"
     pub gcs_path_prefix: String, // e.g., "dev" or "prod"
+    // Valkey (Redis-compatible) session store
+    #[serde(default = "default_valkey_url")]
+    pub valkey_url: String,
+}
+
+fn default_valkey_url() -> String {
+    "redis://localhost:6379/0".to_string()
 }
 
 #[cfg(feature = "ssr")]
