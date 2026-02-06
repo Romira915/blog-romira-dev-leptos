@@ -45,25 +45,61 @@ where
                 // Step 2: Upload to GCS via signed URL
                 #[cfg(feature = "hydrate")]
                 {
-                    use gloo_net::http::Request;
-                    use leptos::wasm_bindgen::JsValue;
+                    use wasm_bindgen::JsCast;
+                    use wasm_bindgen_futures::JsFuture;
+                    use web_sys::{RequestInit, RequestMode};
 
                     let body = js_sys::Uint8Array::from(file_data.as_slice());
 
-                    let response = match Request::put(&url_response.upload_url)
-                        .header("Content-Type", &content_type)
-                        .body(JsValue::from(body))
-                    {
-                        Ok(req) => match req.send().await {
-                            Ok(resp) => resp,
-                            Err(e) => {
-                                message.set(Some((false, format!("アップロードエラー: {}", e))));
-                                uploading.set(false);
-                                return;
-                            }
-                        },
+                    let opts = RequestInit::new();
+                    opts.set_method("PUT");
+                    opts.set_mode(RequestMode::Cors);
+                    opts.set_body(&body.into());
+
+                    let request = match web_sys::Request::new_with_str_and_init(
+                        &url_response.upload_url,
+                        &opts,
+                    ) {
+                        Ok(req) => req,
                         Err(e) => {
-                            message.set(Some((false, format!("リクエスト作成エラー: {}", e))));
+                            message.set(Some((false, format!("リクエスト作成エラー: {:?}", e))));
+                            uploading.set(false);
+                            return;
+                        }
+                    };
+
+                    if let Err(e) = request.headers().set("Content-Type", &content_type) {
+                        message.set(Some((false, format!("ヘッダー設定エラー: {:?}", e))));
+                        uploading.set(false);
+                        return;
+                    }
+
+                    let window = match web_sys::window() {
+                        Some(w) => w,
+                        None => {
+                            message.set(Some((
+                                false,
+                                "windowオブジェクトが取得できません".to_string(),
+                            )));
+                            uploading.set(false);
+                            return;
+                        }
+                    };
+
+                    let resp_value = match JsFuture::from(window.fetch_with_request(&request)).await
+                    {
+                        Ok(v) => v,
+                        Err(e) => {
+                            message.set(Some((false, format!("アップロードエラー: {:?}", e))));
+                            uploading.set(false);
+                            return;
+                        }
+                    };
+
+                    let response: web_sys::Response = match resp_value.dyn_into() {
+                        Ok(r) => r,
+                        Err(_) => {
+                            message.set(Some((false, "レスポンスの変換に失敗".to_string())));
                             uploading.set(false);
                             return;
                         }
