@@ -30,13 +30,7 @@
 | WordPress N+1解消 | `WordPressService` | 各記事のカテゴリを1件ずつ取得→一括取得して結合 | 中 |
 | MarkdownPreviewメモ化 | `MarkdownPreview` | 毎回Markdown→HTML変換→Memoでキャッシュ | 中 |
 
-## 9.4 インフラ
-
-| タスク | 対象 | 説明 | 優先度 |
-|--------|------|------|--------|
-| セッションストアValkey移行 | `tower-sessions` | PostgreSQL (`tower-sessions-sqlx-store`) → Valkey (Redis互換) に切り替え | 中 |
-
-## 9.5 リファクタリング
+## 9.4 リファクタリング
 
 | タスク | 対象 | 説明 | 優先度 |
 |--------|------|------|--------|

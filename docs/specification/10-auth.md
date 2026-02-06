@@ -96,8 +96,7 @@ OAuthフロー中のエラーは、すべて `/admin?error={code}` へのリダ�
 
 ### セッションストア
 
-- **現在**: PostgreSQL（`tower-sessions-sqlx-store`）
-- **将来**: Valkey（Redis互換）への移行予定
+- **ストア**: Valkey（Redis互換、`tower-sessions-redis-store` + `fred`）
 
 ### Cookie設定
 

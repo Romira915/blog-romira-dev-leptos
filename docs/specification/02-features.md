@@ -204,6 +204,6 @@ Google Workspaceアカウントでログインする。
 
 Cookie + サーバーサイドセッションで認証状態を管理する。
 
-- **セッションストア**: PostgreSQL（`tower-sessions-sqlx-store`）
+- **セッションストア**: Valkey（Redis互換、`tower-sessions-redis-store` + `fred`）
 - **セッションキー**: `user`（AuthUser）、`oauth_csrf`（一時的CSRFトークン）
 - **ログアウト**: `/auth/logout` でセッションからユーザー情報を削除し、`/` にリダイレクト
