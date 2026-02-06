@@ -13,7 +13,7 @@ use tower_http::classify::{ServerErrorsAsFailures, SharedClassifier};
 use tower_http::set_header::SetResponseHeaderLayer;
 use tower_http::trace::{MakeSpan, TraceLayer};
 use tower_sessions::SessionManagerLayer;
-use tower_sessions_sqlx_store::PostgresStore;
+use tower_sessions_redis_store::{RedisStore, fred::prelude::*};
 use tracing::Span;
 
 #[tokio::main]
@@ -39,8 +39,16 @@ async fn main() {
         .await
         .expect("Failed to run migrations");
 
-    // Session store
-    let session_store = PostgresStore::new(db_pool.clone());
+    // Session store (Valkey)
+    let valkey_config = Config::from_url(&SERVER_CONFIG.valkey_url).expect("Invalid Valkey URL");
+    let valkey_pool =
+        Pool::new(valkey_config, None, None, None, 6).expect("Failed to create Valkey pool");
+    valkey_pool.connect();
+    valkey_pool
+        .wait_for_connect()
+        .await
+        .expect("Failed to connect to Valkey");
+    let session_store = RedisStore::new(valkey_pool);
     let session_layer = SessionManagerLayer::new(session_store)
         .with_secure(false) // TODO: Set to true in production with HTTPS
         .with_same_site(tower_sessions::cookie::SameSite::Lax);

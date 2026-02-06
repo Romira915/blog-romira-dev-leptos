@@ -44,7 +44,8 @@ google-cloud-auth = "1.4"
 # OAuth / Session
 oauth2 = "5"
 tower-sessions = "0.14"
-tower-sessions-sqlx-store = { version = "0.15", features = ["postgres"] }
+tower-sessions-redis-store = "0.16"
+fred = "10"
 
 [profile.release]
 panic = "abort"
