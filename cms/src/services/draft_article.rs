@@ -44,6 +44,7 @@ impl DraftArticleService {
         slug: &str,
         body: &str,
         description: Option<&str>,
+        cover_image_url: Option<&str>,
     ) -> Result<(), CmsError> {
         DraftArticleRepository::upsert(
             &self.pool,
@@ -52,6 +53,7 @@ impl DraftArticleService {
             slug,
             body,
             description,
+            cover_image_url,
             utc_now(),
         )
         .await

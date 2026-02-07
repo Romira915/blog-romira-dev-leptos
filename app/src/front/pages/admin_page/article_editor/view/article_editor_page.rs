@@ -7,8 +7,25 @@ use super::super::get_article_for_edit_handler;
 use super::super::state::{ArticleFormState, ViewMode};
 use super::MarkdownPreview;
 use super::style;
+use crate::constants::IMAGE_WIDTHS;
+use crate::front::components::ImagePickerModal;
 use crate::front::hooks::use_scroll_sync;
 use crate::front::pages::admin_page::AdminLayout;
+
+/// UTF-16コード単位位置をバイトインデックスに変換
+fn utf16_offset_to_byte_index(s: &str, utf16_pos: usize) -> usize {
+    s.char_indices()
+        .scan(0usize, |utf16_count, (byte_idx, ch)| {
+            if *utf16_count >= utf16_pos {
+                return Some(Some(byte_idx));
+            }
+            *utf16_count += ch.len_utf16();
+            Some(None)
+        })
+        .flatten()
+        .next()
+        .unwrap_or(s.len())
+}
 
 #[component]
 pub fn ArticleEditorPage() -> impl IntoView {
@@ -40,6 +57,55 @@ pub fn ArticleEditorPage() -> impl IntoView {
     // Scroll sync refs
     let editor_ref: NodeRef<leptos::html::Textarea> = NodeRef::new();
     let preview_ref: NodeRef<leptos::html::Div> = NodeRef::new();
+
+    // Image picker modals
+    let show_cover_picker = RwSignal::new(false);
+    let show_insert_picker = RwSignal::new(false);
+
+    // Cover image selection callback
+    let on_cover_select = Callback::new(
+        move |image: crate::common::handlers::admin::images::ImageDto| {
+            form.cover_image_url.set(Some(image.imgix_url));
+        },
+    );
+
+    // Insert image callback
+    let on_insert_select = Callback::new(
+        move |image: crate::common::handlers::admin::images::ImageDto| {
+            #[cfg(feature = "hydrate")]
+            {
+                if let Some(textarea) = editor_ref.get() {
+                    let el: &web_sys::HtmlTextAreaElement = textarea.as_ref();
+                    // selection_start(): Result<Option<u32>, JsValue> → 取得失敗時は先頭(0)扱い
+                    let utf16_pos = el.selection_start().ok().flatten().unwrap_or(0) as usize;
+                    let current_body = form.body.get();
+                    let byte_index = utf16_offset_to_byte_index(&current_body, utf16_pos);
+
+                    let image_url =
+                        format!("{}?w={}&auto=format&q=75", image.imgix_url, IMAGE_WIDTHS[1]);
+                    let markdown_image = format!("![{}]({})", image.filename, image_url);
+                    let new_body = format!(
+                        "{}{}{}",
+                        &current_body[..byte_index],
+                        markdown_image,
+                        &current_body[byte_index..]
+                    );
+
+                    // 挿入テキスト分だけカーソル位置を進める（UTF-16単位で計算）
+                    let new_cursor_utf16 =
+                        utf16_pos + markdown_image.chars().map(|c| c.len_utf16()).sum::<usize>();
+                    form.body.set(new_body);
+
+                    // body更新後にDOMが再描画されるので、次のマイクロタスクでカーソル位置を復元
+                    let el_clone = el.clone();
+                    leptos::task::spawn_local(async move {
+                        let _ = el_clone.set_selection_start(Some(new_cursor_utf16 as u32));
+                        let _ = el_clone.set_selection_end(Some(new_cursor_utf16 as u32));
+                    });
+                }
+            }
+        },
+    );
 
     view! {
         <AdminLayout>
@@ -147,9 +213,62 @@ pub fn ArticleEditorPage() -> impl IntoView {
                                             />
                                         </div>
 
+                                        <div class=style::form_row>
+                                            <label class=style::label>"カバー画像"</label>
+                                            <div class=style::cover_image_section>
+                                                {move || {
+                                                    form.cover_image_url
+                                                        .get()
+                                                        .map(|url| {
+                                                            let preview_url = format!(
+                                                                "{}?w={}&auto=format",
+                                                                url,
+                                                                IMAGE_WIDTHS[0],
+                                                            );
+                                                            view! {
+                                                                <div class=style::cover_image_preview>
+                                                                    <img src=preview_url alt="カバー画像" />
+                                                                </div>
+                                                            }
+                                                        })
+                                                }} <div class=style::cover_image_actions>
+                                                    <button
+                                                        type="button"
+                                                        class=style::cover_select_button
+                                                        on:click=move |_| show_cover_picker.set(true)
+                                                    >
+                                                        {move || {
+                                                            if form.cover_image_url.get().is_some() {
+                                                                "変更"
+                                                            } else {
+                                                                "選択"
+                                                            }
+                                                        }}
+                                                    </button>
+                                                    <Show when=move || { form.cover_image_url.get().is_some() }>
+                                                        <button
+                                                            type="button"
+                                                            class=style::cover_remove_button
+                                                            on:click=move |_| { form.cover_image_url.set(None) }
+                                                        >
+                                                            "解除"
+                                                        </button>
+                                                    </Show>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
 
                                     <div class=style::editor_toolbar>
+                                        <div class=style::editor_tools>
+                                            <button
+                                                type="button"
+                                                class=style::insert_image_button
+                                                on:click=move |_| show_insert_picker.set(true)
+                                            >
+                                                "画像挿入"
+                                            </button>
+                                        </div>
                                         <div class=style::view_mode_buttons>
                                             <button
                                                 class=move || {
@@ -218,6 +337,8 @@ pub fn ArticleEditorPage() -> impl IntoView {
                             })
                     }}
                 </Suspense>
+                <ImagePickerModal show=show_cover_picker on_select=on_cover_select />
+                <ImagePickerModal show=show_insert_picker on_select=on_insert_select />
             </div>
         </AdminLayout>
     }

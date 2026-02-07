@@ -11,6 +11,7 @@ pub struct SavePublishedInput {
     pub slug: String,
     pub body: String,
     pub description: Option<String>,
+    pub cover_image_url: Option<String>,
 }
 
 /// 公開記事の保存（更新のみ）
@@ -41,6 +42,7 @@ pub async fn save_published_handler(input: SavePublishedInput) -> Result<String,
             &slug,
             &input.body,
             input.description.as_deref(),
+            input.cover_image_url.as_deref(),
         )
         .await
         .map_err(|e| cms_error_to_response(&response, e))?;

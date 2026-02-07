@@ -24,6 +24,7 @@ impl DraftArticleRepository {
     }
 
     /// 下書き記事をUpsert（存在しなければINSERT、存在すればUPDATE）
+    #[allow(clippy::too_many_arguments)]
     #[instrument(skip(pool))]
     pub async fn upsert(
         pool: &PgPool,
@@ -32,17 +33,19 @@ impl DraftArticleRepository {
         slug: &str,
         body: &str,
         description: Option<&str>,
+        cover_image_url: Option<&str>,
         now: NaiveDateTime,
     ) -> Result<(), CmsError> {
         sqlx::query!(
             r#"
-            INSERT INTO draft_articles (id, slug, title, body, description, created_at, updated_at)
-            VALUES ($1, $2, $3, $4, $5, $6, $6)
+            INSERT INTO draft_articles (id, slug, title, body, description, cover_image_url, created_at, updated_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $7)
             ON CONFLICT (id) DO UPDATE SET
                 slug = EXCLUDED.slug,
                 title = EXCLUDED.title,
                 body = EXCLUDED.body,
                 description = EXCLUDED.description,
+                cover_image_url = EXCLUDED.cover_image_url,
                 updated_at = EXCLUDED.updated_at
             "#,
             id,
@@ -50,6 +53,7 @@ impl DraftArticleRepository {
             title,
             body,
             description,
+            cover_image_url,
             now as _
         )
         .execute(pool)
@@ -69,7 +73,7 @@ mod tests {
     async fn test_deleteで記事が削除されること(pool: PgPool) {
         let now = utc_now();
         let id = Uuid::now_v7();
-        DraftArticleRepository::upsert(&pool, id, "削除対象", "to-delete", "本文", None, now)
+        DraftArticleRepository::upsert(&pool, id, "削除対象", "to-delete", "本文", None, None, now)
             .await
             .expect("Failed to create draft article");
 
@@ -118,6 +122,7 @@ mod tests {
             "test-article-slug",
             "これはテスト記事の本文です。",
             Some("テスト記事の説明"),
+            None,
             now,
         )
         .await
@@ -150,6 +155,7 @@ mod tests {
             "original",
             "元の本文",
             None,
+            None,
             now,
         )
         .await
@@ -163,6 +169,7 @@ mod tests {
             "updated",
             "更新後の本文",
             Some("更新後の説明"),
+            None,
             utc_now(),
         )
         .await
@@ -190,9 +197,18 @@ mod tests {
         // 3回連続でupsert（連打シミュレーション）
         for i in 0..3 {
             let title = format!("タイトル{}", i);
-            DraftArticleRepository::upsert(&pool, id, title.as_str(), "slug", "本文", None, now)
-                .await
-                .expect("Failed to upsert");
+            DraftArticleRepository::upsert(
+                &pool,
+                id,
+                title.as_str(),
+                "slug",
+                "本文",
+                None,
+                None,
+                now,
+            )
+            .await
+            .expect("Failed to upsert");
         }
 
         let count: i64 = sqlx::query_scalar!(
@@ -212,5 +228,61 @@ mod tests {
             .expect("Failed to fetch");
 
         assert_eq!(article.title, "タイトル2");
+    }
+
+    #[sqlx::test]
+    async fn test_upsertでcover_image_urlが保存されること(pool: PgPool) {
+        let now = utc_now();
+        let id = Uuid::now_v7();
+
+        DraftArticleRepository::upsert(
+            &pool,
+            id,
+            "カバー画像テスト",
+            "cover-test",
+            "本文",
+            None,
+            Some("https://example.com/image.jpg"),
+            now,
+        )
+        .await
+        .expect("Failed to upsert");
+
+        let article = sqlx::query!(
+            r#"SELECT cover_image_url FROM draft_articles WHERE id = $1"#,
+            id
+        )
+        .fetch_one(&pool)
+        .await
+        .expect("Failed to fetch");
+
+        assert_eq!(
+            article.cover_image_url.as_deref(),
+            Some("https://example.com/image.jpg")
+        );
+
+        // 更新でcover_image_urlをNoneに変更
+        DraftArticleRepository::upsert(
+            &pool,
+            id,
+            "カバー画像テスト",
+            "cover-test",
+            "本文",
+            None,
+            None,
+            utc_now(),
+        )
+        .await
+        .expect("Failed to update");
+
+        let article = sqlx::query!(
+            r#"SELECT cover_image_url FROM draft_articles WHERE id = $1"#,
+            id
+        )
+        .fetch_one(&pool)
+        .await
+        .expect("Failed to fetch");
+
+        assert_eq!(article.cover_image_url, None);
     }
 }

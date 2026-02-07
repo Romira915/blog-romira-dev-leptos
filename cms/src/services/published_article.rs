@@ -62,6 +62,7 @@ impl PublishedArticleService {
         slug: &PublishedArticleSlug,
         body: &str,
         description: Option<&str>,
+        cover_image_url: Option<&str>,
     ) -> Result<(), CmsError> {
         // スラッグ重複チェック（自分自身は除外）
         if PublishedArticleQuery::exists_by_slug(&self.pool, slug.as_str(), Some(article_id))
@@ -79,6 +80,7 @@ impl PublishedArticleService {
             slug.as_str(),
             body,
             description,
+            cover_image_url,
             utc_now(),
         )
         .await

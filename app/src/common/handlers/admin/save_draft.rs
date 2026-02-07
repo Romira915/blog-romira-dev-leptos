@@ -11,6 +11,7 @@ pub struct SaveDraftInput {
     pub slug: String,
     pub body: String,
     pub description: Option<String>,
+    pub cover_image_url: Option<String>,
 }
 
 /// 下書き記事の保存（Upsert: 存在しなければ作成、存在すれば更新）
@@ -32,6 +33,7 @@ pub async fn save_draft_handler(input: SaveDraftInput) -> Result<String, ServerF
             &input.slug,
             &input.body,
             input.description.as_deref(),
+            input.cover_image_url.as_deref(),
         )
         .await
         .map_err(|e| ServerFnError::new(e.to_string()))?;
