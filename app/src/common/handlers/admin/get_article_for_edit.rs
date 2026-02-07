@@ -10,6 +10,7 @@ pub struct ArticleEditData {
     pub slug: String,
     pub body: String,
     pub description: Option<String>,
+    pub cover_image_url: Option<String>,
     pub is_draft: bool,
 }
 
@@ -39,6 +40,7 @@ pub async fn get_article_for_edit_handler(
             slug: draft.article.slug,
             body: draft.article.body,
             description: draft.article.description,
+            cover_image_url: draft.article.cover_image_url,
             is_draft: true,
         }));
     }
@@ -55,6 +57,7 @@ pub async fn get_article_for_edit_handler(
             slug: published.article.slug,
             body: published.article.body,
             description: published.article.description,
+            cover_image_url: published.article.cover_image_url,
             is_draft: false,
         }));
     }

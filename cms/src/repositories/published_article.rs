@@ -47,6 +47,7 @@ impl PublishedArticleRepository {
     }
 
     /// 公開記事を更新
+    #[allow(clippy::too_many_arguments)]
     #[instrument(skip(pool))]
     pub async fn update(
         pool: &PgPool,
@@ -55,18 +56,20 @@ impl PublishedArticleRepository {
         slug: &str,
         body: &str,
         description: Option<&str>,
+        cover_image_url: Option<&str>,
         now: NaiveDateTime,
     ) -> Result<(), CmsError> {
         let rows = sqlx::query!(
             r#"
             UPDATE published_articles
-            SET title = $1, slug = $2, body = $3, description = $4, updated_at = $5
-            WHERE id = $6
+            SET title = $1, slug = $2, body = $3, description = $4, cover_image_url = $5, updated_at = $6
+            WHERE id = $7
             "#,
             title,
             slug,
             body,
             description,
+            cover_image_url,
             now as _,
             article_id
         )
@@ -255,6 +258,7 @@ mod tests {
             "updated-slug",
             "更新後の本文",
             Some("更新後の説明"),
+            None,
             update_time,
         )
         .await
@@ -286,10 +290,88 @@ mod tests {
             "slug",
             "本文",
             None,
+            None,
             utc_now(),
         )
         .await;
 
         assert!(matches!(result, Err(CmsError::NotFound)));
+    }
+
+    #[sqlx::test]
+    async fn test_updateでcover_image_urlが更新されること(pool: PgPool) {
+        let draft_id =
+            insert_draft_article(&pool, "cover-slug", "カバーテスト", "本文", None).await;
+
+        let draft = DraftArticleWithCategories {
+            article: DraftArticle {
+                id: draft_id,
+                slug: "cover-slug".to_string(),
+                title: "カバーテスト".to_string(),
+                body: "本文".to_string(),
+                description: None,
+                cover_image_url: None,
+                created_at: utc_now(),
+                updated_at: utc_now(),
+            },
+            categories: vec![],
+        };
+
+        let publish_time = utc_now();
+        let published_id =
+            PublishedArticleRepository::create_from_draft(&pool, &draft, publish_time)
+                .await
+                .expect("Failed to create published article");
+
+        // cover_image_url を設定して更新
+        PublishedArticleRepository::update(
+            &pool,
+            published_id,
+            "カバーテスト",
+            "cover-slug",
+            "本文",
+            None,
+            Some("https://example.com/cover.jpg"),
+            utc_now(),
+        )
+        .await
+        .expect("Failed to update");
+
+        let updated = sqlx::query!(
+            r#"SELECT cover_image_url FROM published_articles WHERE id = $1"#,
+            published_id
+        )
+        .fetch_one(&pool)
+        .await
+        .expect("Failed to fetch");
+
+        assert_eq!(
+            updated.cover_image_url.as_deref(),
+            Some("https://example.com/cover.jpg")
+        );
+
+        // cover_image_url を None に戻す
+        PublishedArticleRepository::update(
+            &pool,
+            published_id,
+            "カバーテスト",
+            "cover-slug",
+            "本文",
+            None,
+            None,
+            utc_now(),
+        )
+        .await
+        .expect("Failed to update");
+
+        let updated = sqlx::query!(
+            r#"SELECT cover_image_url FROM published_articles WHERE id = $1"#,
+            published_id
+        )
+        .fetch_one(&pool)
+        .await
+        .expect("Failed to fetch");
+
+        assert_eq!(updated.cover_image_url, None);
     }
 }

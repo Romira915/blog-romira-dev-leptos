@@ -1,0 +1,20 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            UPDATE published_articles\n            SET title = $1, slug = $2, body = $3, description = $4, cover_image_url = $5, updated_at = $6\n            WHERE id = $7\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Varchar",
+        "Varchar",
+        "Text",
+        "Text",
+        "Varchar",
+        "Timestamp",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "52e6a86978f5c0501312bf1941b98dfe4a898dc1bc3eb0aff2b57aeb7412c5a0"
+}
