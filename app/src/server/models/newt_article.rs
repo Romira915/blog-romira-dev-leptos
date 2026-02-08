@@ -1,7 +1,10 @@
 use crate::common::dto::{
     ArticleDetailDto, ArticleMetaDto, ArticlePageDto, ArticleSource, HomePageArticleDto,
 };
-use crate::constants::{DATE_DISPLAY_FORMAT, HOUR, JST_TZ, THUMBNAIL_NO_IMAGE_URL};
+use crate::common::imgix_url::{extract_base_url, generate_srcset, is_imgix_url};
+use crate::constants::{
+    COVER_IMAGE_WIDTHS, DATE_DISPLAY_FORMAT, HOUR, JST_TZ, THUMBNAIL_NO_IMAGE_URL,
+};
 use crate::server::utils::url::{
     to_optimize_cover_image_url, to_optimize_og_image_url, to_optimize_thumbnail_url,
 };
@@ -75,12 +78,16 @@ impl From<NewtArticle> for ArticlePageDto {
     #[instrument]
     fn from(value: NewtArticle) -> Self {
         let title = RwSignal::new(value.title);
-        let cover_image_url = RwSignal::new(to_optimize_cover_image_url(
-            value.cover_image.as_ref().map_or_else(
-                || THUMBNAIL_NO_IMAGE_URL,
-                |cover_image| cover_image.src.as_str(),
-            ),
-        ));
+        let cover_image_raw = value.cover_image.as_ref().map_or_else(
+            || THUMBNAIL_NO_IMAGE_URL,
+            |cover_image| cover_image.src.as_str(),
+        );
+        let cover_image_url = RwSignal::new(to_optimize_cover_image_url(cover_image_raw));
+        let cover_image_srcset = RwSignal::new(if is_imgix_url(cover_image_raw) {
+            generate_srcset(extract_base_url(cover_image_raw), &COVER_IMAGE_WIDTHS)
+        } else {
+            String::new()
+        });
         let body = RwSignal::new(value.body.unwrap_or_default());
         let category = value
             .categories
@@ -133,6 +140,7 @@ impl From<NewtArticle> for ArticlePageDto {
             article_detail_dto: ArticleDetailDto {
                 title,
                 cover_image_url,
+                cover_image_srcset,
                 body,
                 category: category.clone(),
                 first_published_at,

@@ -44,6 +44,7 @@ pub enum ArticleResponse {
 pub struct ArticleDetailDto {
     pub(crate) title: RwSignal<String>,
     pub(crate) cover_image_url: RwSignal<String>,
+    pub(crate) cover_image_srcset: RwSignal<String>,
     pub(crate) body: RwSignal<String>,
     pub(crate) category: Vec<RwSignal<String>>,
     pub(crate) first_published_at: RwSignal<String>,

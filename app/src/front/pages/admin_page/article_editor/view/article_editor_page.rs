@@ -7,6 +7,7 @@ use super::super::get_article_for_edit_handler;
 use super::super::state::{ArticleFormState, ViewMode};
 use super::MarkdownPreview;
 use super::style;
+use crate::common::imgix_url::{extract_base_url, generate_srcset};
 use crate::constants::IMAGE_WIDTHS;
 use crate::front::components::ImagePickerModal;
 use crate::front::hooks::use_scroll_sync;
@@ -83,7 +84,16 @@ pub fn ArticleEditorPage() -> impl IntoView {
 
                     let image_url =
                         format!("{}?w={}&auto=format&q=75", image.imgix_url, IMAGE_WIDTHS[1]);
-                    let markdown_image = format!("![{}]({})", image.filename, image_url);
+                    let srcset = generate_srcset(extract_base_url(&image.imgix_url), &IMAGE_WIDTHS);
+                    let sizes = "(max-width: 800px) 100vw, 800px";
+                    let (w, h) = match (image.width, image.height) {
+                        (Some(w), Some(h)) => (w, h),
+                        _ => (IMAGE_WIDTHS[1] as i32, 0),
+                    };
+                    let markdown_image = format!(
+                        r#"<img src="{}" srcset="{}" sizes="{}" width="{}" height="{}" loading="lazy" alt="{}">"#,
+                        image_url, srcset, sizes, w, h, image.filename,
+                    );
                     let new_body = format!(
                         "{}{}{}",
                         &current_body[..byte_index],
