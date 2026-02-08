@@ -1,5 +1,5 @@
 use crate::error::CmsError;
-use crate::models::PublishedArticleWithCategories;
+use crate::models::{ArticleContent, PublishedArticleWithCategories};
 use crate::queries::PublishedArticleQuery;
 use crate::repositories::PublishedArticleRepository;
 use crate::value_objects::{PublishedArticleSlug, PublishedArticleTitle};
@@ -73,16 +73,14 @@ impl PublishedArticleService {
             ));
         }
 
-        PublishedArticleRepository::update(
-            &self.pool,
-            article_id,
-            title.as_str(),
-            slug.as_str(),
+        let content = ArticleContent {
+            title: title.as_str(),
+            slug: slug.as_str(),
             body,
             description,
             cover_image_url,
-            utc_now(),
-        )
-        .await
+        };
+
+        PublishedArticleRepository::update(&self.pool, article_id, &content, utc_now()).await
     }
 }

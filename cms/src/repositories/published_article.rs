@@ -1,5 +1,5 @@
 use crate::error::CmsError;
-use crate::models::DraftArticleWithCategories;
+use crate::models::{ArticleContent, DraftArticleWithCategories};
 use chrono::NaiveDateTime;
 use sqlx::PgPool;
 use tracing::instrument;
@@ -47,16 +47,11 @@ impl PublishedArticleRepository {
     }
 
     /// 公開記事を更新
-    #[allow(clippy::too_many_arguments)]
     #[instrument(skip(pool))]
     pub async fn update(
         pool: &PgPool,
         article_id: Uuid,
-        title: &str,
-        slug: &str,
-        body: &str,
-        description: Option<&str>,
-        cover_image_url: Option<&str>,
+        content: &ArticleContent<'_>,
         now: NaiveDateTime,
     ) -> Result<(), CmsError> {
         let rows = sqlx::query!(
@@ -65,11 +60,11 @@ impl PublishedArticleRepository {
             SET title = $1, slug = $2, body = $3, description = $4, cover_image_url = $5, updated_at = $6
             WHERE id = $7
             "#,
-            title,
-            slug,
-            body,
-            description,
-            cover_image_url,
+            content.title,
+            content.slug,
+            content.body,
+            content.description,
+            content.cover_image_url,
             now as _,
             article_id
         )
@@ -89,7 +84,7 @@ impl PublishedArticleRepository {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::{Category, DraftArticle};
+    use crate::models::{ArticleContent, Category, DraftArticle};
     use crate::test_utils::*;
 
     #[sqlx::test]
@@ -251,18 +246,16 @@ mod tests {
                 .expect("Failed to create published article");
 
         let update_time = utc_now();
-        PublishedArticleRepository::update(
-            &pool,
-            published_id,
-            "更新後のタイトル",
-            "updated-slug",
-            "更新後の本文",
-            Some("更新後の説明"),
-            None,
-            update_time,
-        )
-        .await
-        .expect("Failed to update published article");
+        let content = ArticleContent {
+            title: "更新後のタイトル",
+            slug: "updated-slug",
+            body: "更新後の本文",
+            description: Some("更新後の説明"),
+            cover_image_url: None,
+        };
+        PublishedArticleRepository::update(&pool, published_id, &content, update_time)
+            .await
+            .expect("Failed to update published article");
 
         let updated = sqlx::query!(
             r#"SELECT title, slug, body, description FROM published_articles WHERE id = $1"#,
@@ -283,17 +276,15 @@ mod tests {
         pool: PgPool,
     ) {
         let nonexistent_id = Uuid::now_v7();
-        let result = PublishedArticleRepository::update(
-            &pool,
-            nonexistent_id,
-            "タイトル",
-            "slug",
-            "本文",
-            None,
-            None,
-            utc_now(),
-        )
-        .await;
+        let content = ArticleContent {
+            title: "タイトル",
+            slug: "slug",
+            body: "本文",
+            description: None,
+            cover_image_url: None,
+        };
+        let result =
+            PublishedArticleRepository::update(&pool, nonexistent_id, &content, utc_now()).await;
 
         assert!(matches!(result, Err(CmsError::NotFound)));
     }
@@ -324,18 +315,16 @@ mod tests {
                 .expect("Failed to create published article");
 
         // cover_image_url を設定して更新
-        PublishedArticleRepository::update(
-            &pool,
-            published_id,
-            "カバーテスト",
-            "cover-slug",
-            "本文",
-            None,
-            Some("https://example.com/cover.jpg"),
-            utc_now(),
-        )
-        .await
-        .expect("Failed to update");
+        let content = ArticleContent {
+            title: "カバーテスト",
+            slug: "cover-slug",
+            body: "本文",
+            description: None,
+            cover_image_url: Some("https://example.com/cover.jpg"),
+        };
+        PublishedArticleRepository::update(&pool, published_id, &content, utc_now())
+            .await
+            .expect("Failed to update");
 
         let updated = sqlx::query!(
             r#"SELECT cover_image_url FROM published_articles WHERE id = $1"#,
@@ -351,18 +340,16 @@ mod tests {
         );
 
         // cover_image_url を None に戻す
-        PublishedArticleRepository::update(
-            &pool,
-            published_id,
-            "カバーテスト",
-            "cover-slug",
-            "本文",
-            None,
-            None,
-            utc_now(),
-        )
-        .await
-        .expect("Failed to update");
+        let content = ArticleContent {
+            title: "カバーテスト",
+            slug: "cover-slug",
+            body: "本文",
+            description: None,
+            cover_image_url: None,
+        };
+        PublishedArticleRepository::update(&pool, published_id, &content, utc_now())
+            .await
+            .expect("Failed to update");
 
         let updated = sqlx::query!(
             r#"SELECT cover_image_url FROM published_articles WHERE id = $1"#,

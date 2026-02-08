@@ -19,6 +19,7 @@ pub struct SaveDraftInput {
 #[server(input = Json, endpoint = "admin/save_draft")]
 pub async fn save_draft_handler(input: SaveDraftInput) -> Result<String, ServerFnError> {
     use crate::server::contexts::AppState;
+    use blog_romira_dev_cms::ArticleContent;
     use uuid::Uuid;
 
     let state = expect_context::<AppState>();
@@ -26,15 +27,16 @@ pub async fn save_draft_handler(input: SaveDraftInput) -> Result<String, ServerF
 
     let uuid = Uuid::parse_str(&input.id).map_err(|e| ServerFnError::new(e.to_string()))?;
 
+    let content = ArticleContent {
+        title: &input.title,
+        slug: &input.slug,
+        body: &input.body,
+        description: input.description.as_deref(),
+        cover_image_url: input.cover_image_url.as_deref(),
+    };
+
     service
-        .save(
-            uuid,
-            &input.title,
-            &input.slug,
-            &input.body,
-            input.description.as_deref(),
-            input.cover_image_url.as_deref(),
-        )
+        .save(uuid, &content)
         .await
         .map_err(|e| ServerFnError::new(e.to_string()))?;
 

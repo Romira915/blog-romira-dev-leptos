@@ -1,5 +1,5 @@
 use crate::error::CmsError;
-use crate::models::DraftArticleWithCategories;
+use crate::models::{ArticleContent, DraftArticleWithCategories};
 use crate::queries::{DraftArticleQuery, PublishedArticleQuery};
 use crate::repositories::{DraftArticleRepository, PublishedArticleRepository};
 use crate::value_objects::PublishedArticleSlug;
@@ -40,23 +40,9 @@ impl DraftArticleService {
     pub async fn save(
         &self,
         article_id: Uuid,
-        title: &str,
-        slug: &str,
-        body: &str,
-        description: Option<&str>,
-        cover_image_url: Option<&str>,
+        content: &ArticleContent<'_>,
     ) -> Result<(), CmsError> {
-        DraftArticleRepository::upsert(
-            &self.pool,
-            article_id,
-            title,
-            slug,
-            body,
-            description,
-            cover_image_url,
-            utc_now(),
-        )
-        .await
+        DraftArticleRepository::upsert(&self.pool, article_id, content, utc_now()).await
     }
 
     /// 下書きを公開（draft_articles → published_articles に移動）
