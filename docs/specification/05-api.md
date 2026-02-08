@@ -251,7 +251,7 @@ enum ArticleResponse {
 |------|-----|
 | **エンドポイント** | `admin/get_articles` |
 | **入力コーデック** | `GetUrl` (GET) |
-| **認証** | UIレベルガードのみ（サーバーサイド認証チェックなし） |
+| **認証** | 必須（Axumミドルウェア。未認証時 401） |
 
 #### 入力
 
@@ -286,7 +286,7 @@ enum ArticleResponse {
 |------|-----|
 | **エンドポイント** | `admin/get_article` |
 | **入力コーデック** | `GetUrl` (GET) |
-| **認証** | UIレベルガードのみ |
+| **認証** | 必須（Axumミドルウェア。未認証時 401） |
 
 #### 入力
 
@@ -329,7 +329,7 @@ enum ArticleResponse {
 |------|-----|
 | **エンドポイント** | `admin/save_draft` |
 | **入力コーデック** | `Json` (POST) |
-| **認証** | UIレベルガードのみ |
+| **認証** | 必須（Axumミドルウェア。未認証時 401） |
 
 #### 入力型: `SaveDraftInput`
 
@@ -366,7 +366,7 @@ enum ArticleResponse {
 |------|-----|
 | **エンドポイント** | `admin/save_published` |
 | **入力コーデック** | `Json` (POST) |
-| **認証** | UIレベルガードのみ |
+| **認証** | 必須（Axumミドルウェア。未認証時 401） |
 
 #### 入力型: `SavePublishedInput`
 
@@ -406,7 +406,7 @@ enum ArticleResponse {
 |------|-----|
 | **エンドポイント** | `admin/publish_article` |
 | **入力コーデック** | `Json` (POST) |
-| **認証** | UIレベルガードのみ |
+| **認証** | 必須（Axumミドルウェア。未認証時 401） |
 
 #### 入力型: `PublishArticleInput`
 
@@ -446,7 +446,7 @@ enum ArticleResponse {
 |------|-----|
 | **エンドポイント** | `admin/images` |
 | **入力コーデック** | `GetUrl` (GET) |
-| **認証** | UIレベルガードのみ |
+| **認証** | 必須（Axumミドルウェア。未認証時 401） |
 
 #### 入力
 
@@ -487,7 +487,7 @@ enum ArticleResponse {
 |------|-----|
 | **エンドポイント** | `admin/images/upload-url` |
 | **入力コーデック** | `Json` (POST) |
-| **認証** | UIレベルガードのみ |
+| **認証** | 必須（Axumミドルウェア。未認証時 401） |
 
 #### 入力型: `GenerateUploadUrlInput`
 
@@ -528,7 +528,7 @@ enum ArticleResponse {
 |------|-----|
 | **エンドポイント** | `admin/images` |
 | **入力コーデック** | `Json` (POST) |
-| **認証** | UIレベルガードのみ |
+| **認証** | 必須（Axumミドルウェア。未認証時 401） |
 
 #### 入力型: `RegisterImageInput`
 
@@ -576,7 +576,7 @@ enum ArticleResponse {
 |------|-----|
 | **エンドポイント** | `admin/images/delete` |
 | **入力コーデック** | `Json` (POST) |
-| **認証** | UIレベルガードのみ |
+| **認証** | 必須（Axumミドルウェア。未認証時 401） |
 
 #### 入力型: `DeleteImageInput`
 

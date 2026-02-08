@@ -1,7 +1,9 @@
 use axum::Router;
 use axum::extract::MatchedPath;
 use axum::http::Request;
-use blog_romira_dev_app::{App, AppState, SERVER_CONFIG, admin_routes, auth_routes, shell};
+use blog_romira_dev_app::{
+    App, AppState, SERVER_CONFIG, admin_routes, auth_routes, require_admin_auth, shell,
+};
 use leptos::logging::log;
 use leptos::prelude::*;
 use leptos_axum::{LeptosRoutes, generate_route_list};
@@ -85,6 +87,7 @@ async fn main() {
         // })
         .fallback(leptos_axum::file_and_error_handler::<AppState, _>(shell))
         .with_state(app_state)
+        .layer(axum::middleware::from_fn(require_admin_auth))
         .layer(session_layer)
         .layer(MakeSpanForHttp.into_tracing_service());
 

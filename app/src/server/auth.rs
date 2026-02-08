@@ -1,6 +1,9 @@
 use axum::extract::Query;
+use axum::http::StatusCode;
 use axum::{
     Router,
+    extract::Request,
+    middleware::Next,
     response::{IntoResponse, Redirect},
     routing::get,
 };
@@ -50,27 +53,21 @@ struct GoogleUserInfo {
 }
 
 /// Create OAuth2 client
-fn create_oauth_client() -> Option<GoogleOAuthClient> {
-    let client_id = SERVER_CONFIG.google_client_id.as_ref()?;
-    let client_secret = SERVER_CONFIG.google_client_secret.as_ref()?;
-    let app_url = SERVER_CONFIG.app_url.as_ref()?;
+fn create_oauth_client() -> GoogleOAuthClient {
+    let redirect_url = format!("{}/auth/callback", SERVER_CONFIG.app_url);
 
-    let redirect_url = format!("{}/auth/callback", app_url);
-
-    let client = BasicClient::new(ClientId::new(client_id.clone()))
-        .set_client_secret(ClientSecret::new(client_secret.clone()))
+    BasicClient::new(ClientId::new(SERVER_CONFIG.google_client_id.clone()))
+        .set_client_secret(ClientSecret::new(
+            SERVER_CONFIG.google_client_secret.clone(),
+        ))
         .set_auth_uri(AuthUrl::new(GOOGLE_AUTH_URL.to_string()).unwrap())
         .set_token_uri(TokenUrl::new(GOOGLE_TOKEN_URL.to_string()).unwrap())
-        .set_redirect_uri(RedirectUrl::new(redirect_url).unwrap());
-
-    Some(client)
+        .set_redirect_uri(RedirectUrl::new(redirect_url).unwrap())
 }
 
 /// Start OAuth flow - redirect to Google
 pub async fn auth_google(session: Session) -> impl IntoResponse {
-    let Some(client) = create_oauth_client() else {
-        return Redirect::to("/admin?error=oauth_not_configured").into_response();
-    };
+    let client = create_oauth_client();
 
     let (auth_url, csrf_token) = client
         .authorize_url(CsrfToken::new_random)
@@ -103,9 +100,7 @@ pub async fn auth_callback(
     }
     let _ = session.remove::<String>(SESSION_CSRF_KEY).await;
 
-    let Some(client) = create_oauth_client() else {
-        return Redirect::to("/admin?error=oauth_not_configured").into_response();
-    };
+    let client = create_oauth_client();
 
     // Exchange code for token
     let http_client = oauth2::reqwest::Client::new();
@@ -144,6 +139,19 @@ pub async fn auth_callback(
         }
     };
 
+    // Check if email is in the admin allowlist
+    if !is_admin_email(&userinfo.email) {
+        tracing::warn!("Unauthorized login attempt: {}", userinfo.email);
+        let _ = session.flush().await;
+        return (
+            StatusCode::FORBIDDEN,
+            axum::response::Html(
+                "<h1>403 Forbidden</h1><p>This account is not authorized to access the admin area.</p>",
+            ),
+        )
+            .into_response();
+    }
+
     // Store user in session
     let user = AuthUser {
         email: userinfo.email,
@@ -175,6 +183,50 @@ pub async fn get_current_user(session: &Session) -> Option<AuthUser> {
 #[allow(dead_code)]
 pub async fn is_authenticated(session: &Session) -> bool {
     get_current_user(session).await.is_some()
+}
+
+/// Check if the given email is in the ADMIN_EMAILS allowlist.
+fn is_admin_email(email: &str) -> bool {
+    use super::config::SERVER_CONFIG;
+
+    SERVER_CONFIG
+        .admin_emails
+        .split(',')
+        .any(|e| e.trim().eq_ignore_ascii_case(email))
+}
+
+/// Middleware that requires authentication for admin paths.
+///
+/// - `/api/admin/` → 401 Unauthorized if not authenticated, 403 Forbidden if not admin
+/// - `/admin` or `/admin/` → redirect to `/auth/google` if not authenticated, 403 if not admin
+pub async fn require_admin_auth(
+    session: Session,
+    request: Request,
+    next: Next,
+) -> axum::response::Response {
+    let path = request.uri().path();
+    let is_admin_path = path == "/admin" || path.starts_with("/admin/");
+    let is_admin_api = path.starts_with("/api/admin/");
+
+    if is_admin_path || is_admin_api {
+        match get_current_user(&session).await {
+            None => {
+                if is_admin_api {
+                    return StatusCode::UNAUTHORIZED.into_response();
+                }
+                return Redirect::to("/auth/google").into_response();
+            }
+            Some(user) => {
+                if !is_admin_email(&user.email) {
+                    tracing::warn!("Non-admin session detected, flushing: {}", user.email);
+                    let _ = session.flush().await;
+                    return StatusCode::FORBIDDEN.into_response();
+                }
+            }
+        }
+    }
+
+    next.run(request).await
 }
 
 /// Create auth routes
