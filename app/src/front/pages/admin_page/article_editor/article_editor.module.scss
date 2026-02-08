@@ -180,6 +180,43 @@
     }
 }
 
+.fullscreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 1000;
+    background: var(--surface);
+    display: flex;
+    flex-direction: column;
+    padding: 0.5rem;
+    overflow: hidden;
+
+    .editor_toolbar {
+        flex-shrink: 0;
+    }
+
+    .editor_container {
+        flex: 1;
+        min-height: 0;
+    }
+}
+
+.fullscreen_button {
+    padding: 0.375rem 0.75rem;
+    background-color: var(--surface);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.875rem;
+
+    &:hover {
+        background-color: var(--surface-hover);
+    }
+}
+
 .editor_toolbar {
     display: flex;
     justify-content: space-between;
