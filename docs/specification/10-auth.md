@@ -14,11 +14,12 @@ Google OAuth 2.0 による管理者認証。Google Workspace の内部アプリ�
 
 | 環境変数 | 説明 | 必須 |
 |---------|------|:----:|
-| `GOOGLE_CLIENT_ID` | OAuth2 クライアントID | ○（OAuth使用時） |
-| `GOOGLE_CLIENT_SECRET` | OAuth2 クライアントシークレット | ○（OAuth使用時） |
-| `APP_URL` | アプリケーションURL（コールバックURL構築用） | ○（OAuth使用時） |
+| `GOOGLE_CLIENT_ID` | OAuth2 クライアントID | ○ |
+| `GOOGLE_CLIENT_SECRET` | OAuth2 クライアントシークレット | ○ |
+| `APP_URL` | アプリケーションURL（コールバックURL構築用） | ○ |
+| `ADMIN_EMAILS` | 許可メールアドレス（カンマ区切り） | ○ |
 
-3つすべてが設定されていない場合、OAuthは「未設定」として動作し、管理画面は認証なしでアクセス可能。
+上記4つはすべて **起動時に必須** である。未設定の場合、アプリケーションは起動時にパニックする（`envy::from_env().expect()`）。
 
 ### Google OAuth2 エンドポイント
 
@@ -76,7 +77,7 @@ OAuthフロー中のエラーは、すべて `/admin?error={code}` へのリダ�
 
 | エラーコード | 発生タイミング | 説明 |
 |------------|-------------|------|
-| `oauth_not_configured` | `/auth/google` または `/auth/callback` | OAuth環境変数（client_id, client_secret, app_url）が未設定 |
+| `oauth_not_configured` | `/auth/google` または `/auth/callback` | OAuth環境変数が未設定（※到達不能：起動時に必須チェック済み） |
 | `session_error` | `/auth/google` または `/auth/callback` | セッションへの書き込み失敗（CSRF保存 or ユーザー保存） |
 | `csrf_mismatch` | `/auth/callback` | CSRFトークン不一致（改ざんまたはセッション切れ） |
 | `token_exchange_failed` | `/auth/callback` | 認証コード→アクセストークン交換失敗 |
@@ -111,6 +112,7 @@ OAuthフロー中のエラーは、すべて `/admin?error={code}` へのリダ�
 - **実装**: `app/src/common/handlers/auth/is_oauth_configured.rs`
 - **判定条件**: `google_client_id`, `google_client_secret`, `app_url` の3項目すべてが `Some`
 - **レスポンス**: `bool`
+- **備考**: 環境変数は起動時に必須チェックされるため、実行時は常に `true` を返す（レガシーAPI）
 
 ### auth/me — 認証ユーザー取得
 
@@ -136,13 +138,9 @@ OAuthフロー中のエラーは、すべて `/admin?error={code}` へのリダ�
   4. `AuthUser` が存在しなければ → 401 Unauthorized を返す
 - **認可粒度**: 認証済みであれば全管理機能を許可（ロール区別なし）
 
-### OAuth未設定時の挙動
+### 環境変数に関する補足
 
-OAuth環境変数（`GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `APP_URL`）が未設定の場合でも、認証ミドルウェアは **常に有効** である。
-
-- ログイン手段がないため、セッションに `AuthUser` が格納されることはない
-- 結果として、全管理APIが 401 で拒否される
-- **開発環境でも OAuth 設定が必須**
+OAuth環境変数（`GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `APP_URL`, `ADMIN_EMAILS`）は起動時に必須チェックされるため、未設定の状態でアプリケーションが動作することはない。開発環境でもOAuth設定が必須である。
 
 ### エラーレスポンス
 
@@ -169,11 +167,12 @@ UIレベルの表示制御はUXのために維持するが、セキュリティ�
 2. `get_auth_user()` で認証ユーザーを取得
 3. 以下の条件でUI表示を分岐:
 
-| OAuth設定 | 認証状態 | 表示 |
-|----------|---------|------|
-| 未設定 | — | 「認証未設定」表示 + ログイン不可のメッセージ |
-| 設定済み | 認証済み | ユーザーメール表示 + ログアウトリンク |
-| 設定済み | 未認証 | 管理画面コンテンツの上にログインオーバーレイを表示 |
+| 認証状態 | 表示 |
+|---------|------|
+| 認証済み | ユーザーメール表示 + ログアウトリンク |
+| 未認証 | 管理画面コンテンツの上にログインオーバーレイを表示 |
+
+> **備考**: OAuth環境変数は起動時に必須のため「未設定」状態は発生しない。UIの `is_oauth_configured()` チェックはレガシーコードとして残存しているが、常に `true` を返す。
 
 ### ログインオーバーレイ
 
