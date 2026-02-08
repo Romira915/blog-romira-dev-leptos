@@ -223,10 +223,8 @@ pub(crate) async fn get_article_handler(
         }
     }
 
-    // 3. 見つからない場合は404（SSR時のみステータス設定）
-    if crate::server::http::request::is_ssr_request().await {
-        response.set_status(StatusCode::NOT_FOUND);
-    }
+    // 3. 見つからない場合は404
+    response.set_status(StatusCode::NOT_FOUND);
     Ok(ArticleResponse::NotFound(()))
 }
 #[instrument]
