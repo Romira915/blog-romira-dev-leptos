@@ -36,21 +36,32 @@ pub(crate) async fn get_articles_handler()
         set_top_page_cache_control();
     }
 
-    let newt_articles = newt_article_service.fetch_published_articles().await;
-    let newt_articles = match newt_articles {
-        Ok(articles) => articles,
-        Err(err) => {
-            response.set_status(StatusCode::INTERNAL_SERVER_ERROR);
-            tracing::error!(
-                error = err.to_string(),
-                "Failed to get articles from NewtArticleService",
-            );
-            return Err(ServerFnError::from(
-                GetArticlesError::NewtArticleServiceGetArticles(
-                    "Failed to get articles from NewtArticleService".to_string(),
-                ),
-            ));
-        }
+    // features=local の場合、Newt記事をスキップ
+    let mut articles = if show_local {
+        Vec::new()
+    } else {
+        let newt_articles = newt_article_service.fetch_published_articles().await;
+        let newt_articles = match newt_articles {
+            Ok(articles) => articles,
+            Err(err) => {
+                response.set_status(StatusCode::INTERNAL_SERVER_ERROR);
+                tracing::error!(
+                    error = err.to_string(),
+                    "Failed to get articles from NewtArticleService",
+                );
+                return Err(ServerFnError::from(
+                    GetArticlesError::NewtArticleServiceGetArticles(
+                        "Failed to get articles from NewtArticleService".to_string(),
+                    ),
+                ));
+            }
+        };
+
+        newt_articles
+            .items
+            .into_iter()
+            .map(HomePageArticleDto::from)
+            .collect::<Vec<HomePageArticleDto>>()
     };
 
     let wordpress_articles = wordpress_article_service.fetch_articles().await;
@@ -84,12 +95,6 @@ pub(crate) async fn get_articles_handler()
             )));
         }
     };
-
-    let mut articles = newt_articles
-        .items
-        .into_iter()
-        .map(HomePageArticleDto::from)
-        .collect::<Vec<HomePageArticleDto>>();
 
     articles.extend(wordpress_articles.into_iter().map(HomePageArticleDto::from));
     articles.extend(qiita_articles.into_iter().map(HomePageArticleDto::from));
