@@ -1,4 +1,5 @@
 use crate::error::CmsError;
+use crate::models::ArticleContent;
 use chrono::NaiveDateTime;
 use sqlx::PgPool;
 use tracing::instrument;
@@ -24,16 +25,11 @@ impl DraftArticleRepository {
     }
 
     /// 下書き記事をUpsert（存在しなければINSERT、存在すればUPDATE）
-    #[allow(clippy::too_many_arguments)]
     #[instrument(skip(pool))]
     pub async fn upsert(
         pool: &PgPool,
         id: Uuid,
-        title: &str,
-        slug: &str,
-        body: &str,
-        description: Option<&str>,
-        cover_image_url: Option<&str>,
+        content: &ArticleContent<'_>,
         now: NaiveDateTime,
     ) -> Result<(), CmsError> {
         sqlx::query!(
@@ -49,11 +45,11 @@ impl DraftArticleRepository {
                 updated_at = EXCLUDED.updated_at
             "#,
             id,
-            slug,
-            title,
-            body,
-            description,
-            cover_image_url,
+            content.slug,
+            content.title,
+            content.body,
+            content.description,
+            content.cover_image_url,
             now as _
         )
         .execute(pool)
@@ -67,13 +63,21 @@ impl DraftArticleRepository {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::models::ArticleContent;
     use crate::test_utils::utc_now;
 
     #[sqlx::test]
     async fn test_deleteで記事が削除されること(pool: PgPool) {
         let now = utc_now();
         let id = Uuid::now_v7();
-        DraftArticleRepository::upsert(&pool, id, "削除対象", "to-delete", "本文", None, None, now)
+        let content = ArticleContent {
+            title: "削除対象",
+            slug: "to-delete",
+            body: "本文",
+            description: None,
+            cover_image_url: None,
+        };
+        DraftArticleRepository::upsert(&pool, id, &content, now)
             .await
             .expect("Failed to create draft article");
 
@@ -115,18 +119,16 @@ mod tests {
         let now = utc_now();
         let id = Uuid::now_v7();
 
-        DraftArticleRepository::upsert(
-            &pool,
-            id,
-            "テスト記事タイトル",
-            "test-article-slug",
-            "これはテスト記事の本文です。",
-            Some("テスト記事の説明"),
-            None,
-            now,
-        )
-        .await
-        .expect("Failed to upsert draft article");
+        let content = ArticleContent {
+            title: "テスト記事タイトル",
+            slug: "test-article-slug",
+            body: "これはテスト記事の本文です。",
+            description: Some("テスト記事の説明"),
+            cover_image_url: None,
+        };
+        DraftArticleRepository::upsert(&pool, id, &content, now)
+            .await
+            .expect("Failed to upsert draft article");
 
         let article = sqlx::query!(
             r#"SELECT title, slug, body, description FROM draft_articles WHERE id = $1"#,
@@ -148,32 +150,28 @@ mod tests {
         let id = Uuid::now_v7();
 
         // 1回目のupsert（作成）
-        DraftArticleRepository::upsert(
-            &pool,
-            id,
-            "元のタイトル",
-            "original",
-            "元の本文",
-            None,
-            None,
-            now,
-        )
-        .await
-        .expect("Failed to create");
+        let content = ArticleContent {
+            title: "元のタイトル",
+            slug: "original",
+            body: "元の本文",
+            description: None,
+            cover_image_url: None,
+        };
+        DraftArticleRepository::upsert(&pool, id, &content, now)
+            .await
+            .expect("Failed to create");
 
         // 2回目のupsert（更新）
-        DraftArticleRepository::upsert(
-            &pool,
-            id,
-            "更新後のタイトル",
-            "updated",
-            "更新後の本文",
-            Some("更新後の説明"),
-            None,
-            utc_now(),
-        )
-        .await
-        .expect("Failed to update");
+        let content = ArticleContent {
+            title: "更新後のタイトル",
+            slug: "updated",
+            body: "更新後の本文",
+            description: Some("更新後の説明"),
+            cover_image_url: None,
+        };
+        DraftArticleRepository::upsert(&pool, id, &content, utc_now())
+            .await
+            .expect("Failed to update");
 
         let article = sqlx::query!(
             r#"SELECT title, slug, body, description FROM draft_articles WHERE id = $1"#,
@@ -197,18 +195,16 @@ mod tests {
         // 3回連続でupsert（連打シミュレーション）
         for i in 0..3 {
             let title = format!("タイトル{}", i);
-            DraftArticleRepository::upsert(
-                &pool,
-                id,
-                title.as_str(),
-                "slug",
-                "本文",
-                None,
-                None,
-                now,
-            )
-            .await
-            .expect("Failed to upsert");
+            let content = ArticleContent {
+                title: title.as_str(),
+                slug: "slug",
+                body: "本文",
+                description: None,
+                cover_image_url: None,
+            };
+            DraftArticleRepository::upsert(&pool, id, &content, now)
+                .await
+                .expect("Failed to upsert");
         }
 
         let count: i64 = sqlx::query_scalar!(
@@ -235,18 +231,16 @@ mod tests {
         let now = utc_now();
         let id = Uuid::now_v7();
 
-        DraftArticleRepository::upsert(
-            &pool,
-            id,
-            "カバー画像テスト",
-            "cover-test",
-            "本文",
-            None,
-            Some("https://example.com/image.jpg"),
-            now,
-        )
-        .await
-        .expect("Failed to upsert");
+        let content = ArticleContent {
+            title: "カバー画像テスト",
+            slug: "cover-test",
+            body: "本文",
+            description: None,
+            cover_image_url: Some("https://example.com/image.jpg"),
+        };
+        DraftArticleRepository::upsert(&pool, id, &content, now)
+            .await
+            .expect("Failed to upsert");
 
         let article = sqlx::query!(
             r#"SELECT cover_image_url FROM draft_articles WHERE id = $1"#,
@@ -262,18 +256,16 @@ mod tests {
         );
 
         // 更新でcover_image_urlをNoneに変更
-        DraftArticleRepository::upsert(
-            &pool,
-            id,
-            "カバー画像テスト",
-            "cover-test",
-            "本文",
-            None,
-            None,
-            utc_now(),
-        )
-        .await
-        .expect("Failed to update");
+        let content = ArticleContent {
+            title: "カバー画像テスト",
+            slug: "cover-test",
+            body: "本文",
+            description: None,
+            cover_image_url: None,
+        };
+        DraftArticleRepository::upsert(&pool, id, &content, utc_now())
+            .await
+            .expect("Failed to update");
 
         let article = sqlx::query!(
             r#"SELECT cover_image_url FROM draft_articles WHERE id = $1"#,

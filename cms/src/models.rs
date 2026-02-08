@@ -3,6 +3,16 @@ use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
 
+/// Repository層で記事コンテンツの受け渡しに使用する構造体
+#[derive(Debug)]
+pub struct ArticleContent<'a> {
+    pub title: &'a str,
+    pub slug: &'a str,
+    pub body: &'a str,
+    pub description: Option<&'a str>,
+    pub cover_image_url: Option<&'a str>,
+}
+
 /// 画像ライブラリ
 /// タイムスタンプはUTCで保存
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]

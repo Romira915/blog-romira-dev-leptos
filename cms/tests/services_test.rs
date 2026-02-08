@@ -5,7 +5,7 @@
 use blog_romira_dev_cms::error::CmsError;
 use blog_romira_dev_cms::services::{DraftArticleService, PublishedArticleService};
 use blog_romira_dev_cms::test_utils::*;
-use blog_romira_dev_cms::{PublishedArticleSlug, PublishedArticleTitle};
+use blog_romira_dev_cms::{ArticleContent, PublishedArticleSlug, PublishedArticleTitle};
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -22,15 +22,15 @@ async fn test_下書き公開で公開記事が作成されカテゴリがコピ
     let service = DraftArticleService::new(pool.clone());
 
     let draft_id = Uuid::now_v7();
+    let content = ArticleContent {
+        title: "Draft to Publish",
+        slug: "draft-to-publish",
+        body: "Draft Body",
+        description: Some("Draft Desc"),
+        cover_image_url: None,
+    };
     service
-        .save(
-            draft_id,
-            "Draft to Publish",
-            "draft-to-publish",
-            "Draft Body",
-            Some("Draft Desc"),
-            None,
-        )
+        .save(draft_id, &content)
         .await
         .expect("Failed to create draft");
 
@@ -101,8 +101,15 @@ async fn test_空スラッグの下書きを公開するとvalidationエラー�
     let service = DraftArticleService::new(pool);
 
     let draft_id = Uuid::now_v7();
+    let content = ArticleContent {
+        title: "Title",
+        slug: "",
+        body: "Body",
+        description: None,
+        cover_image_url: None,
+    };
     service
-        .save(draft_id, "Title", "", "Body", None, None)
+        .save(draft_id, &content)
         .await
         .expect("Failed to create draft");
 
@@ -126,15 +133,15 @@ async fn test_重複スラッグの下書きを公開するとvalidationエラ�
 
     // 先に同じスラッグで公開記事を作成
     let first_draft_id = Uuid::now_v7();
+    let content = ArticleContent {
+        title: "First",
+        slug: "duplicate-slug",
+        body: "Body",
+        description: None,
+        cover_image_url: None,
+    };
     service
-        .save(
-            first_draft_id,
-            "First",
-            "duplicate-slug",
-            "Body",
-            None,
-            None,
-        )
+        .save(first_draft_id, &content)
         .await
         .expect("Failed to create first draft");
     service
@@ -144,15 +151,15 @@ async fn test_重複スラッグの下書きを公開するとvalidationエラ�
 
     // 同じスラッグで下書きを作成して公開を試みる
     let second_draft_id = Uuid::now_v7();
+    let content = ArticleContent {
+        title: "Second",
+        slug: "duplicate-slug",
+        body: "Body",
+        description: None,
+        cover_image_url: None,
+    };
     service
-        .save(
-            second_draft_id,
-            "Second",
-            "duplicate-slug",
-            "Body",
-            None,
-            None,
-        )
+        .save(second_draft_id, &content)
         .await
         .expect("Failed to create second draft");
 
@@ -175,8 +182,15 @@ async fn test_公開記事を同じスラッグで更新すると成功するこ
 
     // 公開記事を作成
     let draft_id = Uuid::now_v7();
+    let content = ArticleContent {
+        title: "Original",
+        slug: "same-slug",
+        body: "Body",
+        description: None,
+        cover_image_url: None,
+    };
     draft_service
-        .save(draft_id, "Original", "same-slug", "Body", None, None)
+        .save(draft_id, &content)
         .await
         .expect("Failed to create draft");
     let published_id = draft_service
@@ -204,8 +218,15 @@ async fn test_公開記事を他の記事と重複するスラッグで更新す
 
     // 2つの公開記事を作成
     let draft1_id = Uuid::now_v7();
+    let content = ArticleContent {
+        title: "First",
+        slug: "first-slug",
+        body: "Body",
+        description: None,
+        cover_image_url: None,
+    };
     draft_service
-        .save(draft1_id, "First", "first-slug", "Body", None, None)
+        .save(draft1_id, &content)
         .await
         .expect("Failed to create first draft");
     let _first_published_id = draft_service
@@ -214,8 +235,15 @@ async fn test_公開記事を他の記事と重複するスラッグで更新す
         .expect("Failed to publish first");
 
     let draft2_id = Uuid::now_v7();
+    let content = ArticleContent {
+        title: "Second",
+        slug: "second-slug",
+        body: "Body",
+        description: None,
+        cover_image_url: None,
+    };
     draft_service
-        .save(draft2_id, "Second", "second-slug", "Body", None, None)
+        .save(draft2_id, &content)
         .await
         .expect("Failed to create second draft");
     let second_published_id = draft_service
