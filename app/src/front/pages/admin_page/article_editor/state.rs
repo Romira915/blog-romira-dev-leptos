@@ -23,6 +23,7 @@ pub struct ArticleFormState {
     pub cover_image_url: RwSignal<Option<String>>,
     pub is_draft: RwSignal<bool>,
     pub view_mode: RwSignal<ViewMode>,
+    pub is_fullscreen: RwSignal<bool>,
     pub saving: RwSignal<bool>,
     pub publishing: RwSignal<bool>,
     pub message: RwSignal<Option<(bool, String)>>,
@@ -38,6 +39,7 @@ impl Default for ArticleFormState {
             cover_image_url: RwSignal::new(None),
             is_draft: RwSignal::new(true), // 新規作成時は下書き
             view_mode: RwSignal::new(ViewMode::default()),
+            is_fullscreen: RwSignal::new(false),
             saving: RwSignal::new(false),
             publishing: RwSignal::new(false),
             message: RwSignal::new(None),
