@@ -11,7 +11,7 @@ use axum::http::{Request, StatusCode};
 use axum::routing::post;
 use blog_romira_dev_app::common::handlers::auth::AuthUser;
 use blog_romira_dev_app::common::response::CacheControlSet;
-use blog_romira_dev_app::{App, AppState, require_admin_auth};
+use blog_romira_dev_app::{App, AppState, auth_routes, require_admin_auth};
 use http_body_util::BodyExt;
 use leptos::prelude::*;
 use leptos_axum::{LeptosRoutes, generate_route_list};
@@ -29,7 +29,7 @@ fn ensure_admin_emails_env() {
     INIT.call_once(|| {
         // SAFETY: Called once before any other threads access SERVER_CONFIG
         unsafe {
-            std::env::set_var("ADMIN_EMAILS", "test@example.com");
+            std::env::set_var("ADMIN_EMAILS", "test@example.com,admin@example.com");
         }
     });
 }
@@ -74,6 +74,7 @@ fn build_test_router_with_auth(app_state: AppState) -> Router {
     Router::new()
         .route("/test/login", post(test_login_handler))
         .route("/test/login_as", post(test_login_as_handler))
+        .merge(auth_routes())
         .leptos_routes_with_context(
             &app_state,
             routes,
@@ -905,4 +906,139 @@ async fn test_許可メールで管理apiにアクセスすると正常に通る
     let response = app.clone().oneshot(request).await.unwrap();
 
     assert_eq!(response.status(), StatusCode::OK);
+}
+
+// =====================================
+// is_admin_email のテスト（ミドルウェア経由）
+// =====================================
+
+#[sqlx::test(migrations = "../migrations")]
+async fn test_大文字小文字が異なるメールで管理apiにアクセスすると正常に通ること(
+    pool: PgPool,
+) {
+    let app_state = create_test_app_state(pool);
+    let app = build_test_router_with_auth(app_state);
+
+    // 大文字小文字混在メールでログイン（ADMIN_EMAILS=test@example.com に対して）
+    let cookie = login_as_and_get_cookie(&app, "TEST@EXAMPLE.COM").await;
+
+    let request = Request::builder()
+        .method("GET")
+        .uri("/api/admin/get_articles")
+        .header("cookie", &cookie)
+        .body(Body::empty())
+        .unwrap();
+
+    let response = app.clone().oneshot(request).await.unwrap();
+
+    assert_eq!(response.status(), StatusCode::OK);
+}
+
+#[sqlx::test(migrations = "../migrations")]
+async fn test_複数許可メールの2番目で管理apiにアクセスすると正常に通ること(
+    pool: PgPool,
+) {
+    let app_state = create_test_app_state(pool);
+    let app = build_test_router_with_auth(app_state);
+
+    // 2番目の許可メール(admin@example.com)でログイン
+    let cookie = login_as_and_get_cookie(&app, "admin@example.com").await;
+
+    let request = Request::builder()
+        .method("GET")
+        .uri("/api/admin/get_articles")
+        .header("cookie", &cookie)
+        .body(Body::empty())
+        .unwrap();
+
+    let response = app.clone().oneshot(request).await.unwrap();
+
+    assert_eq!(response.status(), StatusCode::OK);
+}
+
+// =====================================
+// ログアウトのテスト
+// =====================================
+
+#[sqlx::test(migrations = "../migrations")]
+async fn test_ログアウトするとルートにリダイレクトされること(pool: PgPool) {
+    let app_state = create_test_app_state(pool);
+    let app = build_test_router_with_auth(app_state);
+
+    let cookie = login_and_get_cookie(&app).await;
+
+    let request = Request::builder()
+        .method("GET")
+        .uri("/auth/logout")
+        .header("cookie", &cookie)
+        .body(Body::empty())
+        .unwrap();
+
+    let response = app.clone().oneshot(request).await.unwrap();
+
+    assert_eq!(response.status(), StatusCode::SEE_OTHER);
+    assert_eq!(
+        response
+            .headers()
+            .get("location")
+            .unwrap()
+            .to_str()
+            .unwrap(),
+        "/"
+    );
+}
+
+#[sqlx::test(migrations = "../migrations")]
+async fn test_ログアウト後に管理apiにアクセスすると401を返すこと(
+    pool: PgPool,
+) {
+    let app_state = create_test_app_state(pool);
+    let app = build_test_router_with_auth(app_state);
+
+    let cookie = login_and_get_cookie(&app).await;
+
+    // ログアウト
+    let request = Request::builder()
+        .method("GET")
+        .uri("/auth/logout")
+        .header("cookie", &cookie)
+        .body(Body::empty())
+        .unwrap();
+    let _ = app.clone().oneshot(request).await.unwrap();
+
+    // ログアウト後に管理APIにアクセス → セッションが消えているので401
+    let request = Request::builder()
+        .method("GET")
+        .uri("/api/admin/get_articles")
+        .header("cookie", &cookie)
+        .body(Body::empty())
+        .unwrap();
+    let response = app.clone().oneshot(request).await.unwrap();
+
+    assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+}
+
+// =====================================
+// パス判定の境界テスト
+// =====================================
+
+#[sqlx::test(migrations = "../migrations")]
+async fn test_admin接頭辞だが管理パスでないパスは認証不要であること(
+    pool: PgPool,
+) {
+    let app_state = create_test_app_state(pool);
+    let app = build_test_router_with_auth(app_state);
+
+    // /adminPanel は /admin でも /admin/ で始まるパスでもないので認証不要
+    let request = Request::builder()
+        .method("GET")
+        .uri("/adminPanel")
+        .body(Body::empty())
+        .unwrap();
+
+    let response = app.oneshot(request).await.unwrap();
+
+    // ミドルウェアで401/403にならないこと（ルートがないので他のステータスになる）
+    assert_ne!(response.status(), StatusCode::UNAUTHORIZED);
+    assert_ne!(response.status(), StatusCode::FORBIDDEN);
 }
