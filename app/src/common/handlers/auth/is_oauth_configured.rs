@@ -6,9 +6,5 @@ use tracing::instrument;
 #[instrument]
 #[server(input = GetUrl, endpoint = "auth/configured")]
 pub async fn is_oauth_configured() -> Result<bool, ServerFnError> {
-    use crate::server::config::SERVER_CONFIG;
-
-    Ok(SERVER_CONFIG.google_client_id.is_some()
-        && SERVER_CONFIG.google_client_secret.is_some()
-        && SERVER_CONFIG.app_url.is_some())
+    Ok(true)
 }

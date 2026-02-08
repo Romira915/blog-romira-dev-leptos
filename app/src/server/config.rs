@@ -9,13 +9,10 @@ pub struct ServerConfig {
     pub newt_api_token: String,
     pub qiita_api_token: String,
     pub database_url: String,
-    // OAuth (optional - required only for admin authentication)
-    #[serde(default)]
-    pub google_client_id: Option<String>,
-    #[serde(default)]
-    pub google_client_secret: Option<String>,
-    #[serde(default)]
-    pub app_url: Option<String>, // e.g., "http://localhost:3000" or "https://blog.romira.dev"
+    // OAuth (required for admin authentication)
+    pub google_client_id: String,
+    pub google_client_secret: String,
+    pub app_url: String, // e.g., "http://localhost:3000" or "https://blog.romira.dev"
     // GCS / imgix (required for image upload)
     pub gcs_bucket: String,
     pub gcs_service_account_key_json: String,
@@ -24,6 +21,8 @@ pub struct ServerConfig {
     // Valkey (Redis-compatible) session store
     #[serde(default = "default_valkey_url")]
     pub valkey_url: String,
+    // Admin access control (comma-separated list of allowed email addresses)
+    pub admin_emails: String,
 }
 
 fn default_valkey_url() -> String {

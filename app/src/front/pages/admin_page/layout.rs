@@ -108,21 +108,18 @@ pub fn AdminLayout(children: Children) -> impl IntoView {
                                 view! {
                                     <div class=style::auth_info>
                                         <span class=style::user_email>{user.email.clone()}</span>
-                                        <a href="/auth/logout" class=style::logout_link>
+                                        <a
+                                            href="/auth/logout"
+                                            rel="external"
+                                            class=style::logout_link
+                                        >
                                             "ログアウト"
                                         </a>
                                     </div>
                                 }
                                     .into_any()
                             } else {
-                                view! {
-                                    <div class=style::auth_info>
-                                        <a href="/auth/google" class=style::login_button>
-                                            "Googleでログイン"
-                                        </a>
-                                    </div>
-                                }
-                                    .into_any()
+                                view! { <div class=style::auth_info></div> }.into_any()
                             }
                         }}
                     </Suspense>

@@ -10,5 +10,8 @@ pub(crate) mod server;
 pub use front::app::{App, shell};
 #[cfg(feature = "ssr")]
 pub use server::{
-    admin_routes::admin_routes, auth::auth_routes, config::SERVER_CONFIG, contexts::AppState,
+    admin_routes::admin_routes,
+    auth::{auth_routes, require_admin_auth},
+    config::SERVER_CONFIG,
+    contexts::AppState,
 };
