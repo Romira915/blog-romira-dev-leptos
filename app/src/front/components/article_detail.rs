@@ -39,8 +39,11 @@ pub(crate) fn ArticleDetail(article: ArticleDetailDto) -> impl IntoView {
             <figure class=article_detail_style::article_cover>
                 <img
                     src=article.cover_image_url
+                    srcset=article.cover_image_srcset
+                    sizes="(max-width: 800px) 800px, (max-width: 1200px) 1200px, 1920px"
                     width=745
                     height=419
+                    loading="lazy"
                     alt=format!("Cover image of {}", article.title.read())
                     class=article_detail_style::article_cover_image
                 />

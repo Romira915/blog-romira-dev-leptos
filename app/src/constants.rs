@@ -20,9 +20,11 @@ pub(crate) const ROMIRA_GITHUB_URL: &str = "https://github.com/Romira915";
 pub(crate) const ROMIRA_X_URL: &str = "https://x.com/Romira915";
 pub(crate) const QIITA_BASE_URL: &str = "https://qiita.com";
 
-/// レスポンシブ画像用のサイズ (srcset用)
-#[allow(dead_code)]
+/// 本文画像用のレスポンシブサイズ (srcset用)
 pub const IMAGE_WIDTHS: [u32; 3] = [400, 800, 1200];
+
+/// カバー画像用のレスポンシブサイズ (srcset用)
+pub const COVER_IMAGE_WIDTHS: [u32; 3] = [800, 1200, 1920];
 
 /// Newt記事IDからDB記事のslugへのマッピング
 /// 旧Newt記事URLを新しいDB記事URLにリダイレクトするために使用
