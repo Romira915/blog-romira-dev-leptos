@@ -2,6 +2,7 @@ use leptos::prelude::*;
 use stylance::import_style;
 
 use crate::common::handlers::admin::images::{ImageDto, get_images_handler};
+use crate::front::components::UploadArea;
 
 import_style!(style, "image_picker_modal.module.scss");
 
@@ -31,9 +32,11 @@ fn ImageCard(
 
 #[component]
 pub fn ImagePickerModal(show: RwSignal<bool>, on_select: Callback<ImageDto>) -> impl IntoView {
+    let refresh_trigger = RwSignal::new(0u32);
+
     let images = Resource::new(
-        move || show.get(),
-        |visible| async move {
+        move || (show.get(), refresh_trigger.get()),
+        |(visible, _)| async move {
             if visible {
                 get_images_handler().await.ok()
             } else {
@@ -41,6 +44,10 @@ pub fn ImagePickerModal(show: RwSignal<bool>, on_select: Callback<ImageDto>) -> 
             }
         },
     );
+
+    let on_upload_complete = move || {
+        refresh_trigger.update(|n| *n += 1);
+    };
 
     let on_overlay_click = move |_| {
         show.set(false);
@@ -61,6 +68,9 @@ pub fn ImagePickerModal(show: RwSignal<bool>, on_select: Callback<ImageDto>) -> 
                         </button>
                     </div>
                     <div class=style::body>
+                        <div class=style::upload_section>
+                            <UploadArea on_upload_complete=on_upload_complete />
+                        </div>
                         <Suspense fallback=move || {
                             view! { <p class=style::loading>"画像を読み込み中..."</p> }
                         }>
