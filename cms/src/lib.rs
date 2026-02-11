@@ -13,9 +13,14 @@ pub use models::{
     ArticleContent, ArticleListItem, Category, DraftArticle, DraftArticleWithCategories, Image,
     PublishedArticle, PublishedArticleWithCategories,
 };
-pub use queries::{AdminArticleQuery, DraftArticleQuery, ImageQuery, PublishedArticleQuery};
-pub use repositories::{DraftArticleRepository, ImageRepository, PublishedArticleRepository};
+pub use queries::{
+    AdminArticleQuery, CategoryQuery, DraftArticleQuery, ImageQuery, PublishedArticleQuery,
+};
+pub use repositories::{
+    CategoryRepository, DraftArticleRepository, ImageRepository, PublishedArticleRepository,
+};
 pub use services::{
-    AdminArticleService, DraftArticleService, ImageService, PublishedArticleService,
+    AdminArticleService, CategoryService, DraftArticleService, ImageService,
+    PublishedArticleService,
 };
 pub use value_objects::{PublishedArticleSlug, PublishedArticleTitle};

@@ -12,6 +12,7 @@ pub struct ArticleEditData {
     pub description: Option<String>,
     pub cover_image_url: Option<String>,
     pub is_draft: bool,
+    pub categories: Vec<String>,
 }
 
 #[instrument]
@@ -42,6 +43,7 @@ pub async fn get_article_for_edit_handler(
             description: draft.article.description,
             cover_image_url: draft.article.cover_image_url,
             is_draft: true,
+            categories: draft.categories.into_iter().map(|c| c.name).collect(),
         }));
     }
 
@@ -59,6 +61,7 @@ pub async fn get_article_for_edit_handler(
             description: published.article.description,
             cover_image_url: published.article.cover_image_url,
             is_draft: false,
+            categories: published.categories.into_iter().map(|c| c.name).collect(),
         }));
     }
 

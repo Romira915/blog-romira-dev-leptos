@@ -12,6 +12,8 @@ pub struct SavePublishedInput {
     pub body: String,
     pub description: Option<String>,
     pub cover_image_url: Option<String>,
+    #[serde(default)]
+    pub category_names: Vec<String>,
 }
 
 /// 公開記事の保存（更新のみ）
@@ -46,6 +48,12 @@ pub async fn save_published_handler(input: SavePublishedInput) -> Result<String,
         )
         .await
         .map_err(|e| cms_error_to_response(&response, e))?;
+
+    state
+        .category_service()
+        .save_for_published(uuid, &input.category_names)
+        .await
+        .map_err(|e| ServerFnError::new(e.to_string()))?;
 
     Ok(uuid.to_string())
 }

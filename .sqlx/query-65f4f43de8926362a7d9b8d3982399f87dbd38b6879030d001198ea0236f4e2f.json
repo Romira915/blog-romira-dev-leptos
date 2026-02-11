@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM published_article_categories WHERE article_id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "65f4f43de8926362a7d9b8d3982399f87dbd38b6879030d001198ea0236f4e2f"
+}
