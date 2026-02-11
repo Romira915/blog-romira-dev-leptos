@@ -104,6 +104,13 @@ impl ArticleListItem {
         matches!(self, ArticleListItem::Draft(_))
     }
 
+    pub fn created_at(&self) -> NaiveDateTime {
+        match self {
+            ArticleListItem::Published(a) => a.article.created_at,
+            ArticleListItem::Draft(a) => a.article.created_at,
+        }
+    }
+
     pub fn updated_at(&self) -> NaiveDateTime {
         match self {
             ArticleListItem::Published(a) => a.article.updated_at,
