@@ -224,6 +224,21 @@ pub async fn require_admin_auth(
                 }
             }
         }
+
+        let mut response = next.run(request).await;
+        response.headers_mut().insert(
+            axum::http::header::CACHE_CONTROL,
+            axum::http::HeaderValue::from_static(
+                "no-store, no-cache, must-revalidate, max-age=0, private",
+            ),
+        );
+        response.headers_mut().insert(
+            axum::http::header::CDN_CACHE_CONTROL,
+            axum::http::HeaderValue::from_static(
+                "no-store, no-cache, must-revalidate, max-age=0, private",
+            ),
+        );
+        return response;
     }
 
     next.run(request).await
