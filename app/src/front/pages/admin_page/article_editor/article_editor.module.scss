@@ -126,6 +126,7 @@
 
 .input {
     width: 100%;
+    box-sizing: border-box;
     padding: 0.5rem;
     border: 1px solid var(--border);
     border-radius: 4px;
@@ -377,5 +378,42 @@
 
     &:hover {
         opacity: 1;
+    }
+}
+
+.tag_input_wrapper {
+    position: relative;
+}
+
+.suggestions_list {
+    position: absolute;
+    z-index: 10;
+    top: 100%;
+    left: 0;
+    right: 0;
+    margin: 0.25rem 0 0;
+    padding: 0.25rem 0;
+    list-style: none;
+    background-color: var(--background);
+    border: 2px solid var(--primary, #2196f3);
+    border-radius: 4px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.suggestion_item {
+    padding: 0.5rem 0.75rem;
+    cursor: pointer;
+    color: var(--text-primary);
+    font-size: 0.875rem;
+
+    &:hover {
+        background-color: var(--primary, #2196f3);
+        color: #fff;
+    }
+
+    & + & {
+        border-top: 1px solid var(--border);
     }
 }
