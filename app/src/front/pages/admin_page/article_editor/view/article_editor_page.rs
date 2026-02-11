@@ -53,6 +53,7 @@ pub fn ArticleEditorPage() -> impl IntoView {
     // Actions
     let save_article = form.create_save_action(article_id);
     let publish_article = form.create_publish_action(article_id);
+    let delete_article = form.create_delete_action(article_id);
 
     // Scroll sync refs
     let editor_ref: NodeRef<leptos::html::Textarea> = NodeRef::new();
@@ -133,6 +134,7 @@ pub fn ArticleEditorPage() -> impl IntoView {
                                             is_new
                                             save_action=save_article
                                             publish_action=publish_article
+                                            delete_action=delete_article
                                         />
                                         <ArticleForm form show_cover_picker />
                                     </Show>

@@ -667,6 +667,110 @@ async fn test_publish_article_空スラッグの下書きの場合バリデー�
 }
 
 // =====================================
+// delete_article_handler のテスト
+// =====================================
+
+#[sqlx::test(migrations = "../migrations")]
+async fn test_delete_article_下書き記事が正常に削除されること(pool: PgPool) {
+    let draft_id = insert_draft_article(&pool, "Delete Draft", "delete-draft", "Body").await;
+
+    let app_state = create_test_app_state(pool.clone());
+    let app = build_test_router(app_state);
+
+    let input = json!({
+        "input": {
+            "id": draft_id.to_string(),
+            "is_draft": true
+        }
+    });
+
+    let request = Request::builder()
+        .method("POST")
+        .uri("/api/admin/delete_article")
+        .header("content-type", "application/json")
+        .body(Body::from(serde_json::to_vec(&input).unwrap()))
+        .unwrap();
+
+    let response = app.oneshot(request).await.unwrap();
+
+    assert_eq!(response.status(), StatusCode::OK);
+
+    // 下書きが削除されていることを確認
+    let count = sqlx::query_scalar!(
+        "SELECT COUNT(*) FROM draft_articles WHERE id = $1",
+        draft_id
+    )
+    .fetch_one(&pool)
+    .await
+    .unwrap();
+    assert_eq!(count, Some(0));
+}
+
+#[sqlx::test(migrations = "../migrations")]
+async fn test_delete_article_公開記事が正常に削除されること(pool: PgPool) {
+    let published_id =
+        insert_published_article(&pool, "Delete Published", "delete-published", "Body").await;
+
+    let app_state = create_test_app_state(pool.clone());
+    let app = build_test_router(app_state);
+
+    let input = json!({
+        "input": {
+            "id": published_id.to_string(),
+            "is_draft": false
+        }
+    });
+
+    let request = Request::builder()
+        .method("POST")
+        .uri("/api/admin/delete_article")
+        .header("content-type", "application/json")
+        .body(Body::from(serde_json::to_vec(&input).unwrap()))
+        .unwrap();
+
+    let response = app.oneshot(request).await.unwrap();
+
+    assert_eq!(response.status(), StatusCode::OK);
+
+    // 公開記事が削除されていることを確認
+    let count = sqlx::query_scalar!(
+        "SELECT COUNT(*) FROM published_articles WHERE id = $1",
+        published_id
+    )
+    .fetch_one(&pool)
+    .await
+    .unwrap();
+    assert_eq!(count, Some(0));
+}
+
+#[sqlx::test(migrations = "../migrations")]
+async fn test_delete_article_存在しない記事の場合notfoundエラーを返すこと(
+    pool: PgPool,
+) {
+    let app_state = create_test_app_state(pool);
+    let app = build_test_router(app_state);
+
+    let nonexistent_id = Uuid::now_v7();
+    let input = json!({
+        "input": {
+            "id": nonexistent_id.to_string(),
+            "is_draft": true
+        }
+    });
+
+    let request = Request::builder()
+        .method("POST")
+        .uri("/api/admin/delete_article")
+        .header("content-type", "application/json")
+        .body(Body::from(serde_json::to_vec(&input).unwrap()))
+        .unwrap();
+
+    let response = app.oneshot(request).await.unwrap();
+
+    assert_eq!(response.status(), StatusCode::NOT_FOUND);
+}
+
+// =====================================
 // 認証ミドルウェアのテスト
 // =====================================
 

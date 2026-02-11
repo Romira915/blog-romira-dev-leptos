@@ -46,6 +46,21 @@ impl PublishedArticleRepository {
         Ok(published_id)
     }
 
+    /// 公開記事を削除
+    #[instrument(skip(pool))]
+    pub async fn delete(pool: &PgPool, article_id: Uuid) -> Result<(), CmsError> {
+        let rows = sqlx::query!("DELETE FROM published_articles WHERE id = $1", article_id)
+            .execute(pool)
+            .await?
+            .rows_affected();
+
+        if rows == 0 {
+            return Err(CmsError::NotFound);
+        }
+
+        Ok(())
+    }
+
     /// 公開記事を更新
     #[instrument(skip(pool))]
     pub async fn update(
@@ -360,5 +375,60 @@ mod tests {
         .expect("Failed to fetch");
 
         assert_eq!(updated.cover_image_url, None);
+    }
+
+    #[sqlx::test]
+    async fn test_deleteで公開記事が削除されること(pool: PgPool) {
+        let draft_id = insert_draft_article(&pool, "delete-test", "削除対象", "本文", None).await;
+
+        let draft = DraftArticleWithCategories {
+            article: DraftArticle {
+                id: draft_id,
+                slug: "delete-test".to_string(),
+                title: "削除対象".to_string(),
+                body: "本文".to_string(),
+                description: None,
+                cover_image_url: None,
+                created_at: utc_now(),
+                updated_at: utc_now(),
+            },
+            categories: vec![],
+        };
+
+        let published_id = PublishedArticleRepository::create_from_draft(&pool, &draft, utc_now())
+            .await
+            .expect("Failed to create published article");
+
+        let exists_before = sqlx::query_scalar!(
+            r#"SELECT EXISTS(SELECT 1 FROM published_articles WHERE id = $1) as "exists!""#,
+            published_id
+        )
+        .fetch_one(&pool)
+        .await
+        .expect("Failed to check existence");
+        assert!(exists_before);
+
+        PublishedArticleRepository::delete(&pool, published_id)
+            .await
+            .expect("Failed to delete published article");
+
+        let exists_after = sqlx::query_scalar!(
+            r#"SELECT EXISTS(SELECT 1 FROM published_articles WHERE id = $1) as "exists!""#,
+            published_id
+        )
+        .fetch_one(&pool)
+        .await
+        .expect("Failed to check existence");
+        assert!(!exists_after);
+    }
+
+    #[sqlx::test]
+    async fn test_存在しない公開記事をdeleteするとnotfoundエラーになること(
+        pool: PgPool,
+    ) {
+        let nonexistent_id = Uuid::now_v7();
+        let result = PublishedArticleRepository::delete(&pool, nonexistent_id).await;
+
+        assert!(matches!(result, Err(CmsError::NotFound)));
     }
 }

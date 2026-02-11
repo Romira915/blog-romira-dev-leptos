@@ -3,7 +3,9 @@ use leptos_router::components::A;
 use stylance::import_style;
 
 use super::AdminLayout;
-use crate::common::handlers::admin::get_admin_articles_handler;
+use crate::common::handlers::admin::{
+    DeleteArticleInput, delete_article_handler, get_admin_articles_handler,
+};
 
 import_style!(style, "article_list.module.scss");
 
@@ -44,6 +46,8 @@ pub fn ArticleListPage() -> impl IntoView {
                                                     {list
                                                         .into_iter()
                                                         .map(|article| {
+                                                            let article_id = article.id.clone();
+                                                            let is_draft = article.is_draft;
                                                             view! {
                                                                 <tr>
                                                                     <td>{article.title}</td>
@@ -66,6 +70,47 @@ pub fn ArticleListPage() -> impl IntoView {
                                                                         >
                                                                             "編集"
                                                                         </A>
+                                                                        " "
+                                                                        <button
+                                                                            class=style::delete_button
+                                                                            on:click=move |_| {
+                                                                                #[cfg(feature = "hydrate")]
+                                                                                {
+                                                                                    let confirmed = web_sys::window()
+                                                                                        .and_then(|w| {
+                                                                                            w.confirm_with_message(
+                                                                                                    "この記事を削除しますか？",
+                                                                                                )
+                                                                                                .ok()
+                                                                                        })
+                                                                                        .unwrap_or(false);
+                                                                                    if confirmed {
+                                                                                        let id = article_id.clone();
+                                                                                        leptos::task::spawn_local(async move {
+                                                                                            let result = delete_article_handler(DeleteArticleInput {
+                                                                                                    id,
+                                                                                                    is_draft,
+                                                                                                })
+                                                                                                .await;
+                                                                                            match result {
+                                                                                                Ok(_) => {
+                                                                                                    articles.refetch();
+                                                                                                }
+                                                                                                Err(e) => {
+                                                                                                    #[cfg(feature = "hydrate")]
+                                                                                                    if let Some(w) = web_sys::window() {
+                                                                                                        let _ = w
+                                                                                                            .alert_with_message(&format!("削除エラー: {}", e));
+                                                                                                    }
+                                                                                                }
+                                                                                            }
+                                                                                        });
+                                                                                    }
+                                                                                }
+                                                                            }
+                                                                        >
+                                                                            "削除"
+                                                                        </button>
                                                                     </td>
                                                                 </tr>
                                                             }

@@ -53,6 +53,12 @@ impl PublishedArticleService {
         PublishedArticleQuery::fetch_by_id_for_admin(&self.pool, article_id).await
     }
 
+    /// 公開記事を削除
+    #[instrument(skip(self))]
+    pub async fn delete(&self, article_id: Uuid) -> Result<(), CmsError> {
+        PublishedArticleRepository::delete(&self.pool, article_id).await
+    }
+
     /// 公開記事を更新
     #[instrument(skip(self))]
     pub async fn update(
