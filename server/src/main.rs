@@ -21,7 +21,7 @@ use tracing::Span;
 #[tokio::main]
 async fn main() {
     easy_init_newrelic_opentelemetry::NewRelicSubscriberInitializer::default()
-        .newrelic_service_name("blog-romira-dev")
+        .newrelic_service_name(&SERVER_CONFIG.new_relic_service_name)
         .host_name(&SERVER_CONFIG.host_name)
         .newrelic_license_key(&SERVER_CONFIG.new_relic_license_key)
         .timestamps_offset(offset!(+09:00:00))

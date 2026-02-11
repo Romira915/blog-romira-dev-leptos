@@ -5,6 +5,7 @@ use std::sync::LazyLock;
 pub struct ServerConfig {
     pub host_name: String,
     pub new_relic_license_key: String,
+    pub new_relic_service_name: String,
     pub newt_cdn_api_token: String,
     pub newt_api_token: String,
     pub qiita_api_token: String,
