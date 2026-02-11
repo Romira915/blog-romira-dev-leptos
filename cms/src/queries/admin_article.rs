@@ -60,8 +60,8 @@ impl AdminArticleQuery {
             }));
         }
 
-        // 更新日時でソート
-        result.sort_by_key(|a| std::cmp::Reverse(a.updated_at()));
+        // 作成日時でソート（新しい順）
+        result.sort_by_key(|a| std::cmp::Reverse(a.created_at()));
 
         Ok(result)
     }
@@ -264,5 +264,58 @@ mod tests {
 
         assert_eq!(published.published_at(), Some(publish_time));
         assert_eq!(draft.published_at(), None);
+    }
+
+    #[sqlx::test]
+    async fn test_fetch_allで作成日時の降順にソートされること(pool: PgPool) {
+        let t1 = parse_datetime("2020-01-01 10:00:00");
+        let t2 = parse_datetime("2021-06-01 10:00:00");
+        let t3 = parse_datetime("2023-03-15 10:00:00");
+        let t4 = parse_datetime("2025-06-01 10:00:00");
+
+        // 最古の公開記事
+        let id_t1 = insert_published_article_with_created_at(
+            &pool,
+            "slug-t1",
+            "Article T1",
+            "Body",
+            None,
+            t1,
+            t1,
+        )
+        .await;
+
+        // 2番目に古い下書き記事
+        let id_t2 =
+            insert_draft_article_with_created_at(&pool, "slug-t2", "Article T2", "Body", None, t2)
+                .await;
+
+        // 3番目の公開記事
+        let id_t3 = insert_published_article_with_created_at(
+            &pool,
+            "slug-t3",
+            "Article T3",
+            "Body",
+            None,
+            t3,
+            t3,
+        )
+        .await;
+
+        // 最新の下書き記事
+        let id_t4 =
+            insert_draft_article_with_created_at(&pool, "slug-t4", "Article T4", "Body", None, t4)
+                .await;
+
+        let result = AdminArticleQuery::fetch_all(&pool)
+            .await
+            .expect("Failed to fetch all");
+
+        assert_eq!(result.len(), 4);
+        // 作成日時の降順に並ぶこと
+        assert_eq!(result[0].id(), id_t4);
+        assert_eq!(result[1].id(), id_t3);
+        assert_eq!(result[2].id(), id_t2);
+        assert_eq!(result[3].id(), id_t1);
     }
 }

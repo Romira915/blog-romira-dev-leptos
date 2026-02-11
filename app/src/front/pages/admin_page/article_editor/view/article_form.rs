@@ -8,6 +8,7 @@ use crate::front::pages::admin_page::article_editor::state::ArticleFormState;
 #[component]
 pub fn ArticleForm(form: ArticleFormState, show_cover_picker: RwSignal<bool>) -> impl IntoView {
     let tag_input = RwSignal::new(String::new());
+    let show_suggestions = RwSignal::new(false);
 
     // 既存カテゴリ候補を取得
     let categories_resource = Resource::new(
@@ -15,17 +16,34 @@ pub fn ArticleForm(form: ArticleFormState, show_cover_picker: RwSignal<bool>) ->
         |_| async move { get_categories_handler().await.unwrap_or_default() },
     );
 
+    // フィルタ済み候補リスト（入力テキストでフィルタ + 選択済みタグを除外）
+    let filtered_suggestions = move || {
+        let all_cats = categories_resource.get().unwrap_or_default();
+        let input = tag_input.get().to_lowercase();
+        let selected = form.categories.get();
+        all_cats
+            .into_iter()
+            .filter(|c| !selected.iter().any(|s| s.eq_ignore_ascii_case(c)))
+            .filter(|c| input.is_empty() || c.to_lowercase().contains(&input))
+            .collect::<Vec<_>>()
+    };
+
+    let add_tag = move |value: String| {
+        let mut current = form.categories.get();
+        if !current.iter().any(|c| c.eq_ignore_ascii_case(&value)) {
+            current.push(value);
+            form.categories.set(current);
+        }
+        tag_input.set(String::new());
+        show_suggestions.set(false);
+    };
+
     let on_tag_keydown = move |ev: leptos::web_sys::KeyboardEvent| {
         if ev.key() == "Enter" {
             ev.prevent_default();
             let value = tag_input.get().trim().to_string();
             if !value.is_empty() {
-                let mut current = form.categories.get();
-                if !current.iter().any(|c| c.eq_ignore_ascii_case(&value)) {
-                    current.push(value);
-                    form.categories.set(current);
-                }
-                tag_input.set(String::new());
+                add_tag(value);
             }
         }
     };
@@ -95,33 +113,49 @@ pub fn ArticleForm(form: ArticleFormState, show_cover_picker: RwSignal<bool>) ->
                         }
                     </For>
                 </div>
-                <input
-                    type="text"
-                    class=style::input
-                    list="category-suggestions"
-                    placeholder="タグを入力してEnterで追加"
-                    prop:value=move || tag_input.get()
-                    on:input=move |ev| tag_input.set(event_target_value(&ev))
-                    on:keydown=on_tag_keydown
-                />
-                <Suspense fallback=|| ()>
-                    {move || {
-                        categories_resource
-                            .get()
-                            .map(|cats| {
-                                view! {
-                                    <datalist id="category-suggestions">
-                                        {cats
-                                            .into_iter()
-                                            .map(|c| {
-                                                view! { <option value=c /> }
-                                            })
-                                            .collect::<Vec<_>>()}
-                                    </datalist>
+                <div class=style::tag_input_wrapper>
+                    <input
+                        type="text"
+                        class=style::input
+                        placeholder="タグを入力してEnterで追加"
+                        prop:value=move || tag_input.get()
+                        on:input=move |ev| {
+                            tag_input.set(event_target_value(&ev));
+                            show_suggestions.set(true);
+                        }
+                        on:focus=move |_| show_suggestions.set(true)
+                        on:blur=move |_| show_suggestions.set(false)
+                        on:keydown=on_tag_keydown
+                    />
+                    <Suspense fallback=|| ()>
+                        <Show when=move || {
+                            show_suggestions.get() && !filtered_suggestions().is_empty()
+                        }>
+                            <ul
+                                class=style::suggestions_list
+                                on:mousedown=move |ev: leptos::web_sys::MouseEvent| {
+                                    ev.prevent_default();
                                 }
-                            })
-                    }}
-                </Suspense>
+                            >
+                                <For each=filtered_suggestions key=|name| name.clone() let:name>
+                                    {
+                                        let name_for_click = name.clone();
+                                        view! {
+                                            <li
+                                                class=style::suggestion_item
+                                                on:click=move |_| {
+                                                    add_tag(name_for_click.clone());
+                                                }
+                                            >
+                                                {name}
+                                            </li>
+                                        }
+                                    }
+                                </For>
+                            </ul>
+                        </Show>
+                    </Suspense>
+                </div>
             </div>
 
             <div class=style::form_row>

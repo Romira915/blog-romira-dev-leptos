@@ -31,14 +31,25 @@ pub async fn insert_draft_article(
     body: &str,
     description: Option<&str>,
 ) -> Uuid {
-    let now = utc_now();
+    insert_draft_article_with_created_at(pool, slug, title, body, description, utc_now()).await
+}
+
+/// テスト用下書き記事を作成（作成日時指定）
+pub async fn insert_draft_article_with_created_at(
+    pool: &PgPool,
+    slug: &str,
+    title: &str,
+    body: &str,
+    description: Option<&str>,
+    created_at: NaiveDateTime,
+) -> Uuid {
     sqlx::query_scalar!(
         r#"INSERT INTO draft_articles (slug, title, body, description, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $5) RETURNING id"#,
         slug,
         title,
         body,
         description,
-        now as _
+        created_at as _
     )
     .fetch_one(pool)
     .await
@@ -61,6 +72,30 @@ pub async fn insert_published_article(
         body,
         description,
         published_at as _
+    )
+    .fetch_one(pool)
+    .await
+    .expect("Failed to insert published article")
+}
+
+/// テスト用公開記事を作成（作成日時指定）
+pub async fn insert_published_article_with_created_at(
+    pool: &PgPool,
+    slug: &str,
+    title: &str,
+    body: &str,
+    description: Option<&str>,
+    published_at: NaiveDateTime,
+    created_at: NaiveDateTime,
+) -> Uuid {
+    sqlx::query_scalar!(
+        r#"INSERT INTO published_articles (slug, title, body, description, published_at, created_at) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id"#,
+        slug,
+        title,
+        body,
+        description,
+        published_at as _,
+        created_at as _
     )
     .fetch_one(pool)
     .await
