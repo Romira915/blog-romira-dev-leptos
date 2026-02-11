@@ -41,31 +41,33 @@ jobs:
           sudo rm -rf /usr/share/swift
           sudo rm -rf /opt/hostedtoolcache/go
           sudo rm -rf /opt/hostedtoolcache/node
+          sudo rm -rf /opt/hostedtoolcache/Ruby
+          sudo rm -rf /opt/hostedtoolcache/PyPy
+          sudo rm -rf /opt/hostedtoolcache/Python
           sudo rm -rf /opt/microsoft
           sudo rm -rf /usr/share/az_*
           sudo rm -rf /usr/share/gradle-*
           sudo rm -rf /usr/share/miniconda
+          sudo rm -rf /usr/share/kotlinc
           sudo rm -rf /usr/local/graalvm
+          sudo rm -rf /usr/local/lib/heroku
           sudo rm -rf /usr/local/share/chromium
+          sudo rm -rf /usr/local/share/powershell
+          sudo rm -rf /usr/local/share/edge_driver
+          sudo rm -rf /usr/local/share/gecko_driver
+          sudo rm -rf /usr/local/share/chromedriver-*
+          sudo rm -rf /usr/local/share/chrome
+          sudo rm -rf /usr/local/share/phantomjs*
           docker system prune -af || true
           df -h
 
       - uses: actions/checkout@v6
 
-      - name: Cache Cargo
-        id: cache-cargo
-        uses: actions/cache@v5
+      - name: Cache Rust
+        uses: Swatinem/rust-cache@v2
         with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            ./**/target
-          key: ${{ runner.os }}-cargo-test-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-test-
-            ${{ runner.os }}-cargo-
+          shared-key: "ci"
+          cache-targets: true
 
       - uses: extractions/setup-just@v3
         with:
@@ -87,6 +89,11 @@ jobs:
 
       - name: Install leptosfmt
         run: just setup_leptosfmt
+
+      - name: Clean stale build artifacts
+        run: |
+          find ./target -name "*.rmeta" -mtime +7 -delete 2>/dev/null || true
+          find ./target -name "*.rlib" -mtime +7 -delete 2>/dev/null || true
 
       - name: Check format
         run: just check-format

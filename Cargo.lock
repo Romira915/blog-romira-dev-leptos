@@ -849,9 +849,9 @@ checksum = "d0881ea181b1df73ff77ffaaf9c7544ecc11e82fba9b5f27b262a3c73a332555"
 
 [[package]]
 name = "easy_init_newrelic_opentelemetry"
-version = "0.4.1"
+version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "54ae3552a80eaf50cc293924bcdf17f8a689349fa09caf33923e44774ecb3d28"
+checksum = "75dbd058b8121103855d84ce0e0866c3b8a4d302df538fa11577d5b24ffbb834"
 dependencies = [
  "anyhow",
  "opentelemetry",
@@ -3278,6 +3278,7 @@ checksum = "eddd3ca559203180a307f12d114c268abf583f59b03cb906fd0b3ff8646c1147"
 dependencies = [
  "base64",
  "bytes",
+ "futures-channel",
  "futures-core",
  "futures-util",
  "http",
