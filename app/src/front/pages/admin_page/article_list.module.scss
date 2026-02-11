@@ -86,6 +86,19 @@
     }
 }
 
+.delete_button {
+    background: none;
+    border: none;
+    color: var(--error, #dc3545);
+    cursor: pointer;
+    font-size: 0.875rem;
+    padding: 0;
+
+    &:hover {
+        text-decoration: underline;
+    }
+}
+
 .error {
     color: var(--error-text);
     padding: 1rem;

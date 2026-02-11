@@ -1,8 +1,8 @@
 use leptos::prelude::*;
 
 use super::{
-    ArticleEditData, PublishArticleInput, SaveDraftInput, SavePublishedInput,
-    publish_article_handler, save_draft_handler, save_published_handler,
+    ArticleEditData, DeleteArticleInput, PublishArticleInput, SaveDraftInput, SavePublishedInput,
+    delete_article_handler, publish_article_handler, save_draft_handler, save_published_handler,
 };
 
 #[derive(Clone, Copy, PartialEq, Default)]
@@ -26,6 +26,7 @@ pub struct ArticleFormState {
     pub is_fullscreen: RwSignal<bool>,
     pub saving: RwSignal<bool>,
     pub publishing: RwSignal<bool>,
+    pub deleting: RwSignal<bool>,
     pub message: RwSignal<Option<(bool, String)>>,
 }
 
@@ -42,6 +43,7 @@ impl Default for ArticleFormState {
             is_fullscreen: RwSignal::new(false),
             saving: RwSignal::new(false),
             publishing: RwSignal::new(false),
+            deleting: RwSignal::new(false),
             message: RwSignal::new(None),
         }
     }
@@ -61,7 +63,7 @@ impl ArticleFormState {
 
     /// 操作中かどうか
     pub fn is_busy(&self) -> bool {
-        self.saving.get() || self.publishing.get()
+        self.saving.get() || self.publishing.get() || self.deleting.get()
     }
 
     /// 下書き保存用の入力データを生成
@@ -183,6 +185,44 @@ impl ArticleFormState {
                     Err(e) => {
                         form.message
                             .set(Some((false, format!("公開エラー: {}", e))));
+                    }
+                }
+            }
+        })
+    }
+
+    /// 削除アクションを生成
+    pub fn create_delete_action<F>(&self, get_article_id: F) -> Action<(), ()>
+    where
+        F: Fn() -> Option<String> + Copy + Send + Sync + 'static,
+    {
+        let form = *self;
+        Action::new(move |_: &()| {
+            let id = get_article_id();
+            let is_draft = form.is_draft.get();
+            async move {
+                let Some(id) = id else {
+                    form.message
+                        .set(Some((false, "記事IDがありません".to_string())));
+                    return;
+                };
+
+                form.deleting.set(true);
+                form.message.set(None);
+
+                let result = delete_article_handler(DeleteArticleInput { id, is_draft }).await;
+
+                form.deleting.set(false);
+
+                match result {
+                    Ok(_) => {
+                        form.message.set(Some((true, "削除しました".to_string())));
+                        let navigate = leptos_router::hooks::use_navigate();
+                        navigate("/admin/articles", Default::default());
+                    }
+                    Err(e) => {
+                        form.message
+                            .set(Some((false, format!("削除エラー: {}", e))));
                     }
                 }
             }

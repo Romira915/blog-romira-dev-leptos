@@ -9,6 +9,7 @@ pub fn EditorHeader(
     is_new: Signal<bool>,
     save_action: Action<(), ()>,
     publish_action: Action<(), ()>,
+    delete_action: Action<(), ()>,
 ) -> impl IntoView {
     view! {
         <header class=style::header>
@@ -50,6 +51,26 @@ pub fn EditorHeader(
                         }
                     >
                         {move || { if form.publishing.get() { "公開中..." } else { "公開" } }}
+                    </button>
+                </Show>
+                <Show when=move || !is_new.get()>
+                    <button
+                        class=style::delete_button
+                        disabled=move || form.is_busy()
+                        on:click=move |_| {
+                            #[cfg(feature = "hydrate")]
+                            if web_sys::window()
+                                .and_then(|w| {
+                                    w.confirm_with_message("この記事を削除しますか？")
+                                        .ok()
+                                })
+                                .unwrap_or(false)
+                            {
+                                let _ = delete_action.dispatch(());
+                            }
+                        }
+                    >
+                        {move || { if form.deleting.get() { "削除中..." } else { "削除" } }}
                     </button>
                 </Show>
             </div>
