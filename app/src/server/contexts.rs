@@ -9,7 +9,8 @@ use crate::server::services::signing::GcsSigningService;
 use crate::server::services::word_press::WordPressArticleService;
 use axum::extract::FromRef;
 use blog_romira_dev_cms::{
-    AdminArticleService, DraftArticleService, ImageService, PublishedArticleService,
+    AdminArticleService, CategoryService, DraftArticleService, ImageService,
+    PublishedArticleService,
 };
 use leptos::prelude::*;
 use sqlx::PgPool;
@@ -26,6 +27,7 @@ pub struct AppState {
     pub(crate) draft_article_service: DraftArticleService,
     pub(crate) admin_article_service: AdminArticleService,
     pub(crate) image_service: ImageService,
+    pub(crate) category_service: CategoryService,
     pub(crate) signing_service: GcsSigningService,
     pub(crate) imgix_service: ImgixService,
 }
@@ -61,7 +63,11 @@ impl AppState {
             published_article_service: PublishedArticleService::new(db_pool.clone()),
             draft_article_service: DraftArticleService::new(db_pool.clone()),
             admin_article_service: AdminArticleService::new(db_pool.clone()),
-            image_service: ImageService::new(db_pool, SERVER_CONFIG.gcs_path_prefix.clone()),
+            image_service: ImageService::new(
+                db_pool.clone(),
+                SERVER_CONFIG.gcs_path_prefix.clone(),
+            ),
+            category_service: CategoryService::new(db_pool),
             signing_service,
             imgix_service,
         }
@@ -95,6 +101,10 @@ impl AppState {
         &self.signing_service
     }
 
+    pub fn category_service(&self) -> &CategoryService {
+        &self.category_service
+    }
+
     pub fn imgix_service(&self) -> &ImgixService {
         &self.imgix_service
     }
@@ -120,7 +130,8 @@ impl AppState {
             published_article_service: PublishedArticleService::new(db_pool.clone()),
             draft_article_service: DraftArticleService::new(db_pool.clone()),
             admin_article_service: AdminArticleService::new(db_pool.clone()),
-            image_service: ImageService::new(db_pool, "test".to_string()),
+            image_service: ImageService::new(db_pool.clone(), "test".to_string()),
+            category_service: CategoryService::new(db_pool),
             signing_service: GcsSigningService::new_stub("test-bucket".to_string()),
             imgix_service: ImgixService::new("test.imgix.net".to_string()),
         }

@@ -8,6 +8,19 @@ use uuid::Uuid;
 pub struct CategoryQuery;
 
 impl CategoryQuery {
+    /// 全カテゴリを取得
+    #[instrument(skip(pool))]
+    pub async fn fetch_all(pool: &PgPool) -> Result<Vec<Category>, CmsError> {
+        let categories = sqlx::query_as!(
+            Category,
+            r#"SELECT id, name, slug FROM categories ORDER BY name"#
+        )
+        .fetch_all(pool)
+        .await?;
+
+        Ok(categories)
+    }
+
     /// 公開記事のカテゴリを取得
     #[instrument(skip(pool))]
     pub async fn fetch_for_published(

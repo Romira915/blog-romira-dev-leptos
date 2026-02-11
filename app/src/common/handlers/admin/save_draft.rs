@@ -12,6 +12,8 @@ pub struct SaveDraftInput {
     pub body: String,
     pub description: Option<String>,
     pub cover_image_url: Option<String>,
+    #[serde(default)]
+    pub category_names: Vec<String>,
 }
 
 /// 下書き記事の保存（Upsert: 存在しなければ作成、存在すれば更新）
@@ -37,6 +39,12 @@ pub async fn save_draft_handler(input: SaveDraftInput) -> Result<String, ServerF
 
     service
         .save(uuid, &content)
+        .await
+        .map_err(|e| ServerFnError::new(e.to_string()))?;
+
+    state
+        .category_service()
+        .save_for_draft(uuid, &input.category_names)
         .await
         .map_err(|e| ServerFnError::new(e.to_string()))?;
 

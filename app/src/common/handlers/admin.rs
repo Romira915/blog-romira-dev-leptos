@@ -1,6 +1,7 @@
 mod delete_article;
 mod get_admin_articles;
 mod get_article_for_edit;
+mod get_categories;
 pub mod images;
 mod publish_article;
 mod save_draft;
@@ -9,6 +10,7 @@ mod save_published;
 pub use delete_article::{DeleteArticleInput, delete_article_handler};
 pub use get_admin_articles::{AdminArticleListItem, get_admin_articles_handler};
 pub use get_article_for_edit::{ArticleEditData, get_article_for_edit_handler};
+pub use get_categories::get_categories_handler;
 pub use images::{
     DeleteImageInput, GenerateUploadUrlInput, GenerateUploadUrlResponse, ImageDto,
     RegisterImageInput, delete_image_handler, generate_upload_url_handler, get_images_handler,

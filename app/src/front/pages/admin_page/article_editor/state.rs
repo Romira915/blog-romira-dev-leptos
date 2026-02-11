@@ -21,6 +21,7 @@ pub struct ArticleFormState {
     pub body: RwSignal<String>,
     pub description: RwSignal<String>,
     pub cover_image_url: RwSignal<Option<String>>,
+    pub categories: RwSignal<Vec<String>>,
     pub is_draft: RwSignal<bool>,
     pub view_mode: RwSignal<ViewMode>,
     pub is_fullscreen: RwSignal<bool>,
@@ -38,6 +39,7 @@ impl Default for ArticleFormState {
             body: RwSignal::new(String::new()),
             description: RwSignal::new(String::new()),
             cover_image_url: RwSignal::new(None),
+            categories: RwSignal::new(vec![]),
             is_draft: RwSignal::new(true), // 新規作成時は下書き
             view_mode: RwSignal::new(ViewMode::default()),
             is_fullscreen: RwSignal::new(false),
@@ -58,6 +60,7 @@ impl ArticleFormState {
         self.description
             .set(article.description.clone().unwrap_or_default());
         self.cover_image_url.set(article.cover_image_url.clone());
+        self.categories.set(article.categories.clone());
         self.is_draft.set(article.is_draft);
     }
 
@@ -80,6 +83,7 @@ impl ArticleFormState {
                 Some(description)
             },
             cover_image_url: self.cover_image_url.get(),
+            category_names: self.categories.get(),
         }
     }
 
@@ -97,6 +101,7 @@ impl ArticleFormState {
                 Some(description)
             },
             cover_image_url: self.cover_image_url.get(),
+            category_names: self.categories.get(),
         }
     }
 
