@@ -1,0 +1,92 @@
+name: Code Coverage
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  coverage:
+    name: Generate coverage and upload to Codecov
+    runs-on: ubuntu-24.04
+    env:
+      SQLX_OFFLINE: true
+      DATABASE_URL: postgres://blog:blog@localhost:5432/blog_romira_dev
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: blog
+          POSTGRES_PASSWORD: blog
+          POSTGRES_DB: blog_romira_dev
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U blog -d blog_romira_dev"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /opt/hostedtoolcache/CodeQL
+          sudo rm -rf /usr/local/share/boost
+          sudo rm -rf /usr/share/swift
+          sudo rm -rf /opt/hostedtoolcache/go
+          sudo rm -rf /opt/hostedtoolcache/node
+          sudo rm -rf /opt/hostedtoolcache/Ruby
+          sudo rm -rf /opt/hostedtoolcache/PyPy
+          sudo rm -rf /opt/hostedtoolcache/Python
+          sudo rm -rf /opt/microsoft
+          sudo rm -rf /usr/share/az_*
+          sudo rm -rf /usr/share/gradle-*
+          sudo rm -rf /usr/share/miniconda
+          sudo rm -rf /usr/share/kotlinc
+          sudo rm -rf /usr/local/graalvm
+          sudo rm -rf /usr/local/lib/heroku
+          sudo rm -rf /usr/local/share/chromium
+          sudo rm -rf /usr/local/share/powershell
+          sudo rm -rf /usr/local/share/edge_driver
+          sudo rm -rf /usr/local/share/gecko_driver
+          sudo rm -rf /usr/local/share/chromedriver-*
+          sudo rm -rf /usr/local/share/chrome
+          sudo rm -rf /usr/local/share/phantomjs*
+          docker system prune -af || true
+          df -h
+
+      - uses: actions/checkout@v6
+
+      - name: Cache Rust
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: "coverage"
+          cache-targets: true
+
+      - name: Install mold linker and clang
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mold clang
+
+      - name: Install cargo-llvm-cov
+        uses: taiki-e/install-action@cargo-llvm-cov
+
+      - name: Setup .env
+        run: cp .env.example .env
+
+      - name: Generate code coverage
+        run: cargo llvm-cov --all-targets --all-features --workspace --lcov --output-path lcov.info
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: lcov.info
+          fail_ci_if_error: true
