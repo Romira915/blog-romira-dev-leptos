@@ -4,5 +4,6 @@ pub mod config;
 pub mod contexts;
 pub(crate) mod http;
 pub(crate) mod models;
+pub mod seo_routes;
 pub(crate) mod services;
 pub(crate) mod utils;

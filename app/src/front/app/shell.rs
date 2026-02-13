@@ -14,6 +14,19 @@ pub fn shell(options: LeptosOptions) -> impl IntoView {
                 <meta charset="utf-8" />
                 <meta name="viewport" content="width=device-width, initial-scale=1" />
                 <meta name="color-scheme" content="dark light" />
+                <meta name="theme-color" content="#1a1a2e" />
+                <link rel="dns-prefetch" href="https://blog-romira.imgix.net" />
+                <link
+                    rel="preconnect"
+                    href="https://blog-romira.imgix.net"
+                    crossorigin="anonymous"
+                />
+                <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com" />
+                <link
+                    rel="preconnect"
+                    href="https://cdnjs.cloudflare.com"
+                    crossorigin="anonymous"
+                />
                 <script async src="https://www.googletagmanager.com/gtag/js?id=G-4P5K3SBG1K" />
                 <script>
                     {"window.dataLayer = window.dataLayer || [];

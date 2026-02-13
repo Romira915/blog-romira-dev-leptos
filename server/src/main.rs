@@ -2,7 +2,7 @@ use axum::Router;
 use axum::extract::MatchedPath;
 use axum::http::Request;
 use blog_romira_dev_app::{
-    App, AppState, SERVER_CONFIG, admin_routes, auth_routes, require_admin_auth, shell,
+    App, AppState, SERVER_CONFIG, admin_routes, auth_routes, require_admin_auth, seo_routes, shell,
 };
 use leptos::logging::log;
 use leptos::prelude::*;
@@ -63,6 +63,7 @@ async fn main() {
     let routes = generate_route_list(App);
 
     let app = Router::new()
+        .merge(seo_routes())
         .merge(auth_routes())
         .merge(admin_routes())
         .leptos_routes_with_context(
