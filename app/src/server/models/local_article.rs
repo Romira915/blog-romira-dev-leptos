@@ -73,7 +73,8 @@ impl From<PublishedArticleWithCategories> for ArticlePageDto {
             .collect();
 
         let published_at_jst = to_jst(article.published_at);
-        let published_at_rfc3339 = RwSignal::new(published_at_jst.to_rfc3339());
+        let updated_at_jst = to_jst(article.updated_at);
+        let updated_at_rfc3339 = RwSignal::new(updated_at_jst.to_rfc3339());
         let first_published_at =
             RwSignal::new(published_at_jst.format(DATE_DISPLAY_FORMAT).to_string());
         let first_published_at_rfc3339 = RwSignal::new(published_at_jst.to_rfc3339());
@@ -102,7 +103,7 @@ impl From<PublishedArticleWithCategories> for ArticlePageDto {
                 description,
                 keywords: category,
                 og_image_url,
-                published_at: published_at_rfc3339,
+                published_at: updated_at_rfc3339,
                 first_published_at: first_published_at_rfc3339,
             },
         }

@@ -14,4 +14,5 @@ pub use server::{
     auth::{auth_routes, require_admin_auth},
     config::SERVER_CONFIG,
     contexts::AppState,
+    seo_routes::seo_routes,
 };
