@@ -69,7 +69,11 @@ pub async fn save_published_handler(input: SavePublishedInput) -> Result<String,
 
     // CDNキャッシュパージ（ベストエフォート、未設定ならスキップ）
     if let Some(purge_service) = state.cloudflare_purge_service() {
-        let mut tags = vec!["top-page".to_string(), format!("article:{}", slug.as_str())];
+        let mut tags = vec![
+            "top-page".to_string(),
+            "sitemap".to_string(),
+            format!("article:{}", slug.as_str()),
+        ];
         if let Some(ref old) = old_article
             && old.article.slug != slug.as_str()
         {
