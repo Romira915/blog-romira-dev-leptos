@@ -29,11 +29,34 @@ pub async fn delete_article_handler(input: DeleteArticleInput) -> Result<(), Ser
             .await
             .map_err(|e| cms_error_to_response(&response, e))?;
     } else {
+        // slug取得（パージサービスが設定されている場合のみ）
+        let article = if state.cloudflare_purge_service().is_some() {
+            state
+                .published_article_service()
+                .fetch_by_id_for_admin(uuid)
+                .await
+                .ok()
+                .flatten()
+        } else {
+            None
+        };
+
         state
             .published_article_service()
             .delete(uuid)
             .await
             .map_err(|e| cms_error_to_response(&response, e))?;
+
+        // CDNキャッシュパージ（ベストエフォート、未設定ならスキップ）
+        if let Some(purge_service) = state.cloudflare_purge_service() {
+            let mut tags = vec!["top-page".to_string()];
+            if let Some(ref article) = article {
+                tags.push(format!("article:{}", article.article.slug));
+            }
+            if let Err(e) = purge_service.purge_tags(&tags).await {
+                tracing::warn!(error = %e, "Failed to purge Cloudflare cache after delete");
+            }
+        }
     }
 
     Ok(())

@@ -27,5 +27,13 @@ pub async fn publish_article_handler(input: PublishArticleInput) -> Result<Strin
         .await
         .map_err(|e| cms_error_to_response(&response, e))?;
 
+    // CDNキャッシュパージ（ベストエフォート、未設定ならスキップ）
+    if let Some(purge_service) = state.cloudflare_purge_service() {
+        let tags = vec!["top-page".to_string()];
+        if let Err(e) = purge_service.purge_tags(&tags).await {
+            tracing::warn!(error = %e, "Failed to purge Cloudflare cache after publish");
+        }
+    }
+
     Ok(published_id.to_string())
 }

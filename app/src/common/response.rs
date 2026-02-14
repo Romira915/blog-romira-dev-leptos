@@ -35,10 +35,11 @@ impl Default for CacheControlSet {
     }
 }
 
-pub(crate) fn set_article_page_cache_control() {
+pub(crate) fn set_article_page_cache_control(_slug: &str) {
     #[cfg(feature = "ssr")]
     crate::server::http::response::set_article_page_cache_control(
         &expect_context::<ResponseOptions>(),
+        _slug,
     );
 }
 

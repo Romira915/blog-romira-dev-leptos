@@ -1,3 +1,4 @@
+pub(crate) mod cloudflare;
 pub(crate) mod imgix;
 pub(crate) mod newt;
 pub(crate) mod qiita;
