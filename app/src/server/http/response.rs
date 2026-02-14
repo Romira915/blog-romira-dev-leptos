@@ -1,5 +1,5 @@
-use axum::http::HeaderValue;
 use axum::http::header::{CACHE_CONTROL, CDN_CACHE_CONTROL};
+use axum::http::{HeaderName, HeaderValue};
 use blog_romira_dev_cms::CmsError;
 use leptos::prelude::ServerFnError;
 use leptos_axum::ResponseOptions;
@@ -31,9 +31,13 @@ pub(crate) fn set_top_page_cache_control(response: &ResponseOptions) {
         CDN_CACHE_CONTROL,
         HeaderValue::from_static("max-age=1296000, stale-while-revalidate=1296000"),
     );
+    response.insert_header(
+        HeaderName::from_static("cache-tag"),
+        HeaderValue::from_static("top-page"),
+    );
 }
 
-pub(crate) fn set_article_page_cache_control(response: &ResponseOptions) {
+pub(crate) fn set_article_page_cache_control(response: &ResponseOptions, slug: &str) {
     response.insert_header(
         CACHE_CONTROL,
         HeaderValue::from_static(
@@ -44,6 +48,10 @@ pub(crate) fn set_article_page_cache_control(response: &ResponseOptions) {
         CDN_CACHE_CONTROL,
         HeaderValue::from_static("max-age=1296000, stale-while-revalidate=1296000"),
     );
+    let cache_tag = format!("article:{slug}");
+    if let Ok(value) = HeaderValue::from_str(&cache_tag) {
+        response.insert_header(HeaderName::from_static("cache-tag"), value);
+    }
 }
 
 pub(crate) fn set_preview_article_page_cache_control(response: &ResponseOptions) {

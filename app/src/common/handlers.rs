@@ -175,7 +175,7 @@ pub(crate) async fn get_article_handler(
     if is_local {
         set_feature_page_cache_control();
     } else {
-        set_article_page_cache_control();
+        set_article_page_cache_control(&id);
     }
 
     // 1. features=local の場合：DB記事をslugで検索

@@ -2,6 +2,7 @@ use crate::constants::{
     NEWT_BASE_URL, NEWT_CDN_BASE_URL, PRTIMES_WORD_PRESS_BASE_URL, QIITA_BASE_URL,
 };
 use crate::server::config::SERVER_CONFIG;
+use crate::server::services::cloudflare::CloudflarePurgeService;
 use crate::server::services::imgix::ImgixService;
 use crate::server::services::newt::NewtArticleService;
 use crate::server::services::qiita::QiitaArticleService;
@@ -30,6 +31,7 @@ pub struct AppState {
     pub(crate) category_service: CategoryService,
     pub(crate) signing_service: GcsSigningService,
     pub(crate) imgix_service: ImgixService,
+    pub(crate) cloudflare_purge_service: Option<CloudflarePurgeService>,
 }
 
 impl AppState {
@@ -70,6 +72,17 @@ impl AppState {
             category_service: CategoryService::new(db_pool),
             signing_service,
             imgix_service,
+            cloudflare_purge_service: if !SERVER_CONFIG.cloudflare_zone_id.is_empty()
+                && !SERVER_CONFIG.cloudflare_api_token.is_empty()
+            {
+                Some(CloudflarePurgeService::new(
+                    client,
+                    &SERVER_CONFIG.cloudflare_zone_id,
+                    &SERVER_CONFIG.cloudflare_api_token,
+                ))
+            } else {
+                None
+            },
         }
     }
 
@@ -109,6 +122,10 @@ impl AppState {
         &self.imgix_service
     }
 
+    pub(crate) fn cloudflare_purge_service(&self) -> Option<&CloudflarePurgeService> {
+        self.cloudflare_purge_service.as_ref()
+    }
+
     /// テスト用のインスタンスを作成（署名サービスはスタブ）
     #[cfg(any(test, feature = "test-utils"))]
     pub fn new_for_test(leptos_options: LeptosOptions, db_pool: PgPool) -> Self {
@@ -134,6 +151,7 @@ impl AppState {
             category_service: CategoryService::new(db_pool),
             signing_service: GcsSigningService::new_stub("test-bucket".to_string()),
             imgix_service: ImgixService::new("test.imgix.net".to_string()),
+            cloudflare_purge_service: None,
         }
     }
 }

@@ -24,6 +24,11 @@ pub struct ServerConfig {
     pub valkey_url: String,
     // Admin access control (comma-separated list of allowed email addresses)
     pub admin_emails: String,
+    // Cloudflare CDN cache purge (optional — skip purge if not set)
+    #[serde(default)]
+    pub cloudflare_zone_id: String,
+    #[serde(default)]
+    pub cloudflare_api_token: String,
 }
 
 fn default_valkey_url() -> String {

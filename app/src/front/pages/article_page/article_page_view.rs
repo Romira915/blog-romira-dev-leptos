@@ -12,10 +12,10 @@ use super::ArticlePageMeta;
 
 #[component]
 pub(crate) fn ArticlePage() -> impl IntoView {
-    set_article_page_cache_control();
-
     let params = use_params_map();
     let id = move || params.read().get("id").unwrap_or_default();
+
+    set_article_page_cache_control(&id());
 
     let article = Resource::new(id, move |id| async move { get_article_handler(id).await });
 
