@@ -57,18 +57,3 @@ pub(crate) fn set_top_page_cache_control() {
         );
     }
 }
-
-/// features=local 用のキャッシュ無効化設定（既に設定済みならスキップ）
-pub(crate) fn set_feature_page_cache_control() {
-    #[cfg(feature = "ssr")]
-    {
-        let cache_control_set = expect_context::<CacheControlSet>();
-        if cache_control_set.is_set() {
-            return;
-        }
-        cache_control_set.mark_set();
-        crate::server::http::response::set_preview_article_page_cache_control(&expect_context::<
-            ResponseOptions,
-        >());
-    }
-}
