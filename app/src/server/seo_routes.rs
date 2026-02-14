@@ -67,7 +67,18 @@ async fn sitemap_xml(
     xml.push_str("</urlset>\n");
 
     (
-        [(header::CONTENT_TYPE, "application/xml; charset=utf-8")],
+        [
+            (header::CONTENT_TYPE, "application/xml; charset=utf-8"),
+            (
+                header::CACHE_CONTROL,
+                "no-cache, must-revalidate, max-age=10, stale-while-revalidate=1296000",
+            ),
+            (
+                header::CDN_CACHE_CONTROL,
+                "max-age=1296000, stale-while-revalidate=1296000",
+            ),
+            (header::HeaderName::from_static("cache-tag"), "sitemap"),
+        ],
         xml,
     )
 }
