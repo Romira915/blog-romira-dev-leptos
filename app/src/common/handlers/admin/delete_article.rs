@@ -49,7 +49,7 @@ pub async fn delete_article_handler(input: DeleteArticleInput) -> Result<(), Ser
 
         // CDNキャッシュパージ（ベストエフォート、未設定ならスキップ）
         if let Some(purge_service) = state.cloudflare_purge_service() {
-            let mut tags = vec!["top-page".to_string()];
+            let mut tags = vec!["top-page".to_string(), "sitemap".to_string()];
             if let Some(ref article) = article {
                 tags.push(format!("article:{}", article.article.slug));
             }
