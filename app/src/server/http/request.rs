@@ -1,42 +1,13 @@
-/// リクエストのCookieから features の値を取得する
-pub(crate) async fn get_features_cookie() -> Option<String> {
-    let headers = leptos_axum::extract::<axum::http::HeaderMap>().await.ok()?;
-    let cookie_header = headers.get(axum::http::header::COOKIE)?;
-    let cookie_str = cookie_header.to_str().ok()?;
-
-    // "features=value" 形式のCookieを探す
-    for part in cookie_str.split(';') {
-        let part = part.trim();
-        if let Some(value) = part.strip_prefix("features=") {
-            return Some(value.to_string());
-        }
-    }
-    None
-}
-
 /// features=local Cookieが設定されているかを判定する
+/// NOTE: DB記事表示を一般公開するため、常にtrueを返す
 pub(crate) async fn is_local_features() -> bool {
-    get_features_cookie().await.as_deref() == Some("local")
+    true
 }
 
 /// features=local Cookieが設定されているかを同期的に判定する
-/// leptos_axumが提供するリクエストPartsコンテキストから読み取る
+/// NOTE: DB記事表示を一般公開するため、常にtrueを返す
 pub(crate) fn is_local_features_sync() -> bool {
-    use leptos::prelude::use_context;
-
-    use_context::<axum::http::request::Parts>()
-        .and_then(|parts| {
-            let cookie_header = parts.headers.get(axum::http::header::COOKIE)?;
-            let cookie_str = cookie_header.to_str().ok()?;
-            for part in cookie_str.split(';') {
-                let part = part.trim();
-                if part.strip_prefix("features=") == Some("local") {
-                    return Some(true);
-                }
-            }
-            None
-        })
-        .unwrap_or(false)
+    true
 }
 
 /// SSRリクエストかどうかを判定する
