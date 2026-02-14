@@ -1,15 +1,3 @@
-/// features=local Cookieが設定されているかを判定する
-/// NOTE: DB記事表示を一般公開するため、常にtrueを返す
-pub(crate) async fn is_local_features() -> bool {
-    true
-}
-
-/// features=local Cookieが設定されているかを同期的に判定する
-/// NOTE: DB記事表示を一般公開するため、常にtrueを返す
-pub(crate) fn is_local_features_sync() -> bool {
-    true
-}
-
 /// SSRリクエストかどうかを判定する
 /// Accept: text/html を含む場合はSSR（ブラウザからの直接アクセス）
 pub(crate) async fn is_ssr_request() -> bool {

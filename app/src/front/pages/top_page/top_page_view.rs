@@ -13,12 +13,8 @@ pub(crate) fn TopPage() -> impl IntoView {
     // SSR時のみキャッシュコントロールを設定
     #[cfg(feature = "ssr")]
     {
-        use crate::common::response::{set_feature_page_cache_control, set_top_page_cache_control};
-        if crate::server::http::request::is_local_features_sync() {
-            set_feature_page_cache_control();
-        } else {
-            set_top_page_cache_control();
-        }
+        use crate::common::response::set_top_page_cache_control;
+        set_top_page_cache_control();
     }
 
     let articles = Resource::new(|| (), |_| async move { get_articles_handler().await });

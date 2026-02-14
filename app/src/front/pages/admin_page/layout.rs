@@ -11,46 +11,6 @@ pub fn AdminLayout(children: Children) -> impl IntoView {
     let auth_user = OnceResource::new(get_auth_user());
     let oauth_configured = OnceResource::new(is_oauth_configured());
 
-    // features Cookie管理（クライアントサイドのみ）
-    let (is_local, set_is_local) = signal(false);
-
-    // クライアントサイドでCookieを読み取って初期化
-    Effect::new(move |_| {
-        #[cfg(feature = "hydrate")]
-        {
-            use leptos::wasm_bindgen::JsCast;
-            use leptos::web_sys::HtmlDocument;
-            let doc = leptos::prelude::document();
-            if let Some(html_doc) = doc.dyn_ref::<HtmlDocument>() {
-                let cookie = html_doc.cookie().unwrap_or_default();
-                let has_local = cookie
-                    .split(';')
-                    .any(|part| part.trim() == "features=local");
-                set_is_local.set(has_local);
-            }
-        }
-    });
-
-    let toggle_local = move |_| {
-        #[cfg(feature = "hydrate")]
-        {
-            use leptos::wasm_bindgen::JsCast;
-            use leptos::web_sys::HtmlDocument;
-            let doc = leptos::prelude::document();
-            if let Some(html_doc) = doc.dyn_ref::<HtmlDocument>() {
-                if is_local.get() {
-                    // Cookieを削除
-                    let _ = html_doc.set_cookie("features=; path=/; max-age=0");
-                    set_is_local.set(false);
-                } else {
-                    // Cookieを設定
-                    let _ = html_doc.set_cookie("features=local; path=/");
-                    set_is_local.set(true);
-                }
-            }
-        }
-    };
-
     // Store children to use multiple times
     let children_view = children();
 
@@ -77,17 +37,6 @@ pub fn AdminLayout(children: Children) -> impl IntoView {
                         </A>
                     </li>
                 </ul>
-                <div class=style::features_toggle>
-                    <label class=style::toggle_label>
-                        <input
-                            type="checkbox"
-                            checked=is_local
-                            on:change=toggle_local
-                            class=style::toggle_checkbox
-                        />
-                        <span class=style::toggle_text>"ローカル記事表示"</span>
-                    </label>
-                </div>
                 <div class=style::auth_section>
                     <Suspense fallback=|| ()>
                         {move || {

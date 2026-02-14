@@ -13,6 +13,7 @@ use leptos::prelude::RwSignal;
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
 
+#[allow(dead_code)] // TODO: Newt終了後に削除
 #[derive(Serialize, Deserialize, Debug, Default, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct NewtArticleCollection {

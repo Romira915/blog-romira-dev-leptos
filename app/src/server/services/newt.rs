@@ -27,6 +27,7 @@ impl NewtArticleService {
         }
     }
 
+    #[allow(dead_code)] // TODO: Newt終了後に削除
     #[instrument]
     async fn fetch_articles(
         &self,
@@ -56,6 +57,7 @@ impl NewtArticleService {
         Ok(articles)
     }
 
+    #[allow(dead_code)] // TODO: Newt終了後に削除
     #[instrument]
     pub(crate) async fn fetch_published_articles(
         &self,
