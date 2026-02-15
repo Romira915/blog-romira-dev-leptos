@@ -31,37 +31,10 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     steps:
-      - name: Free disk space
-        run: |
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf /usr/local/lib/android
-          sudo rm -rf /opt/ghc
-          sudo rm -rf /opt/hostedtoolcache/CodeQL
-          sudo rm -rf /usr/local/share/boost
-          sudo rm -rf /usr/share/swift
-          sudo rm -rf /opt/hostedtoolcache/go
-          sudo rm -rf /opt/hostedtoolcache/node
-          sudo rm -rf /opt/hostedtoolcache/Ruby
-          sudo rm -rf /opt/hostedtoolcache/PyPy
-          sudo rm -rf /opt/hostedtoolcache/Python
-          sudo rm -rf /opt/microsoft
-          sudo rm -rf /usr/share/az_*
-          sudo rm -rf /usr/share/gradle-*
-          sudo rm -rf /usr/share/miniconda
-          sudo rm -rf /usr/share/kotlinc
-          sudo rm -rf /usr/local/graalvm
-          sudo rm -rf /usr/local/lib/heroku
-          sudo rm -rf /usr/local/share/chromium
-          sudo rm -rf /usr/local/share/powershell
-          sudo rm -rf /usr/local/share/edge_driver
-          sudo rm -rf /usr/local/share/gecko_driver
-          sudo rm -rf /usr/local/share/chromedriver-*
-          sudo rm -rf /usr/local/share/chrome
-          sudo rm -rf /usr/local/share/phantomjs*
-          docker system prune -af || true
-          df -h
-
       - uses: actions/checkout@v6
+
+      - name: Free disk space
+        uses: ./.github/actions/free-disk-space
 
       - name: Cache Rust
         uses: Swatinem/rust-cache@v2
@@ -88,7 +61,9 @@ jobs:
           cp .env.example .env
 
       - name: Install leptosfmt
-        run: just setup_leptosfmt
+        uses: taiki-e/install-action@v2
+        with:
+          tool: leptosfmt@0.1.33
 
       - name: Clean stale build artifacts
         run: |
