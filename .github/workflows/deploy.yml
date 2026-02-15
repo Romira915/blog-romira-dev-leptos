@@ -15,7 +15,6 @@ jobs:
 
   build:
     runs-on: ubuntu-24.04
-    needs: ci
     env:
       SQLX_OFFLINE: true
     steps:
@@ -97,7 +96,7 @@ jobs:
 
   create-release-tag:
     runs-on: ubuntu-24.04
-    needs: build
+    needs: [ci, build]
     outputs:
       release_tag: ${{ steps.tag_version.outputs.new_tag }}
 
