@@ -39,18 +39,7 @@ jobs:
       - uses: actions/checkout@v6
 
       - name: Free disk space
-        run: |
-          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc \
-            /opt/hostedtoolcache/CodeQL /usr/local/share/boost /usr/share/swift \
-            /opt/hostedtoolcache/go /opt/hostedtoolcache/node /opt/hostedtoolcache/Ruby \
-            /opt/hostedtoolcache/PyPy /opt/hostedtoolcache/Python /opt/microsoft \
-            /usr/share/az_* /usr/share/gradle-* /usr/share/miniconda /usr/share/kotlinc \
-            /usr/local/graalvm /usr/local/lib/heroku /usr/local/share/chromium \
-            /usr/local/share/powershell /usr/local/share/edge_driver \
-            /usr/local/share/gecko_driver /usr/local/share/chromedriver-* \
-            /usr/local/share/chrome /usr/local/share/phantomjs*
-          docker system prune -af || true
-          df -h
+        uses: ./.github/actions/free-disk-space
 
       - name: Cache Rust
         uses: Swatinem/rust-cache@v2
@@ -104,18 +93,7 @@ jobs:
       - uses: actions/checkout@v6
 
       - name: Free disk space
-        run: |
-          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc \
-            /opt/hostedtoolcache/CodeQL /usr/local/share/boost /usr/share/swift \
-            /opt/hostedtoolcache/go /opt/hostedtoolcache/node /opt/hostedtoolcache/Ruby \
-            /opt/hostedtoolcache/PyPy /opt/hostedtoolcache/Python /opt/microsoft \
-            /usr/share/az_* /usr/share/gradle-* /usr/share/miniconda /usr/share/kotlinc \
-            /usr/local/graalvm /usr/local/lib/heroku /usr/local/share/chromium \
-            /usr/local/share/powershell /usr/local/share/edge_driver \
-            /usr/local/share/gecko_driver /usr/local/share/chromedriver-* \
-            /usr/local/share/chrome /usr/local/share/phantomjs*
-          docker system prune -af || true
-          df -h
+        uses: ./.github/actions/free-disk-space
 
       - name: Cache Rust
         uses: Swatinem/rust-cache@v2

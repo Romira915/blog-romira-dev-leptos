@@ -15,41 +15,13 @@ jobs:
 
   build:
     runs-on: ubuntu-24.04
-    needs: ci
     env:
       SQLX_OFFLINE: true
     steps:
-      - name: Free disk space
-        run: |
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf /usr/local/lib/android
-          sudo rm -rf /opt/ghc
-          sudo rm -rf /opt/hostedtoolcache/CodeQL
-          sudo rm -rf /usr/local/share/boost
-          sudo rm -rf /usr/share/swift
-          sudo rm -rf /opt/hostedtoolcache/go
-          sudo rm -rf /opt/hostedtoolcache/node
-          sudo rm -rf /opt/hostedtoolcache/Ruby
-          sudo rm -rf /opt/hostedtoolcache/PyPy
-          sudo rm -rf /opt/hostedtoolcache/Python
-          sudo rm -rf /opt/microsoft
-          sudo rm -rf /usr/share/az_*
-          sudo rm -rf /usr/share/gradle-*
-          sudo rm -rf /usr/share/miniconda
-          sudo rm -rf /usr/share/kotlinc
-          sudo rm -rf /usr/local/graalvm
-          sudo rm -rf /usr/local/lib/heroku
-          sudo rm -rf /usr/local/share/chromium
-          sudo rm -rf /usr/local/share/powershell
-          sudo rm -rf /usr/local/share/edge_driver
-          sudo rm -rf /usr/local/share/gecko_driver
-          sudo rm -rf /usr/local/share/chromedriver-*
-          sudo rm -rf /usr/local/share/chrome
-          sudo rm -rf /usr/local/share/phantomjs*
-          docker system prune -af || true
-          df -h
-
       - uses: actions/checkout@v6
+
+      - name: Free disk space
+        uses: ./.github/actions/free-disk-space
 
       - name: Cache Rust
         uses: Swatinem/rust-cache@v2
@@ -61,12 +33,17 @@ jobs:
         with:
           just-version: 1.39.0
 
-      - name: Setup rust
+      - name: Install cross-compilation toolchain
         run: |
-          sudo apt update
-          sudo apt install -y gcc-aarch64-linux-gnu
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu
           rustup target add aarch64-unknown-linux-gnu
-          just setup
+          rustup target add wasm32-unknown-unknown
+
+      - name: Install build tools
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-leptos@0.3.2,stylance-cli@0.7.4,wasm-bindgen-cli@0.2.106,sqlx-cli@0.8.6
 
       - name: Build
         env:
@@ -97,7 +74,7 @@ jobs:
 
   create-release-tag:
     runs-on: ubuntu-24.04
-    needs: build
+    needs: [ci, build]
     outputs:
       release_tag: ${{ steps.tag_version.outputs.new_tag }}
 
