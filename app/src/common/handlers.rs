@@ -150,16 +150,13 @@ pub(crate) async fn get_article_handler(
     if let Some(slug) = get_newt_redirect_slug(&id) {
         let redirect_url = format!("/articles/{}", slug);
 
-        // SSR時（Accept: text/html）のみ301リダイレクト
-        if crate::server::http::request::is_ssr_request().await {
-            response.set_status(StatusCode::MOVED_PERMANENTLY);
-            response.insert_header(
-                axum::http::header::LOCATION,
-                axum::http::HeaderValue::from_str(&redirect_url).unwrap(),
-            );
-        }
+        // 常に301リダイレクトを返す（旧Newt IDへのアクセスは外部リンクからのフルページロードのみ）
+        response.set_status(StatusCode::MOVED_PERMANENTLY);
+        response.insert_header(
+            axum::http::header::LOCATION,
+            axum::http::HeaderValue::from_str(&redirect_url).unwrap(),
+        );
 
-        // クライアントナビゲーション時：ClientRedirectで処理
         return Ok(ArticleResponse::Redirect(redirect_url));
     }
 
