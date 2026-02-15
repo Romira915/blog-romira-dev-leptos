@@ -48,5 +48,8 @@ clippy:
 test:
     cargo test --all-targets --all-features
 
+test-nextest:
+    cargo nextest run --all-targets --all-features
+
 # Run all CI checks
 ci: check-format clippy test

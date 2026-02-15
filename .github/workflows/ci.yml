@@ -11,7 +11,66 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  ci:
+  format:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: extractions/setup-just@v3
+        with:
+          just-version: 1.39.0
+
+      - name: Setup rustfmt
+        run: rustup component add --toolchain nightly-x86_64-unknown-linux-gnu rustfmt
+
+      - name: Install leptosfmt
+        uses: taiki-e/install-action@v2
+        with:
+          tool: leptosfmt@0.1.33
+
+      - name: Check format
+        run: just check-format
+
+  clippy:
+    runs-on: ubuntu-24.04
+    env:
+      SQLX_OFFLINE: true
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Free disk space
+        uses: ./.github/actions/free-disk-space
+
+      - name: Cache Rust
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: "ci"
+          cache-targets: true
+
+      - uses: extractions/setup-just@v3
+        with:
+          just-version: 1.39.0
+
+      - name: Setup clippy
+        run: rustup component add --toolchain nightly-x86_64-unknown-linux-gnu clippy
+
+      - name: Install mold linker and clang
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mold clang
+
+      - name: Setup .env
+        run: cp .env.example .env
+
+      - name: Clean stale build artifacts
+        run: |
+          find ./target -name "*.rmeta" -mtime +7 -delete 2>/dev/null || true
+          find ./target -name "*.rlib" -mtime +7 -delete 2>/dev/null || true
+
+      - name: Clippy
+        run: just clippy
+
+  test:
     runs-on: ubuntu-24.04
     env:
       SQLX_OFFLINE: true
@@ -46,35 +105,18 @@ jobs:
         with:
           just-version: 1.39.0
 
-      - name: Setup rustup components
-        run: |
-          rustup component add --toolchain nightly-x86_64-unknown-linux-gnu rustfmt
-          rustup component add --toolchain nightly-x86_64-unknown-linux-gnu clippy
-
       - name: Install mold linker and clang
         run: |
           sudo apt-get update
           sudo apt-get install -y mold clang
 
-      - name: Setup .env
-        run: |
-          cp .env.example .env
-
-      - name: Install leptosfmt
+      - name: Install cargo-nextest
         uses: taiki-e/install-action@v2
         with:
-          tool: leptosfmt@0.1.33
+          tool: cargo-nextest
 
-      - name: Clean stale build artifacts
-        run: |
-          find ./target -name "*.rmeta" -mtime +7 -delete 2>/dev/null || true
-          find ./target -name "*.rlib" -mtime +7 -delete 2>/dev/null || true
-
-      - name: Check format
-        run: just check-format
-
-      - name: Clippy
-        run: just clippy
+      - name: Setup .env
+        run: cp .env.example .env
 
       - name: Test
-        run: just test
+        run: just test-nextest
