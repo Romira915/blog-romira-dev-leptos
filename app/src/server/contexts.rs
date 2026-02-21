@@ -3,6 +3,7 @@ use crate::constants::{
 };
 use crate::server::config::SERVER_CONFIG;
 use crate::server::services::cloudflare::CloudflarePurgeService;
+use crate::server::services::gcs::GcsStorageService;
 use crate::server::services::imgix::ImgixService;
 use crate::server::services::newt::NewtArticleService;
 use crate::server::services::qiita::QiitaArticleService;
@@ -30,6 +31,7 @@ pub struct AppState {
     pub(crate) image_service: ImageService,
     pub(crate) category_service: CategoryService,
     pub(crate) signing_service: GcsSigningService,
+    pub(crate) gcs_storage_service: GcsStorageService,
     pub(crate) imgix_service: ImgixService,
     pub(crate) cloudflare_purge_service: Option<CloudflarePurgeService>,
 }
@@ -45,6 +47,9 @@ impl AppState {
             &SERVER_CONFIG.gcs_service_account_key_json,
         )
         .expect("Failed to initialize GCS signing service");
+
+        // GCSストレージサービスの初期化
+        let gcs_storage_service = GcsStorageService::new(signing_service.clone(), client.clone());
 
         // imgixサービスの初期化
         let imgix_service = ImgixService::new(SERVER_CONFIG.imgix_domain.clone());
@@ -71,6 +76,7 @@ impl AppState {
             ),
             category_service: CategoryService::new(db_pool),
             signing_service,
+            gcs_storage_service,
             imgix_service,
             cloudflare_purge_service: if !SERVER_CONFIG.cloudflare_zone_id.is_empty()
                 && !SERVER_CONFIG.cloudflare_api_token.is_empty()
@@ -114,6 +120,10 @@ impl AppState {
         &self.signing_service
     }
 
+    pub fn gcs_storage_service(&self) -> &GcsStorageService {
+        &self.gcs_storage_service
+    }
+
     pub fn category_service(&self) -> &CategoryService {
         &self.category_service
     }
@@ -150,6 +160,7 @@ impl AppState {
             image_service: ImageService::new(db_pool.clone(), "test".to_string()),
             category_service: CategoryService::new(db_pool),
             signing_service: GcsSigningService::new_stub("test-bucket".to_string()),
+            gcs_storage_service: GcsStorageService::new_stub(),
             imgix_service: ImgixService::new("test.imgix.net".to_string()),
             cloudflare_purge_service: None,
         }
