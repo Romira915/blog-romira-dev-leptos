@@ -341,6 +341,7 @@ dependencies = [
  "http",
  "leptos",
  "leptos_axum",
+ "opentelemetry",
  "sqlx",
  "time",
  "tokio",

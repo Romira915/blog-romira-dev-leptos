@@ -7,6 +7,7 @@ edition = "2024"
 axum = { workspace = true }
 blog-romira-dev-app = { path = "../app", features = ["ssr"] }
 easy_init_newrelic_opentelemetry = { workspace = true }
+opentelemetry = { workspace = true }
 http = { workspace = true }
 leptos = { workspace = true, features = ["ssr"] }
 leptos_axum = { workspace = true, features = ["default"] }
