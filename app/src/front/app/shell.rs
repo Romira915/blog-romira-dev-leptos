@@ -15,6 +15,7 @@ pub fn shell(options: LeptosOptions) -> impl IntoView {
                 <meta name="viewport" content="width=device-width, initial-scale=1" />
                 <meta name="color-scheme" content="dark light" />
                 <meta name="theme-color" content="#1a1a2e" />
+                <script src=format!("{}/nr-browser-agent.js", ASSETS_ROOT) />
                 <link rel="dns-prefetch" href="https://blog-romira.imgix.net" />
                 <link
                     rel="preconnect"
