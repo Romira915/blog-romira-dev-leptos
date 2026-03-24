@@ -128,7 +128,7 @@ async fn http_metrics(req: Request<axum::body::Body>, next: Next) -> Response {
         .extensions()
         .get::<MatchedPath>()
         .map(|m| m.as_str().to_string())
-        .unwrap_or_default();
+        .unwrap_or_else(|| req.uri().path().to_string());
 
     let response = next.run(req).await;
 
@@ -155,13 +155,15 @@ impl<B> MakeSpan<B> for MakeSpanForHttp {
         let matched_path = request
             .extensions()
             .get::<MatchedPath>()
-            .map_or(request.uri().to_string(), |m| m.as_str().to_string());
+            .map(|m| m.as_str().to_string());
+        let route = matched_path.as_deref().unwrap_or(request.uri().path());
         tracing::info_span!(
             "request",
-            http.method = %request.method(),
+            http.request.method = %request.method(),
+            http.route = route,
             http.uri = %request.uri(),
             http.version = ?request.version(),
-            otel.name = format!("{} {}", request.method(), matched_path),
+            otel.name = format!("{} {}", request.method(), route),
             otel.kind = "server",
         )
     }
