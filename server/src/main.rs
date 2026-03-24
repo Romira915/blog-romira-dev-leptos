@@ -14,14 +14,10 @@ use sqlx::postgres::PgPoolOptions;
 use std::sync::LazyLock;
 use std::time::Instant;
 use time::macros::offset;
-use tower::ServiceBuilder;
-use tower::layer::util::{Identity, Stack};
-use tower_http::classify::{ServerErrorsAsFailures, SharedClassifier};
 use tower_http::set_header::SetResponseHeaderLayer;
-use tower_http::trace::{MakeSpan, TraceLayer};
 use tower_sessions::SessionManagerLayer;
 use tower_sessions_redis_store::{RedisStore, fred::prelude::*};
-use tracing::Span;
+use tracing::Instrument;
 
 #[tokio::main]
 async fn main() {
@@ -96,8 +92,7 @@ async fn main() {
         .with_state(app_state)
         .layer(axum::middleware::from_fn(require_admin_auth))
         .layer(session_layer)
-        .layer(axum::middleware::from_fn(http_metrics))
-        .layer(MakeSpanForHttp.into_tracing_service());
+        .layer(axum::middleware::from_fn(http_observability));
 
     // Disable caching in development mode
     #[cfg(debug_assertions)]
@@ -121,7 +116,7 @@ static HTTP_SERVER_REQUEST_DURATION: LazyLock<opentelemetry::metrics::Histogram<
             .build()
     });
 
-async fn http_metrics(req: Request<axum::body::Body>, next: Next) -> Response {
+async fn http_observability(req: Request<axum::body::Body>, next: Next) -> Response {
     let start = Instant::now();
     let method = req.method().clone();
     let route = req
@@ -130,11 +125,21 @@ async fn http_metrics(req: Request<axum::body::Body>, next: Next) -> Response {
         .map(|m| m.as_str().to_string())
         .unwrap_or_else(|| req.uri().path().to_string());
 
-    let response = next.run(req).await;
+    let span = tracing::info_span!(
+        "request",
+        http.request.method = %method,
+        http.route = %route,
+        http.response.status_code = tracing::field::Empty,
+        otel.name = format!("{} {}", method, route),
+        otel.kind = "server",
+    );
+
+    let response = next.run(req).instrument(span.clone()).await;
+
+    let status = response.status().as_u16();
+    span.record("http.response.status_code", i64::from(status));
 
     let duration = start.elapsed().as_secs_f64();
-    let status = response.status().as_u16();
-
     HTTP_SERVER_REQUEST_DURATION.record(
         duration,
         &[
@@ -145,37 +150,6 @@ async fn http_metrics(req: Request<axum::body::Body>, next: Next) -> Response {
     );
 
     response
-}
-
-#[derive(Clone)]
-struct MakeSpanForHttp;
-
-impl<B> MakeSpan<B> for MakeSpanForHttp {
-    fn make_span(&mut self, request: &Request<B>) -> Span {
-        let matched_path = request
-            .extensions()
-            .get::<MatchedPath>()
-            .map(|m| m.as_str().to_string());
-        let route = matched_path.as_deref().unwrap_or(request.uri().path());
-        tracing::info_span!(
-            "request",
-            http.request.method = %request.method(),
-            http.route = route,
-            http.uri = %request.uri(),
-            http.version = ?request.version(),
-            otel.name = format!("{} {}", request.method(), route),
-            otel.kind = "server",
-        )
-    }
-}
-
-impl MakeSpanForHttp {
-    pub(crate) fn into_tracing_service(
-        self,
-    ) -> ServiceBuilder<Stack<TraceLayer<SharedClassifier<ServerErrorsAsFailures>, Self>, Identity>>
-    {
-        ServiceBuilder::new().layer(TraceLayer::new_for_http().make_span_with(self))
-    }
 }
 
 /// Returns a layer that disables caching in development mode
