@@ -123,7 +123,7 @@ async fn http_observability(req: Request<axum::body::Body>, next: Next) -> Respo
         .extensions()
         .get::<MatchedPath>()
         .map(|m| m.as_str().to_string())
-        .unwrap_or_else(|| req.uri().path().to_string());
+        .unwrap_or_else(|| "UNMATCHED".to_string());
 
     let span = tracing::info_span!(
         "request",
