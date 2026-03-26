@@ -159,6 +159,12 @@ pub async fn auth_callback(
         picture: userinfo.picture,
     };
 
+    // Session fixation 対策: 認証成功後にセッションIDを再生成
+    if let Err(e) = session.cycle_id().await {
+        tracing::error!("Failed to cycle session ID: {}", e);
+        return Redirect::to("/admin?error=session_error").into_response();
+    }
+
     if let Err(e) = session.insert(SESSION_USER_KEY, &user).await {
         tracing::error!("Failed to store user in session: {}", e);
         return Redirect::to("/admin?error=session_error").into_response();
@@ -170,7 +176,7 @@ pub async fn auth_callback(
 
 /// Logout - clear session
 pub async fn auth_logout(session: Session) -> impl IntoResponse {
-    let _ = session.remove::<AuthUser>(SESSION_USER_KEY).await;
+    let _ = session.flush().await;
     Redirect::to("/")
 }
 

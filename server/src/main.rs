@@ -55,7 +55,10 @@ async fn main() {
     let session_store = RedisStore::new(valkey_pool);
     let session_layer = SessionManagerLayer::new(session_store)
         .with_secure(false) // TODO: Set to true in production with HTTPS
-        .with_same_site(tower_sessions::cookie::SameSite::Lax);
+        .with_same_site(tower_sessions::cookie::SameSite::Lax)
+        .with_expiry(tower_sessions::Expiry::OnInactivity(time::Duration::weeks(
+            2,
+        )));
 
     let conf = get_configuration(None).unwrap();
     let addr = conf.leptos_options.site_addr;
