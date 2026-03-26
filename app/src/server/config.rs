@@ -29,6 +29,9 @@ pub struct ServerConfig {
     pub cloudflare_zone_id: String,
     #[serde(default)]
     pub cloudflare_api_token: String,
+    // DBSC (Device Bound Session Credentials) — disabled by default
+    #[serde(default)]
+    pub dbsc_enabled: bool,
 }
 
 fn default_valkey_url() -> String {

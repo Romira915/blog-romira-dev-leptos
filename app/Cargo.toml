@@ -25,6 +25,8 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 sqlx = { workspace = true, optional = true }
 tower-sessions = { workspace = true, optional = true }
+jsonwebtoken = { workspace = true, optional = true }
+base64 = { workspace = true, optional = true }
 google-cloud-storage = { workspace = true, optional = true }
 google-cloud-auth = { workspace = true, optional = true }
 uuid = { workspace = true }
@@ -84,6 +86,8 @@ ssr = [
     "google-cloud-auth",
     "http",
     "blog-romira-dev-cms",
+    "jsonwebtoken",
+    "base64",
 ]
 
 [package.metadata.cargo-all-features]

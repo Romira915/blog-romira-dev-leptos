@@ -48,6 +48,10 @@ tower-sessions = "0.14"
 tower-sessions-redis-store = "0.16"
 fred = "10"
 
+# DBSC (Device Bound Session Credentials)
+jsonwebtoken = "9"
+base64 = "0.22"
+
 [profile.release]
 panic = "abort"
 

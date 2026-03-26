@@ -4,7 +4,8 @@ use axum::http::Request;
 use axum::middleware::Next;
 use axum::response::Response;
 use blog_romira_dev_app::{
-    App, AppState, SERVER_CONFIG, admin_routes, auth_routes, require_admin_auth, seo_routes, shell,
+    App, AppState, SERVER_CONFIG, admin_routes, auth_routes, dbsc_routes, require_admin_auth,
+    seo_routes, shell,
 };
 use leptos::logging::log;
 use leptos::prelude::*;
@@ -54,7 +55,7 @@ async fn main() {
         .expect("Failed to connect to Valkey");
     let session_store = RedisStore::new(valkey_pool);
     let session_layer = SessionManagerLayer::new(session_store)
-        .with_secure(false) // TODO: Set to true in production with HTTPS
+        .with_secure(SERVER_CONFIG.dbsc_enabled)
         .with_same_site(tower_sessions::cookie::SameSite::Lax)
         .with_expiry(tower_sessions::Expiry::OnInactivity(time::Duration::weeks(
             2,
@@ -70,6 +71,7 @@ async fn main() {
     let app = Router::new()
         .merge(seo_routes())
         .merge(auth_routes())
+        .merge(dbsc_routes())
         .merge(admin_routes())
         .leptos_routes_with_context(
             &app_state,
