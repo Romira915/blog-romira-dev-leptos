@@ -14,10 +14,6 @@ use crate::server::services::dbsc::{
 
 /// DBSC Registration endpoint — `POST /auth/dbsc/start`
 async fn dbsc_registration(session: Session, body: String) -> impl IntoResponse {
-    if !SERVER_CONFIG.dbsc_enabled {
-        return StatusCode::NOT_FOUND.into_response();
-    }
-
     // 1. Verify user is authenticated
     if get_current_user(&session).await.is_none() {
         return StatusCode::UNAUTHORIZED.into_response();
@@ -85,10 +81,6 @@ async fn dbsc_registration(session: Session, body: String) -> impl IntoResponse 
 /// - Phase 1 (no `Secure-Session-Response`): Issue challenge with 403
 /// - Phase 2 (with `Secure-Session-Response`): Verify proof and update cookie
 async fn dbsc_refresh(session: Session, headers: HeaderMap) -> impl IntoResponse {
-    if !SERVER_CONFIG.dbsc_enabled {
-        return StatusCode::NOT_FOUND.into_response();
-    }
-
     let dbsc_service = DbscService::new(SERVER_CONFIG.app_url.clone());
 
     // Get DBSC session ID from Sec-Secure-Session-Id header

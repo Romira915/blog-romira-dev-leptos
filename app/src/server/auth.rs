@@ -173,22 +173,20 @@ pub async fn auth_callback(
     tracing::info!("User logged in: {}", user.email);
 
     // DBSC: Add Secure-Session-Registration header for supported browsers
-    let mut response = Redirect::to("/admin").into_response();
-    if SERVER_CONFIG.dbsc_enabled {
-        use crate::server::services::dbsc::{DBSC_REGISTRATION_NONCE_KEY, DbscService};
+    use crate::server::services::dbsc::{DBSC_REGISTRATION_NONCE_KEY, DbscService};
 
-        let nonce = DbscService::generate_nonce();
-        if let Err(e) = session.insert(DBSC_REGISTRATION_NONCE_KEY, &nonce).await {
-            tracing::error!("Failed to store DBSC nonce: {}", e);
-            return response;
-        }
-        let dbsc_service = DbscService::new(SERVER_CONFIG.app_url.clone());
-        let header_value = dbsc_service.build_registration_header(&nonce);
-        if let Ok(v) = axum::http::HeaderValue::from_str(&header_value) {
-            response
-                .headers_mut()
-                .insert("Secure-Session-Registration", v);
-        }
+    let mut response = Redirect::to("/admin").into_response();
+    let nonce = DbscService::generate_nonce();
+    if let Err(e) = session.insert(DBSC_REGISTRATION_NONCE_KEY, &nonce).await {
+        tracing::error!("Failed to store DBSC nonce: {}", e);
+        return response;
+    }
+    let dbsc_service = DbscService::new(SERVER_CONFIG.app_url.clone());
+    let header_value = dbsc_service.build_registration_header(&nonce);
+    if let Ok(v) = axum::http::HeaderValue::from_str(&header_value) {
+        response
+            .headers_mut()
+            .insert("Secure-Session-Registration", v);
     }
     response
 }
@@ -249,7 +247,7 @@ pub async fn require_admin_auth(
                 }
 
                 // DBSC enforcement: require DBSC cookie for DBSC-registered sessions
-                if SERVER_CONFIG.dbsc_enabled {
+                {
                     use crate::server::services::dbsc::{DBSC_COOKIE_NAME, DBSC_SESSION_ID_KEY};
 
                     let has_dbsc_session: bool = session
