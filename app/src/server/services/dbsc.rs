@@ -47,6 +47,12 @@ pub(crate) enum DbscError {
     NonceMismatch,
     #[error("Missing JWK in JWT payload")]
     MissingJwk,
+    #[error("Session ID mismatch")]
+    SessionIdMismatch,
+    #[error("No pending challenges")]
+    NoPendingChallenges,
+    #[error("Missing public key")]
+    MissingPublicKey,
 }
 
 /// JWK (JSON Web Key) for EC P-256
@@ -81,12 +87,22 @@ struct DbscRefreshClaims {
 
 #[derive(Clone, Debug)]
 pub(crate) struct DbscService {
-    app_url: String,
+    /// アプリケーションのオリジン（例: "https://blog.romira.dev"）
+    origin: String,
+    /// オリジンからプロトコル・ポートを除いたドメイン（例: "blog.romira.dev"）
+    domain: String,
 }
 
 impl DbscService {
-    pub(crate) fn new(app_url: String) -> Self {
-        Self { app_url }
+    pub(crate) fn new(origin: String) -> Self {
+        let domain = origin
+            .trim_start_matches("https://")
+            .trim_start_matches("http://")
+            .split(':')
+            .next()
+            .unwrap_or("localhost")
+            .to_string();
+        Self { origin, domain }
     }
 
     pub(crate) fn generate_nonce() -> String {
@@ -113,7 +129,7 @@ impl DbscService {
         let mut no_verify = Validation::new(Algorithm::ES256);
         no_verify.insecure_disable_signature_validation();
         no_verify.set_required_spec_claims::<&str>(&[]);
-        no_verify.set_audience(&[&format!("{}/auth/dbsc/start", self.app_url)]);
+        no_verify.set_audience(&[&format!("{}/auth/dbsc/start", self.origin)]);
 
         let token_data =
             decode::<DbscRegistrationClaims>(jwt_str, &DecodingKey::from_secret(b""), &no_verify)
@@ -129,7 +145,7 @@ impl DbscService {
         let decoding_key = Self::decoding_key_from_jwk(jwk)?;
         let mut validation = Validation::new(Algorithm::ES256);
         validation.set_required_spec_claims::<&str>(&[]);
-        validation.set_audience(&[&format!("{}/auth/dbsc/start", self.app_url)]);
+        validation.set_audience(&[&format!("{}/auth/dbsc/start", self.origin)]);
 
         let verified = decode::<DbscRegistrationClaims>(jwt_str, &decoding_key, &validation)
             .map_err(|e| DbscError::InvalidJwt(e.to_string()))?;
@@ -159,7 +175,7 @@ impl DbscService {
         let decoding_key = Self::decoding_key_from_jwk(&jwk)?;
         let mut validation = Validation::new(Algorithm::ES256);
         validation.set_required_spec_claims::<&str>(&[]);
-        validation.set_audience(&[&format!("{}/auth/dbsc/refresh", self.app_url)]);
+        validation.set_audience(&[&format!("{}/auth/dbsc/refresh", self.origin)]);
 
         let token_data = decode::<DbscRefreshClaims>(jwt_str, &decoding_key, &validation)
             .map_err(|e| DbscError::InvalidJwt(e.to_string()))?;
@@ -172,23 +188,15 @@ impl DbscService {
     }
 
     pub(crate) fn build_session_config(&self, session_id: &str) -> serde_json::Value {
-        let domain = self
-            .app_url
-            .trim_start_matches("https://")
-            .trim_start_matches("http://")
-            .split(':')
-            .next()
-            .unwrap_or("localhost");
-
         serde_json::json!({
             "session_identifier": session_id,
             "refresh_url": "/auth/dbsc/refresh",
             "scope": {
-                "origin": self.app_url,
+                "origin": self.origin,
                 "include_site": true,
                 "scope_specification": [
-                    { "type": "include", "domain": domain, "path": "/admin" },
-                    { "type": "include", "domain": domain, "path": "/api/admin" }
+                    { "type": "include", "domain": self.domain, "path": "/admin" },
+                    { "type": "include", "domain": self.domain, "path": "/api/admin" }
                 ]
             },
             "credentials": [{
@@ -294,28 +302,45 @@ impl DbscService {
     }
 
     /// チャレンジを発行する（refresh phase1用）
-    /// 新しいnonceを生成し、noncesリストを更新して返す。
+    /// セッションID照合後、新しいnonceを生成し、noncesリストを更新して返す。
     pub(crate) fn issue_challenge(
+        request_session_id: &str,
+        stored_session_id: Option<&str>,
         mut current_nonces: Vec<String>,
-        session_id: &str,
-    ) -> ChallengeIssue {
+    ) -> Result<ChallengeIssue, DbscError> {
+        if stored_session_id != Some(request_session_id) {
+            return Err(DbscError::SessionIdMismatch);
+        }
+
         let nonce = Self::generate_nonce();
         Self::push_challenge_nonce(&mut current_nonces, nonce.clone());
-        let challenge_header = Self::build_challenge_header(&nonce, session_id);
-        ChallengeIssue {
+        let challenge_header = Self::build_challenge_header(&nonce, request_session_id);
+        Ok(ChallengeIssue {
             updated_nonces: current_nonces,
             challenge_header,
-        }
+        })
     }
 
     /// リフレッシュを完了する（refresh phase2用）
-    /// JWT検証・nonce消費・新Cookie発行を一括で行う。
+    /// セッションID照合・公開鍵/nonces検証・JWT検証・nonce消費・新Cookie発行を一括で行う。
     pub(crate) fn complete_refresh(
         &self,
         jwt: &str,
-        public_key_jwk: &str,
+        request_session_id: &str,
+        stored_session_id: Option<&str>,
+        public_key_jwk: Option<&str>,
         nonces: Vec<String>,
     ) -> Result<RefreshCompletion, DbscError> {
+        if stored_session_id != Some(request_session_id) {
+            return Err(DbscError::SessionIdMismatch);
+        }
+
+        let public_key_jwk = public_key_jwk.ok_or(DbscError::MissingPublicKey)?;
+
+        if nonces.is_empty() {
+            return Err(DbscError::NoPendingChallenges);
+        }
+
         let matched_nonce = self.verify_refresh_jwt(jwt, public_key_jwk, &nonces)?;
 
         let mut updated_nonces = nonces;
@@ -444,7 +469,8 @@ mod tests {
     #[test]
     fn issue_challengeでnoncesを更新しヘッダーを返すこと() {
         let existing = vec!["old-nonce".to_string()];
-        let challenge = DbscService::issue_challenge(existing, "session-id");
+        let challenge =
+            DbscService::issue_challenge("session-id", Some("session-id"), existing).unwrap();
         assert_eq!(challenge.updated_nonces.len(), 2);
         assert_eq!(challenge.updated_nonces[0], "old-nonce");
         assert!(challenge.challenge_header.contains("session-id"));
@@ -452,7 +478,7 @@ mod tests {
 
     #[test]
     fn issue_challengeで空のnoncesリストからでもチャレンジを発行できること() {
-        let challenge = DbscService::issue_challenge(vec![], "sess-1");
+        let challenge = DbscService::issue_challenge("sess-1", Some("sess-1"), vec![]).unwrap();
         assert_eq!(challenge.updated_nonces.len(), 1);
         assert!(challenge.challenge_header.contains("sess-1"));
     }
@@ -460,9 +486,21 @@ mod tests {
     #[test]
     fn issue_challengeでmax超過時に古いnonceを削除すること() {
         let existing: Vec<String> = (0..5).map(|i| format!("nonce-{}", i)).collect();
-        let challenge = DbscService::issue_challenge(existing, "sess");
+        let challenge = DbscService::issue_challenge("sess", Some("sess"), existing).unwrap();
         assert_eq!(challenge.updated_nonces.len(), 5);
         assert!(!challenge.updated_nonces.contains(&"nonce-0".to_string()));
+    }
+
+    #[test]
+    fn issue_challengeでセッションid不一致の場合エラーを返すこと() {
+        let result = DbscService::issue_challenge("request-id", Some("different-id"), vec![]);
+        assert!(matches!(result, Err(DbscError::SessionIdMismatch)));
+    }
+
+    #[test]
+    fn issue_challengeでセッションidが未保存の場合エラーを返すこと() {
+        let result = DbscService::issue_challenge("request-id", None, vec![]);
+        assert!(matches!(result, Err(DbscError::SessionIdMismatch)));
     }
 
     #[test]
@@ -479,5 +517,39 @@ mod tests {
     #[test]
     fn is_session_boundでdbsc登録済みかつcookieなしならfalseを返すこと() {
         assert!(!DbscService::is_session_bound(true, false));
+    }
+
+    #[test]
+    fn complete_refreshでセッションid不一致の場合エラーを返すこと() {
+        let service = DbscService::new("https://example.com".to_string());
+        let result = service.complete_refresh(
+            "jwt",
+            "request-id",
+            Some("different-id"),
+            Some("key"),
+            vec!["nonce".to_string()],
+        );
+        assert!(matches!(result, Err(DbscError::SessionIdMismatch)));
+    }
+
+    #[test]
+    fn complete_refreshで公開鍵なしの場合エラーを返すこと() {
+        let service = DbscService::new("https://example.com".to_string());
+        let result = service.complete_refresh(
+            "jwt",
+            "sess-id",
+            Some("sess-id"),
+            None,
+            vec!["nonce".to_string()],
+        );
+        assert!(matches!(result, Err(DbscError::MissingPublicKey)));
+    }
+
+    #[test]
+    fn complete_refreshでnoncesが空の場合エラーを返すこと() {
+        let service = DbscService::new("https://example.com".to_string());
+        let result =
+            service.complete_refresh("jwt", "sess-id", Some("sess-id"), Some("key"), vec![]);
+        assert!(matches!(result, Err(DbscError::NoPendingChallenges)));
     }
 }

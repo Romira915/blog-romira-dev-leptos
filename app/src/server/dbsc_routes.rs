@@ -82,7 +82,7 @@ async fn dbsc_refresh(
     session: Session,
     headers: HeaderMap,
 ) -> impl IntoResponse {
-    // Get DBSC session ID from Sec-Secure-Session-Id header
+    // 1. Extract HTTP inputs
     let dbsc_session_id = headers
         .get("Sec-Secure-Session-Id")
         .and_then(|v| v.to_str().ok())
@@ -92,17 +92,13 @@ async fn dbsc_refresh(
         return StatusCode::BAD_REQUEST.into_response();
     };
 
-    // Verify session has matching DBSC session ID
-    let stored_session_id: Option<String> = session.get(DBSC_SESSION_ID_KEY).await.unwrap_or(None);
-    if stored_session_id.as_ref() != Some(&dbsc_session_id) {
-        return StatusCode::NOT_FOUND.into_response();
-    }
-
-    // Check if this is Phase 2 (has Secure-Session-Response)
     let jwt_proof = headers
         .get("Secure-Session-Response")
         .and_then(|v| v.to_str().ok())
         .map(|s| s.to_string());
+
+    // 2. Read session data
+    let stored_session_id: Option<String> = session.get(DBSC_SESSION_ID_KEY).await.unwrap_or(None);
 
     if let Some(jwt_proof) = jwt_proof {
         // Phase 2: Verify proof and update cookie
@@ -110,18 +106,20 @@ async fn dbsc_refresh(
             &session,
             app_state.dbsc_service(),
             &dbsc_session_id,
+            stored_session_id.as_deref(),
             &jwt_proof,
         )
         .await;
     }
 
     // Phase 1: Issue challenge
-    handle_refresh_phase1(&session, &dbsc_session_id).await
+    handle_refresh_phase1(&session, &dbsc_session_id, stored_session_id.as_deref()).await
 }
 
 async fn handle_refresh_phase1(
     session: &Session,
     dbsc_session_id: &str,
+    stored_session_id: Option<&str>,
 ) -> axum::response::Response {
     // 1. Read current nonces from session
     let current_nonces: Vec<String> = session
@@ -130,8 +128,15 @@ async fn handle_refresh_phase1(
         .unwrap_or(None)
         .unwrap_or_default();
 
-    // 2. Service: nonce生成・リスト更新・チャレンジヘッダー構築
-    let challenge = DbscService::issue_challenge(current_nonces, dbsc_session_id);
+    // 2. Service: セッションID照合・nonce生成・リスト更新・チャレンジヘッダー構築
+    let challenge =
+        match DbscService::issue_challenge(dbsc_session_id, stored_session_id, current_nonces) {
+            Ok(result) => result,
+            Err(e) => {
+                tracing::warn!("DBSC challenge issue failed: {}", e);
+                return StatusCode::NOT_FOUND.into_response();
+            }
+        };
 
     // 3. Store updated nonces in session
     if let Err(e) = session
@@ -159,33 +164,28 @@ async fn handle_refresh_phase2(
     session: &Session,
     dbsc_service: &DbscService,
     dbsc_session_id: &str,
+    stored_session_id: Option<&str>,
     jwt_proof: &str,
 ) -> axum::response::Response {
     // 1. Read session data
     let public_key_jwk: Option<String> = session.get(DBSC_PUBLIC_KEY_KEY).await.unwrap_or(None);
-    let Some(public_key_jwk) = public_key_jwk else {
-        return StatusCode::FORBIDDEN.into_response();
-    };
-
     let nonces: Vec<String> = session
         .get(DBSC_CHALLENGE_NONCES_KEY)
         .await
         .unwrap_or(None)
         .unwrap_or_default();
 
-    if nonces.is_empty() {
-        return StatusCode::FORBIDDEN.into_response();
-    }
-
-    // 2. Service: JWT検証・nonce消費・新Cookie発行
-    let refresh = match dbsc_service.complete_refresh(jwt_proof, &public_key_jwk, nonces) {
+    // 2. Service: セッションID照合・公開鍵/nonces検証・JWT検証・nonce消費・新Cookie発行
+    let refresh = match dbsc_service.complete_refresh(
+        jwt_proof,
+        dbsc_session_id,
+        stored_session_id,
+        public_key_jwk.as_deref(),
+        nonces,
+    ) {
         Ok(result) => result,
         Err(e) => {
-            tracing::warn!(
-                "DBSC refresh JWT verification failed for session {}: {}",
-                dbsc_session_id,
-                e
-            );
+            tracing::warn!("DBSC refresh failed for session {}: {}", dbsc_session_id, e);
             return StatusCode::FORBIDDEN.into_response();
         }
     };
