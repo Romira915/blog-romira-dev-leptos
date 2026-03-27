@@ -9,6 +9,34 @@ pub(crate) const DBSC_COOKIE_NAME: &str = "__Secure-dbsc";
 pub(crate) const DBSC_COOKIE_MAX_AGE: u64 = 600;
 const MAX_RECENT_CHALLENGES: usize = 5;
 
+/// auth_callback → DBSC登録開始に必要なデータ
+pub(crate) struct RegistrationInitiation {
+    /// セッションに保存するnonce
+    pub nonce: String,
+    /// HTTPレスポンスに設定するSec-Session-Registrationヘッダー値
+    pub header_value: String,
+}
+
+/// DBSC登録完了後にHandler側で処理するデータ
+pub(crate) struct RegistrationCompletion {
+    pub session_id: String,
+    pub public_key_jwk: String,
+    pub set_cookie_header: String,
+    pub session_config: serde_json::Value,
+}
+
+/// DBSCリフレッシュ Phase1: チャレンジ発行結果
+pub(crate) struct ChallengeIssue {
+    pub updated_nonces: Vec<String>,
+    pub challenge_header: String,
+}
+
+/// DBSCリフレッシュ Phase2: 検証成功後の結果
+pub(crate) struct RefreshCompletion {
+    pub updated_nonces: Vec<String>,
+    pub set_cookie_header: String,
+}
+
 #[derive(Debug, thiserror::Error)]
 pub(crate) enum DbscError {
     #[error("Invalid JWT: {0}")]
@@ -224,6 +252,93 @@ impl DbscService {
         DecodingKey::from_ec_components(&jwk.x, &jwk.y)
             .map_err(|e| DbscError::InvalidPublicKey(e.to_string()))
     }
+
+    // --- 高レベルフロー操作 ---
+
+    /// DBSC登録を開始する（auth_callback用）
+    /// nonceを生成し、登録ヘッダー値を構築して返す。
+    /// Handler側でnonceをセッションに保存し、header_valueをHTTPレスポンスに設定する。
+    pub(crate) fn initiate_registration(&self) -> RegistrationInitiation {
+        let nonce = Self::generate_nonce();
+        let header_value = self.build_registration_header(&nonce);
+        RegistrationInitiation {
+            nonce,
+            header_value,
+        }
+    }
+
+    /// DBSC登録を完了する（dbsc_registration handler用）
+    /// JWT検証・nonce照合・セッションID生成・Cookie構築を一括で行う。
+    pub(crate) fn complete_registration(
+        &self,
+        jwt: &str,
+        stored_nonce: &str,
+    ) -> Result<RegistrationCompletion, DbscError> {
+        let (jti_nonce, public_key_jwk) = self.verify_registration_jwt(jwt)?;
+
+        if jti_nonce != stored_nonce {
+            return Err(DbscError::NonceMismatch);
+        }
+
+        let session_id = uuid::Uuid::now_v7().to_string();
+        let cookie_value = Self::generate_cookie_value();
+        let set_cookie_header = Self::build_set_cookie_header(&cookie_value);
+        let session_config = self.build_session_config(&session_id);
+
+        Ok(RegistrationCompletion {
+            session_id,
+            public_key_jwk,
+            set_cookie_header,
+            session_config,
+        })
+    }
+
+    /// チャレンジを発行する（refresh phase1用）
+    /// 新しいnonceを生成し、noncesリストを更新して返す。
+    pub(crate) fn issue_challenge(
+        mut current_nonces: Vec<String>,
+        session_id: &str,
+    ) -> ChallengeIssue {
+        let nonce = Self::generate_nonce();
+        Self::push_challenge_nonce(&mut current_nonces, nonce.clone());
+        let challenge_header = Self::build_challenge_header(&nonce, session_id);
+        ChallengeIssue {
+            updated_nonces: current_nonces,
+            challenge_header,
+        }
+    }
+
+    /// リフレッシュを完了する（refresh phase2用）
+    /// JWT検証・nonce消費・新Cookie発行を一括で行う。
+    pub(crate) fn complete_refresh(
+        &self,
+        jwt: &str,
+        public_key_jwk: &str,
+        nonces: Vec<String>,
+    ) -> Result<RefreshCompletion, DbscError> {
+        let matched_nonce = self.verify_refresh_jwt(jwt, public_key_jwk, &nonces)?;
+
+        let mut updated_nonces = nonces;
+        updated_nonces.retain(|n| n != &matched_nonce);
+
+        let cookie_value = Self::generate_cookie_value();
+        let set_cookie_header = Self::build_set_cookie_header(&cookie_value);
+
+        Ok(RefreshCompletion {
+            updated_nonces,
+            set_cookie_header,
+        })
+    }
+
+    /// DBSCセッションバインディングが有効かどうかを判定する（require_admin_auth用）
+    /// DBSC登録済みセッションはDBSC Cookieが必須。未登録セッションは常にtrue。
+    pub(crate) fn is_session_bound(has_dbsc_session: bool, has_dbsc_cookie: bool) -> bool {
+        if has_dbsc_session {
+            has_dbsc_cookie
+        } else {
+            true
+        }
+    }
 }
 
 //noinspection NonAsciiCharacters
@@ -305,5 +420,64 @@ mod tests {
             &["nonce1".to_string()],
         );
         assert!(result.is_err());
+    }
+
+    // --- 高レベルフロー操作のテスト ---
+
+    #[test]
+    fn initiate_registrationでnonceとヘッダーを返すこと() {
+        let service = DbscService::new("https://example.com".to_string());
+        let initiation = service.initiate_registration();
+        assert!(!initiation.nonce.is_empty());
+        assert!(initiation.header_value.contains(&initiation.nonce));
+        assert!(initiation.header_value.contains("ES256"));
+        assert!(initiation.header_value.contains("/auth/dbsc/start"));
+    }
+
+    #[test]
+    fn complete_registrationで不正なjwtをリジェクトすること() {
+        let service = DbscService::new("https://example.com".to_string());
+        let result = service.complete_registration("not-a-jwt", "some-nonce");
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn issue_challengeでnoncesを更新しヘッダーを返すこと() {
+        let existing = vec!["old-nonce".to_string()];
+        let challenge = DbscService::issue_challenge(existing, "session-id");
+        assert_eq!(challenge.updated_nonces.len(), 2);
+        assert_eq!(challenge.updated_nonces[0], "old-nonce");
+        assert!(challenge.challenge_header.contains("session-id"));
+    }
+
+    #[test]
+    fn issue_challengeで空のnoncesリストからでもチャレンジを発行できること() {
+        let challenge = DbscService::issue_challenge(vec![], "sess-1");
+        assert_eq!(challenge.updated_nonces.len(), 1);
+        assert!(challenge.challenge_header.contains("sess-1"));
+    }
+
+    #[test]
+    fn issue_challengeでmax超過時に古いnonceを削除すること() {
+        let existing: Vec<String> = (0..5).map(|i| format!("nonce-{}", i)).collect();
+        let challenge = DbscService::issue_challenge(existing, "sess");
+        assert_eq!(challenge.updated_nonces.len(), 5);
+        assert!(!challenge.updated_nonces.contains(&"nonce-0".to_string()));
+    }
+
+    #[test]
+    fn is_session_boundでdbsc未登録セッションは常にtrueを返すこと() {
+        assert!(DbscService::is_session_bound(false, false));
+        assert!(DbscService::is_session_bound(false, true));
+    }
+
+    #[test]
+    fn is_session_boundでdbsc登録済みかつcookieありならtrueを返すこと() {
+        assert!(DbscService::is_session_bound(true, true));
+    }
+
+    #[test]
+    fn is_session_boundでdbsc登録済みかつcookieなしならfalseを返すこと() {
+        assert!(!DbscService::is_session_bound(true, false));
     }
 }

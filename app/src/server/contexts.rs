@@ -3,6 +3,7 @@ use crate::constants::{
 };
 use crate::server::config::SERVER_CONFIG;
 use crate::server::services::cloudflare::CloudflarePurgeService;
+use crate::server::services::dbsc::DbscService;
 use crate::server::services::gcs::GcsStorageService;
 use crate::server::services::imgix::ImgixService;
 use crate::server::services::newt::NewtArticleService;
@@ -34,6 +35,7 @@ pub struct AppState {
     pub(crate) gcs_storage_service: GcsStorageService,
     pub(crate) imgix_service: ImgixService,
     pub(crate) cloudflare_purge_service: Option<CloudflarePurgeService>,
+    pub(crate) dbsc_service: DbscService,
 }
 
 impl AppState {
@@ -89,6 +91,7 @@ impl AppState {
             } else {
                 None
             },
+            dbsc_service: DbscService::new(SERVER_CONFIG.app_url.clone()),
         }
     }
 
@@ -136,6 +139,10 @@ impl AppState {
         self.cloudflare_purge_service.as_ref()
     }
 
+    pub(crate) fn dbsc_service(&self) -> &DbscService {
+        &self.dbsc_service
+    }
+
     /// テスト用のインスタンスを作成（署名サービスはスタブ）
     #[cfg(any(test, feature = "test-utils"))]
     pub fn new_for_test(leptos_options: LeptosOptions, db_pool: PgPool) -> Self {
@@ -163,6 +170,7 @@ impl AppState {
             gcs_storage_service: GcsStorageService::new_stub(),
             imgix_service: ImgixService::new("test.imgix.net".to_string()),
             cloudflare_purge_service: None,
+            dbsc_service: DbscService::new("http://localhost:3000".to_string()),
         }
     }
 }

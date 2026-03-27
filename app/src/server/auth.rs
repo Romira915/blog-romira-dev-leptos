@@ -89,6 +89,7 @@ pub async fn auth_google(session: Session) -> impl IntoResponse {
 
 /// OAuth callback - exchange code for token and get user info
 pub async fn auth_callback(
+    axum::extract::State(app_state): axum::extract::State<AppState>,
     session: Session,
     Query(query): Query<AuthCallbackQuery>,
 ) -> impl IntoResponse {
@@ -172,21 +173,20 @@ pub async fn auth_callback(
 
     tracing::info!("User logged in: {}", user.email);
 
-    // DBSC: Add Secure-Session-Registration header for supported browsers
-    use crate::server::services::dbsc::{DBSC_REGISTRATION_NONCE_KEY, DbscService};
+    // DBSC: Add Sec-Session-Registration header for supported browsers
+    use crate::server::services::dbsc::DBSC_REGISTRATION_NONCE_KEY;
 
     let mut response = Redirect::to("/admin").into_response();
-    let nonce = DbscService::generate_nonce();
-    if let Err(e) = session.insert(DBSC_REGISTRATION_NONCE_KEY, &nonce).await {
+    let initiation = app_state.dbsc_service().initiate_registration();
+    if let Err(e) = session
+        .insert(DBSC_REGISTRATION_NONCE_KEY, &initiation.nonce)
+        .await
+    {
         tracing::error!("Failed to store DBSC nonce: {}", e);
         return response;
     }
-    let dbsc_service = DbscService::new(SERVER_CONFIG.app_url.clone());
-    let header_value = dbsc_service.build_registration_header(&nonce);
-    if let Ok(v) = axum::http::HeaderValue::from_str(&header_value) {
-        response
-            .headers_mut()
-            .insert("Secure-Session-Registration", v);
+    if let Ok(v) = axum::http::HeaderValue::from_str(&initiation.header_value) {
+        response.headers_mut().insert("Sec-Session-Registration", v);
     }
     response
 }
@@ -248,25 +248,25 @@ pub async fn require_admin_auth(
 
                 // DBSC enforcement: require DBSC cookie for DBSC-registered sessions
                 {
-                    use crate::server::services::dbsc::{DBSC_COOKIE_NAME, DBSC_SESSION_ID_KEY};
+                    use crate::server::services::dbsc::{
+                        DBSC_COOKIE_NAME, DBSC_SESSION_ID_KEY, DbscService,
+                    };
 
                     let has_dbsc_session: bool = session
                         .get::<String>(DBSC_SESSION_ID_KEY)
                         .await
                         .unwrap_or(None)
                         .is_some();
-                    if has_dbsc_session {
-                        let has_dbsc_cookie = request.headers().get_all("cookie").iter().any(|v| {
-                            v.to_str()
-                                .unwrap_or("")
-                                .contains(&format!("{}=", DBSC_COOKIE_NAME))
-                        });
-                        if !has_dbsc_cookie {
-                            if is_admin_api {
-                                return StatusCode::UNAUTHORIZED.into_response();
-                            }
-                            return Redirect::to("/auth/google").into_response();
+                    let has_dbsc_cookie = request.headers().get_all("cookie").iter().any(|v| {
+                        v.to_str()
+                            .unwrap_or("")
+                            .contains(&format!("{}=", DBSC_COOKIE_NAME))
+                    });
+                    if !DbscService::is_session_bound(has_dbsc_session, has_dbsc_cookie) {
+                        if is_admin_api {
+                            return StatusCode::UNAUTHORIZED.into_response();
                         }
+                        return Redirect::to("/auth/google").into_response();
                     }
                 }
             }
