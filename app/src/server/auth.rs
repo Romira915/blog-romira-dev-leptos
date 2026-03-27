@@ -173,7 +173,7 @@ pub async fn auth_callback(
 
     tracing::info!("User logged in: {}", user.email);
 
-    // DBSC: Add Sec-Session-Registration header for supported browsers
+    // DBSC: Add Secure-Session-Registration header for supported browsers
     use crate::server::services::dbsc::DBSC_REGISTRATION_NONCE_KEY;
 
     let mut response = Redirect::to("/admin").into_response();
@@ -186,7 +186,9 @@ pub async fn auth_callback(
         return response;
     }
     if let Ok(v) = axum::http::HeaderValue::from_str(&initiation.header_value) {
-        response.headers_mut().insert("Sec-Session-Registration", v);
+        response
+            .headers_mut()
+            .insert("Secure-Session-Registration", v);
     }
     response
 }
