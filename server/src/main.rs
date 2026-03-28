@@ -22,14 +22,18 @@ use tracing::Instrument;
 
 #[tokio::main]
 async fn main() {
-    let _telemetry_guard =
+    let mut telemetry_init =
         easy_init_newrelic_opentelemetry::NewRelicSubscriberInitializer::default()
             .newrelic_service_name(&SERVER_CONFIG.new_relic_service_name)
             .host_name(&SERVER_CONFIG.host_name)
             .newrelic_license_key(&SERVER_CONFIG.new_relic_license_key)
-            .timestamps_offset(offset!(+09:00:00))
-            .init()
-            .expect("Failed to initialize NewRelic");
+            .timestamps_offset(offset!(+09:00:00));
+    if !SERVER_CONFIG.otlp_endpoint.is_empty() {
+        telemetry_init = telemetry_init.newrelic_otlp_endpoint(&SERVER_CONFIG.otlp_endpoint);
+    }
+    let _telemetry_guard = telemetry_init
+        .init()
+        .expect("Failed to initialize OpenTelemetry");
 
     // Database connection pool
     let db_pool = PgPoolOptions::new()
@@ -94,8 +98,11 @@ async fn main() {
         //     move || shell(leptos_options.clone())
         // })
         .fallback(leptos_axum::file_and_error_handler::<AppState, _>(shell))
-        .with_state(app_state)
-        .layer(axum::middleware::from_fn(require_admin_auth))
+        .with_state(app_state.clone())
+        .layer(axum::middleware::from_fn_with_state(
+            app_state,
+            require_admin_auth,
+        ))
         .layer(session_layer)
         .layer(axum::middleware::from_fn(http_observability));
 

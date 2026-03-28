@@ -90,8 +90,11 @@ fn build_test_router_with_auth(app_state: AppState) -> Router {
                 move || blog_romira_dev_app::shell(leptos_options.clone())
             },
         )
-        .with_state(app_state)
-        .layer(axum::middleware::from_fn(require_admin_auth))
+        .with_state(app_state.clone())
+        .layer(axum::middleware::from_fn_with_state(
+            app_state,
+            require_admin_auth,
+        ))
         .layer(session_layer)
 }
 

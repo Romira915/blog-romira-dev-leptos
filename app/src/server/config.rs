@@ -29,6 +29,9 @@ pub struct ServerConfig {
     pub cloudflare_zone_id: String,
     #[serde(default)]
     pub cloudflare_api_token: String,
+    // OpenTelemetry OTLP endpoint (optional — uses New Relic default if not set)
+    #[serde(default)]
+    pub otlp_endpoint: String,
 }
 
 fn default_valkey_url() -> String {

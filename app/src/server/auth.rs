@@ -173,22 +173,20 @@ pub async fn auth_callback(
 
     tracing::info!("User logged in: {}", user.email);
 
-    // DBSC: Add Secure-Session-Registration header for supported browsers
-    use crate::server::services::dbsc::DBSC_REGISTRATION_NONCE_KEY;
-
+    // DBSC: Add Secure-Session-Registration header to the login response.
+    // Nonce is delivered via SameSite=None cookie because Chrome's DBSC
+    // registration POST does not include SameSite=Lax session cookies.
     let mut response = Redirect::to("/admin").into_response();
     let initiation = app_state.dbsc_service().initiate_registration();
-    if let Err(e) = session
-        .insert(DBSC_REGISTRATION_NONCE_KEY, &initiation.nonce)
-        .await
-    {
-        tracing::error!("Failed to store DBSC nonce: {}", e);
-        return response;
-    }
     if let Ok(v) = axum::http::HeaderValue::from_str(&initiation.header_value) {
         response
             .headers_mut()
             .insert("Secure-Session-Registration", v);
+    }
+    if let Ok(v) = axum::http::HeaderValue::from_str(&initiation.nonce_cookie_header) {
+        response
+            .headers_mut()
+            .append(axum::http::header::SET_COOKIE, v);
     }
     response
 }
@@ -224,16 +222,30 @@ fn is_admin_email(email: &str) -> bool {
 ///
 /// - `/api/admin/` → 401 Unauthorized if not authenticated, 403 Forbidden if not admin
 /// - `/admin` or `/admin/` → redirect to `/auth/google` if not authenticated, 403 if not admin
+///
+/// Also initiates DBSC registration for authenticated users without a DBSC session
+/// by adding `Secure-Session-Registration` header to the response.
 pub async fn require_admin_auth(
+    axum::extract::State(app_state): axum::extract::State<AppState>,
     session: Session,
     request: Request,
     next: Next,
 ) -> axum::response::Response {
-    let path = request.uri().path();
+    let path = request.uri().path().to_string();
     let is_admin_path = path == "/admin" || path.starts_with("/admin/");
     let is_admin_api = path.starts_with("/api/admin/");
 
     if is_admin_path || is_admin_api {
+        // Extract cookies before request is consumed by next.run()
+        let request_cookies: Vec<String> = request
+            .headers()
+            .get_all("cookie")
+            .iter()
+            .filter_map(|v| v.to_str().ok())
+            .flat_map(|s| s.split(';'))
+            .map(|s| s.trim().to_string())
+            .collect();
+
         match get_current_user(&session).await {
             None => {
                 if is_admin_api {
@@ -259,11 +271,9 @@ pub async fn require_admin_auth(
                         .await
                         .unwrap_or(None)
                         .is_some();
-                    let has_dbsc_cookie = request.headers().get_all("cookie").iter().any(|v| {
-                        v.to_str()
-                            .unwrap_or("")
-                            .contains(&format!("{}=", DBSC_COOKIE_NAME))
-                    });
+                    let has_dbsc_cookie = request_cookies
+                        .iter()
+                        .any(|c| c.starts_with(&format!("{}=", DBSC_COOKIE_NAME)));
                     if !DbscService::is_session_bound(has_dbsc_session, has_dbsc_cookie) {
                         if is_admin_api {
                             return StatusCode::UNAUTHORIZED.into_response();
@@ -287,6 +297,59 @@ pub async fn require_admin_auth(
                 "no-store, no-cache, must-revalidate, max-age=0, private",
             ),
         );
+
+        // DBSC: Transfer pending registration data from cookie to session.
+        // The Secure-Session-Registration header is sent in auth_callback (login response).
+        // Chrome's DBSC registration POST stores results in __Secure-dbsc-pending cookie
+        // because session cookies are not available during registration.
+        // Here we transfer that data to the session on the next admin request.
+        {
+            use crate::server::services::dbsc::{
+                DBSC_PENDING_COOKIE_NAME, DBSC_PUBLIC_KEY_KEY, DBSC_SESSION_ID_KEY, DbscService,
+            };
+
+            let has_dbsc_session: bool = session
+                .get::<String>(DBSC_SESSION_ID_KEY)
+                .await
+                .unwrap_or(None)
+                .is_some();
+
+            if !has_dbsc_session {
+                let pending_cookie = request_cookies.iter().find_map(|c| {
+                    c.trim()
+                        .strip_prefix(&format!("{}=", DBSC_PENDING_COOKIE_NAME))
+                        .map(|v| v.to_string())
+                });
+                if let Some(token) = pending_cookie {
+                    match app_state.dbsc_service().verify_pending_token(&token) {
+                        Ok(pending) => {
+                            tracing::debug!(
+                                "DBSC: transferring pending registration to session, session_id={}",
+                                pending.session_id
+                            );
+                            let _ = session
+                                .insert(DBSC_SESSION_ID_KEY, &pending.session_id)
+                                .await;
+                            let _ = session
+                                .insert(DBSC_PUBLIC_KEY_KEY, &pending.public_key_jwk)
+                                .await;
+                            // Delete pending cookie
+                            if let Ok(v) = axum::http::HeaderValue::from_str(
+                                &DbscService::build_delete_pending_cookie_header(),
+                            ) {
+                                response
+                                    .headers_mut()
+                                    .append(axum::http::header::SET_COOKIE, v);
+                            }
+                        }
+                        Err(e) => {
+                            tracing::warn!("DBSC: invalid pending token: {}", e);
+                        }
+                    }
+                }
+            }
+        }
+
         return response;
     }
 
