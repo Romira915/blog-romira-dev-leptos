@@ -1,13 +1,14 @@
 use axum::extract::State;
 use axum::http::{HeaderMap, HeaderValue, StatusCode};
 use axum::response::IntoResponse;
-use axum::routing::post;
+use axum::routing::{get, post};
 use axum::{Json, Router};
 use tower_sessions::Session;
 
 use crate::server::contexts::AppState;
 use crate::server::services::dbsc::{
-    DBSC_CHALLENGE_NONCES_KEY, DBSC_PUBLIC_KEY_KEY, DBSC_SESSION_ID_KEY, DbscService,
+    DBSC_CHALLENGE_NONCES_KEY, DBSC_PUBLIC_KEY_KEY, DBSC_REGISTRATION_NONCE_KEY,
+    DBSC_SESSION_ID_KEY, DbscService,
 };
 
 /// Dump all DBSC-relevant request information for debugging.
@@ -58,13 +59,13 @@ fn dump_request(
 /// DBSC Registration endpoint — `POST /auth/dbsc/start`
 ///
 /// Chrome sends the JWT proof in the `Secure-Session-Response` header (not in the body).
-/// Session cookie is NOT available — nonce comes from `__Secure-dbsc-nonce` cookie,
-/// and results are stored in `__Secure-dbsc-pending` cookie for later session transfer.
+/// Session cookie IS available thanks to JS redirect resetting Chrome's initiator.
 async fn dbsc_registration(
     State(app_state): State<AppState>,
+    session: Session,
     headers: HeaderMap,
 ) -> impl IntoResponse {
-    dump_request("REGISTRATION", &headers, None);
+    dump_request("REGISTRATION", &headers, session.id().as_ref());
 
     // 1. Extract JWT from Secure-Session-Response header (strip sf-string quotes if present)
     let jwt_proof = match headers
@@ -74,24 +75,6 @@ async fn dbsc_registration(
         Some(jwt) => {
             let trimmed = jwt.trim_matches('"').to_string();
             tracing::info!("DBSC registration: JWT extracted (len={})", trimmed.len());
-            // Decode JWT header and payload for debugging (without signature verification)
-            let parts: Vec<&str> = trimmed.split('.').collect();
-            if parts.len() >= 2 {
-                use base64::Engine;
-                let engine = base64::engine::general_purpose::URL_SAFE_NO_PAD;
-                if let Ok(header_bytes) = engine.decode(parts[0]) {
-                    tracing::info!(
-                        "DBSC registration: JWT header={}",
-                        String::from_utf8_lossy(&header_bytes)
-                    );
-                }
-                if let Ok(payload_bytes) = engine.decode(parts[1]) {
-                    tracing::info!(
-                        "DBSC registration: JWT payload={}",
-                        String::from_utf8_lossy(&payload_bytes)
-                    );
-                }
-            }
             trimmed
         }
         None => {
@@ -100,8 +83,22 @@ async fn dbsc_registration(
         }
     };
 
-    // 2. Service: JWT検証（authorizationクレームからnonce検証）・セッションID生成・Cookie構築
-    let completion = match app_state.dbsc_service().complete_registration(&jwt_proof) {
+    // 2. Get nonce from session
+    let stored_nonce: Option<String> = session
+        .get(DBSC_REGISTRATION_NONCE_KEY)
+        .await
+        .unwrap_or(None);
+    let Some(stored_nonce) = stored_nonce else {
+        tracing::warn!("DBSC registration: no registration nonce in session → 400");
+        return StatusCode::BAD_REQUEST.into_response();
+    };
+    tracing::info!("DBSC registration: stored_nonce={}", stored_nonce);
+
+    // 3. Service: JWT検証・nonce照合・セッションID生成・Cookie構築
+    let completion = match app_state
+        .dbsc_service()
+        .complete_registration(&jwt_proof, &stored_nonce)
+    {
         Ok(result) => {
             tracing::info!(
                 "DBSC registration: SUCCESS, session_id={}",
@@ -115,19 +112,32 @@ async fn dbsc_registration(
         }
     };
 
-    // 4. Build HTTP response with multiple Set-Cookie headers
+    // 3. Store DBSC data in session (session cookie is available thanks to JS redirect
+    //    resetting the initiator, so SameSite=Lax cookies are included)
+    if let Err(e) = session
+        .insert(DBSC_SESSION_ID_KEY, &completion.session_id)
+        .await
+    {
+        tracing::error!("Failed to store DBSC session ID: {}", e);
+        return StatusCode::INTERNAL_SERVER_ERROR.into_response();
+    }
+    if let Err(e) = session
+        .insert(DBSC_PUBLIC_KEY_KEY, &completion.public_key_jwk)
+        .await
+    {
+        tracing::error!("Failed to store DBSC public key: {}", e);
+        return StatusCode::INTERNAL_SERVER_ERROR.into_response();
+    }
+    // Remove registration nonce (one-time use)
+    let _ = session.remove::<String>(DBSC_REGISTRATION_NONCE_KEY).await;
+    tracing::info!("DBSC registration: stored session_id and public_key in session");
+
+    // 4. Build HTTP response
     let mut response_headers = HeaderMap::new();
     if let Ok(v) = HeaderValue::from_str(&completion.set_cookie_header) {
         tracing::info!(
             "DBSC registration: Set-Cookie (dbsc): {}",
             completion.set_cookie_header
-        );
-        response_headers.append(axum::http::header::SET_COOKIE, v);
-    }
-    if let Ok(v) = HeaderValue::from_str(&completion.pending_cookie_header) {
-        tracing::info!(
-            "DBSC registration: Set-Cookie (pending): len={}",
-            completion.pending_cookie_header.len()
         );
         response_headers.append(axum::http::header::SET_COOKIE, v);
     }
@@ -188,38 +198,8 @@ async fn dbsc_refresh(
         jwt_proof.as_ref().map(|j| j.len())
     );
 
-    // 2. Read session data — always check pending cookie to pick up latest registration
-    let mut stored_session_id = session_dbsc_id;
-    {
-        use crate::server::services::dbsc::DBSC_PENDING_COOKIE_NAME;
-
-        let pending_token = headers
-            .get_all("cookie")
-            .iter()
-            .filter_map(|v| v.to_str().ok())
-            .flat_map(|s| s.split(';'))
-            .find_map(|c| {
-                c.trim()
-                    .strip_prefix(&format!("{}=", DBSC_PENDING_COOKIE_NAME))
-                    .map(|v| v.to_string())
-            });
-
-        if let Some(Ok(pending)) =
-            pending_token.map(|t| app_state.dbsc_service().verify_pending_token(&t))
-        {
-            tracing::info!(
-                "DBSC refresh: transferring pending registration, session_id={}",
-                pending.session_id
-            );
-            let _ = session
-                .insert(DBSC_SESSION_ID_KEY, &pending.session_id)
-                .await;
-            let _ = session
-                .insert(DBSC_PUBLIC_KEY_KEY, &pending.public_key_jwk)
-                .await;
-            stored_session_id = Some(pending.session_id);
-        }
-    }
+    // 2. Read session data (DBSC data is written directly to session during registration)
+    let stored_session_id = session_dbsc_id;
 
     tracing::info!(
         "DBSC refresh: final stored_session_id={:?}, request_session_id={}",
@@ -359,6 +339,14 @@ async fn handle_refresh_phase2(
         );
         response_headers.insert(axum::http::header::SET_COOKIE, v);
     }
+    // Include next challenge for Chrome to cache (skips Phase 1 on next Refresh)
+    if let Ok(v) = HeaderValue::from_str(&refresh.challenge_header) {
+        tracing::info!(
+            "DBSC refresh phase2: Secure-Session-Challenge: {}",
+            refresh.challenge_header
+        );
+        response_headers.insert("Secure-Session-Challenge", v);
+    }
     response_headers.insert(
         "Cross-Origin-Resource-Policy",
         HeaderValue::from_static("same-origin"),
@@ -368,8 +356,45 @@ async fn handle_refresh_phase2(
     (StatusCode::OK, response_headers).into_response()
 }
 
+/// DBSC Registration initiation — `GET /auth/dbsc/registration`
+///
+/// Serves `Secure-Session-Registration` header with 303 redirect to /admin.
+/// This endpoint is reached via JS redirect from auth_callback, which resets
+/// Chrome's initiator from accounts.google.com to our domain.
+/// As a result, the DBSC Registration POST includes SameSite=Lax session cookies.
+async fn dbsc_registration_initiation(
+    State(app_state): State<AppState>,
+    session: Session,
+) -> impl IntoResponse {
+    let initiation = app_state.dbsc_service().initiate_registration();
+
+    // Store nonce in session for verification in Registration POST
+    if let Err(e) = session
+        .insert(DBSC_REGISTRATION_NONCE_KEY, &initiation.nonce)
+        .await
+    {
+        tracing::error!("Failed to store DBSC nonce: {}", e);
+        return axum::response::Redirect::to("/admin").into_response();
+    }
+    tracing::info!(
+        "DBSC registration initiation: nonce={}, 303 /admin",
+        initiation.nonce
+    );
+
+    let mut response = axum::response::Redirect::to("/admin").into_response();
+    if let Ok(v) = HeaderValue::from_str(&initiation.header_value) {
+        response
+            .headers_mut()
+            .insert("Secure-Session-Registration", v);
+    }
+    response
+}
+
 pub fn dbsc_routes() -> Router<AppState> {
     Router::new()
-        .route("/auth/dbsc/start", post(dbsc_registration))
+        .route(
+            "/auth/dbsc/registration",
+            get(dbsc_registration_initiation).post(dbsc_registration),
+        )
         .route("/auth/dbsc/refresh", post(dbsc_refresh))
 }

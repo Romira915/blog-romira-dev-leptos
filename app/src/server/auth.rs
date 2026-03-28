@@ -89,7 +89,6 @@ pub async fn auth_google(session: Session) -> impl IntoResponse {
 
 /// OAuth callback - exchange code for token and get user info
 pub async fn auth_callback(
-    axum::extract::State(app_state): axum::extract::State<AppState>,
     session: Session,
     Query(query): Query<AuthCallbackQuery>,
 ) -> impl IntoResponse {
@@ -173,17 +172,14 @@ pub async fn auth_callback(
 
     tracing::info!("User logged in: {}", user.email);
 
-    // DBSC: Add Secure-Session-Registration header to the login response.
-    // Nonce is HMAC-signed and included in the `authorization` parameter.
-    // Chrome copies it to the JWT `authorization` claim, so no cookie needed.
-    let mut response = Redirect::to("/admin").into_response();
-    let initiation = app_state.dbsc_service().initiate_registration();
-    if let Ok(v) = axum::http::HeaderValue::from_str(&initiation.header_value) {
-        response
-            .headers_mut()
-            .insert("Secure-Session-Registration", v);
-    }
-    response
+    // JS redirect to reset Chrome's initiator from accounts.google.com to our domain.
+    // Server-side 303 redirect preserves the cross-site initiator, so we must use
+    // a client-side redirect here. The Secure-Session-Registration header is served
+    // by /auth/dbsc/registration (the next hop), which will have our domain as initiator.
+    axum::response::Html(
+        r#"<!DOCTYPE html><html><head><script>location.href='/auth/dbsc/registration';</script></head><body></body></html>"#,
+    )
+    .into_response()
 }
 
 /// Logout - clear session
@@ -221,7 +217,6 @@ fn is_admin_email(email: &str) -> bool {
 /// Also initiates DBSC registration for authenticated users without a DBSC session
 /// by adding `Secure-Session-Registration` header to the response.
 pub async fn require_admin_auth(
-    axum::extract::State(app_state): axum::extract::State<AppState>,
     session: Session,
     request: Request,
     next: Next,
@@ -292,52 +287,6 @@ pub async fn require_admin_auth(
                 "no-store, no-cache, must-revalidate, max-age=0, private",
             ),
         );
-
-        // DBSC: Transfer pending registration data from cookie to session.
-        // The Secure-Session-Registration header is sent in auth_callback (login response).
-        // Chrome's DBSC registration POST stores results in __Secure-dbsc-pending cookie
-        // because session cookies are not available during registration.
-        // Here we transfer that data to the session on the next admin request.
-        {
-            use crate::server::services::dbsc::{
-                DBSC_PENDING_COOKIE_NAME, DBSC_PUBLIC_KEY_KEY, DBSC_SESSION_ID_KEY, DbscService,
-            };
-
-            // Always transfer pending cookie if present — overwrites stale session data
-            // (e.g. when re-registration occurs due to short Max-Age or re-login)
-            let pending_cookie = request_cookies.iter().find_map(|c| {
-                c.trim()
-                    .strip_prefix(&format!("{}=", DBSC_PENDING_COOKIE_NAME))
-                    .map(|v| v.to_string())
-            });
-            if let Some(token) = pending_cookie {
-                match app_state.dbsc_service().verify_pending_token(&token) {
-                    Ok(pending) => {
-                        tracing::info!(
-                            "DBSC: transferring pending registration to session, session_id={}",
-                            pending.session_id
-                        );
-                        let _ = session
-                            .insert(DBSC_SESSION_ID_KEY, &pending.session_id)
-                            .await;
-                        let _ = session
-                            .insert(DBSC_PUBLIC_KEY_KEY, &pending.public_key_jwk)
-                            .await;
-                        // Delete pending cookie
-                        if let Ok(v) = axum::http::HeaderValue::from_str(
-                            &DbscService::build_delete_pending_cookie_header(),
-                        ) {
-                            response
-                                .headers_mut()
-                                .append(axum::http::header::SET_COOKIE, v);
-                        }
-                    }
-                    Err(e) => {
-                        tracing::warn!("DBSC: invalid pending token: {}", e);
-                    }
-                }
-            }
-        }
 
         return response;
     }

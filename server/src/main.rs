@@ -98,11 +98,8 @@ async fn main() {
         //     move || shell(leptos_options.clone())
         // })
         .fallback(leptos_axum::file_and_error_handler::<AppState, _>(shell))
-        .with_state(app_state.clone())
-        .layer(axum::middleware::from_fn_with_state(
-            app_state,
-            require_admin_auth,
-        ))
+        .with_state(app_state)
+        .layer(axum::middleware::from_fn(require_admin_auth))
         .layer(session_layer)
         .layer(axum::middleware::from_fn(http_observability));
 

@@ -1,17 +1,18 @@
-use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header, Validation, decode, encode};
+use jsonwebtoken::{Algorithm, DecodingKey, Header, Validation, decode};
 use serde::{Deserialize, Serialize};
 
 pub(crate) const DBSC_SESSION_ID_KEY: &str = "dbsc_session_id";
 pub(crate) const DBSC_PUBLIC_KEY_KEY: &str = "dbsc_public_key";
+pub(crate) const DBSC_REGISTRATION_NONCE_KEY: &str = "dbsc_registration_nonce";
 pub(crate) const DBSC_CHALLENGE_NONCES_KEY: &str = "dbsc_challenge_nonces";
 pub(crate) const DBSC_COOKIE_NAME: &str = "__Secure-dbsc";
-pub(crate) const DBSC_PENDING_COOKIE_NAME: &str = "__Secure-dbsc-pending";
 pub(crate) const DBSC_COOKIE_MAX_AGE: u64 = 600;
-const DBSC_PENDING_COOKIE_MAX_AGE: u64 = 120;
 const MAX_RECENT_CHALLENGES: usize = 5;
 
-/// DBSC登録開始に必要なデータ（auth_callback用）
+/// DBSC登録開始に必要なデータ
 pub(crate) struct RegistrationInitiation {
+    /// セッションに保存するnonce
+    pub nonce: String,
     /// HTTPレスポンスに設定するSecure-Session-Registrationヘッダー値
     pub header_value: String,
 }
@@ -19,18 +20,10 @@ pub(crate) struct RegistrationInitiation {
 /// DBSC登録完了後にHandler側で処理するデータ
 pub(crate) struct RegistrationCompletion {
     pub session_id: String,
+    pub public_key_jwk: String,
     /// __Secure-dbsc Set-Cookieヘッダー値
     pub set_cookie_header: String,
-    /// __Secure-dbsc-pending Set-Cookieヘッダー値（HS256署名付き）
-    pub pending_cookie_header: String,
     pub session_config: serde_json::Value,
-}
-
-/// __Secure-dbsc-pending cookieに格納するデータ（HS256 JWT）
-#[derive(Debug, Serialize, Deserialize)]
-pub(crate) struct PendingRegistration {
-    pub session_id: String,
-    pub public_key_jwk: String,
 }
 
 /// DBSCリフレッシュ Phase1: チャレンジ発行結果
@@ -43,6 +36,8 @@ pub(crate) struct ChallengeIssue {
 pub(crate) struct RefreshCompletion {
     pub updated_nonces: Vec<String>,
     pub set_cookie_header: String,
+    /// 次回 Refresh 用の cached challenge ヘッダー
+    pub challenge_header: String,
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -74,12 +69,10 @@ pub(crate) struct EcJwk {
 
 /// JWT payload for DBSC proof (Registration)
 ///
-/// Chrome sends `jti` and `authorization` in the payload.
-/// The JWK is in the JWT header (not the payload).
+/// Chrome sends `jti` in the payload. The JWK is in the JWT header.
 #[derive(Debug, Deserialize)]
 struct DbscRegistrationClaims {
     jti: String,
-    authorization: Option<String>,
 }
 
 /// JWT payload for DBSC proof (Refresh)
@@ -96,14 +89,10 @@ pub(crate) struct DbscService {
     origin: String,
     /// オリジンからプロトコル・ポートを除いたドメイン（例: "blog.romira.dev"）
     domain: String,
-    /// pending cookie の署名用キー（HS256）
-    signing_key: Vec<u8>,
 }
 
 impl DbscService {
     pub(crate) fn new(origin: String) -> Self {
-        // app_url のハッシュをベースにした署名キー（再起動で変わるが pending は短寿命なので問題ない）
-        let signing_key = format!("dbsc-pending-{}-{}", origin, uuid::Uuid::now_v7());
         let domain = origin
             .trim_start_matches("https://")
             .trim_start_matches("http://")
@@ -111,69 +100,28 @@ impl DbscService {
             .next()
             .unwrap_or("localhost")
             .to_string();
-        Self {
-            origin,
-            domain,
-            signing_key: signing_key.into_bytes(),
-        }
+        Self { origin, domain }
     }
 
     pub(crate) fn generate_nonce() -> String {
         uuid::Uuid::now_v7().to_string()
     }
 
-    /// nonceをHMAC署名してauthorizationパラメータに含める。
-    /// Chrome はこの値をJWTペイロードの `authorization` クレームに転記するため、
-    /// Registration エンドポイントでcookieなしにnonce検証が可能。
     pub(crate) fn build_registration_header(&self, nonce: &str) -> String {
-        let signed_nonce = self.sign_nonce(nonce);
         format!(
-            r#"(ES256); path="/auth/dbsc/start"; challenge="{}"; authorization="{}""#,
-            nonce, signed_nonce
+            r#"(ES256); path="/auth/dbsc/registration"; challenge="{}""#,
+            nonce
         )
-    }
-
-    /// nonceをHS256署名してトークンを生成
-    fn sign_nonce(&self, nonce: &str) -> String {
-        #[derive(Serialize)]
-        struct NonceClaims<'a> {
-            nonce: &'a str,
-        }
-        encode(
-            &Header::new(Algorithm::HS256),
-            &NonceClaims { nonce },
-            &EncodingKey::from_secret(&self.signing_key),
-        )
-        .unwrap_or_default()
-    }
-
-    /// 署名付きnonceトークンを検証してnonceを取得
-    fn verify_signed_nonce(&self, token: &str) -> Result<String, DbscError> {
-        #[derive(Deserialize)]
-        struct NonceClaims {
-            nonce: String,
-        }
-        let mut validation = Validation::new(Algorithm::HS256);
-        validation.set_required_spec_claims::<&str>(&[]);
-        validation.validate_aud = false;
-        let data = decode::<NonceClaims>(
-            token,
-            &DecodingKey::from_secret(&self.signing_key),
-            &validation,
-        )
-        .map_err(|e| DbscError::InvalidJwt(format!("invalid nonce token: {}", e)))?;
-        Ok(data.claims.nonce)
     }
 
     /// Verify a Registration JWT proof.
-    /// Returns (jti_nonce, public_key_jwk_json, authorization) on success.
+    /// Returns (jti_nonce, public_key_jwk_json) on success.
     ///
     /// Chrome puts the JWK in the JWT header (not the payload).
-    /// The payload contains `jti` and optionally `authorization`.
     pub(crate) fn verify_registration_jwt(
         &self,
         jwt_str: &str,
-    ) -> Result<(String, String, Option<String>), DbscError> {
+    ) -> Result<(String, String), DbscError> {
         // Decode header to verify typ, alg, and extract JWK
         let header = jsonwebtoken::decode_header(jwt_str)
             .map_err(|e| DbscError::InvalidJwt(e.to_string()))?;
@@ -197,7 +145,7 @@ impl DbscService {
         let jwk_json = serde_json::to_string(&ec_jwk)
             .map_err(|e| DbscError::InvalidPublicKey(e.to_string()))?;
 
-        Ok((verified.claims.jti, jwk_json, verified.claims.authorization))
+        Ok((verified.claims.jti, jwk_json))
     }
 
     /// Verify a Refresh JWT proof.
@@ -336,73 +284,30 @@ impl DbscService {
             .map_err(|e| DbscError::InvalidPublicKey(e.to_string()))
     }
 
-    // --- cookie ヘルパー ---
-
-    /// pending cookie: session_id + public_key_jwk を HS256 JWT で署名
-    fn build_pending_cookie_header(
-        &self,
-        pending: &PendingRegistration,
-    ) -> Result<String, DbscError> {
-        let token = encode(
-            &Header::new(Algorithm::HS256),
-            pending,
-            &EncodingKey::from_secret(&self.signing_key),
-        )
-        .map_err(|e| DbscError::InvalidJwt(format!("failed to sign pending token: {}", e)))?;
-        Ok(format!(
-            "{}={}; SameSite=None; Secure; HttpOnly; Max-Age={}; Path=/",
-            DBSC_PENDING_COOKIE_NAME, token, DBSC_PENDING_COOKIE_MAX_AGE
-        ))
-    }
-
-    pub(crate) fn build_delete_pending_cookie_header() -> String {
-        format!(
-            "{}=; Max-Age=0; Path=/; SameSite=None; Secure; HttpOnly",
-            DBSC_PENDING_COOKIE_NAME
-        )
-    }
-
-    /// pending cookie の HS256 JWT を検証してデコード
-    pub(crate) fn verify_pending_token(
-        &self,
-        token: &str,
-    ) -> Result<PendingRegistration, DbscError> {
-        let mut validation = Validation::new(Algorithm::HS256);
-        validation.set_required_spec_claims::<&str>(&[]);
-        validation.validate_aud = false;
-        let data = decode::<PendingRegistration>(
-            token,
-            &DecodingKey::from_secret(&self.signing_key),
-            &validation,
-        )
-        .map_err(|e| DbscError::InvalidJwt(format!("invalid pending token: {}", e)))?;
-        Ok(data.claims)
-    }
-
     // --- 高レベルフロー操作 ---
 
-    /// DBSC登録を開始する（auth_callback用）
-    /// nonceを生成し、HMAC署名してauthorizationパラメータに含めた登録ヘッダーを構築。
+    /// DBSC登録を開始する（dbsc_registration_initiation用）
+    /// nonceを生成し、登録ヘッダーを構築して返す。
+    /// nonceはHandler側でセッションに保存する。
     pub(crate) fn initiate_registration(&self) -> RegistrationInitiation {
         let nonce = Self::generate_nonce();
         let header_value = self.build_registration_header(&nonce);
-        RegistrationInitiation { header_value }
+        RegistrationInitiation {
+            nonce,
+            header_value,
+        }
     }
 
     /// DBSC登録を完了する（dbsc_registration handler用）
-    /// JWT内のauthorizationクレーム（HMAC署名付きnonce）を検証し、jtiと照合。
-    /// セッションcookieが不在のため、結果はpending cookieで返す。
+    /// JWT検証・nonce照合・セッションID生成・Cookie構築を一括で行う。
     pub(crate) fn complete_registration(
         &self,
         jwt: &str,
+        stored_nonce: &str,
     ) -> Result<RegistrationCompletion, DbscError> {
-        let (jti_nonce, public_key_jwk, signed_nonce) = self.verify_registration_jwt(jwt)?;
+        let (jti_nonce, public_key_jwk) = self.verify_registration_jwt(jwt)?;
 
-        // authorization クレームからHMAC署名付きnonceを検証
-        let signed_nonce = signed_nonce.ok_or(DbscError::NonceMismatch)?;
-        let verified_nonce = self.verify_signed_nonce(&signed_nonce)?;
-
-        if jti_nonce != verified_nonce {
+        if jti_nonce != stored_nonce {
             return Err(DbscError::NonceMismatch);
         }
 
@@ -411,16 +316,10 @@ impl DbscService {
         let set_cookie_header = Self::build_set_cookie_header(&cookie_value);
         let session_config = self.build_session_config(&session_id);
 
-        let pending = PendingRegistration {
-            session_id: session_id.clone(),
-            public_key_jwk,
-        };
-        let pending_cookie_header = self.build_pending_cookie_header(&pending)?;
-
         Ok(RegistrationCompletion {
             session_id,
+            public_key_jwk,
             set_cookie_header,
-            pending_cookie_header,
             session_config,
         })
     }
@@ -470,12 +369,18 @@ impl DbscService {
         let mut updated_nonces = nonces;
         updated_nonces.retain(|n| n != &matched_nonce);
 
+        // Generate next challenge for Chrome to cache (avoids Phase 1 round-trip)
+        let next_nonce = Self::generate_nonce();
+        Self::push_challenge_nonce(&mut updated_nonces, next_nonce.clone());
+        let challenge_header = Self::build_challenge_header(&next_nonce, request_session_id);
+
         let cookie_value = Self::generate_cookie_value();
         let set_cookie_header = Self::build_set_cookie_header(&cookie_value);
 
         Ok(RefreshCompletion {
             updated_nonces,
             set_cookie_header,
+            challenge_header,
         })
     }
 
@@ -504,13 +409,13 @@ mod tests {
     }
 
     #[test]
-    fn build_registration_headerでchallengeとauthorizationを含むこと() {
+    fn build_registration_headerで正しい形式のヘッダーを構築すること() {
         let service = DbscService::new("https://example.com".to_string());
         let header = service.build_registration_header("test-nonce");
-        assert!(header.contains(r#"challenge="test-nonce""#));
-        assert!(header.contains(r#"authorization=""#));
-        assert!(header.contains("ES256"));
-        assert!(header.contains("/auth/dbsc/start"));
+        assert_eq!(
+            header,
+            r#"(ES256); path="/auth/dbsc/registration"; challenge="test-nonce""#
+        );
     }
 
     #[test]
@@ -574,18 +479,19 @@ mod tests {
     // --- 高レベルフロー操作のテスト ---
 
     #[test]
-    fn initiate_registrationでヘッダーにauthorizationを含むこと() {
+    fn initiate_registrationでnonceとヘッダーを返すこと() {
         let service = DbscService::new("https://example.com".to_string());
         let initiation = service.initiate_registration();
+        assert!(!initiation.nonce.is_empty());
+        assert!(initiation.header_value.contains(&initiation.nonce));
         assert!(initiation.header_value.contains("ES256"));
-        assert!(initiation.header_value.contains("/auth/dbsc/start"));
-        assert!(initiation.header_value.contains("authorization="));
+        assert!(initiation.header_value.contains("/auth/dbsc/registration"));
     }
 
     #[test]
     fn complete_registrationで不正なjwtをリジェクトすること() {
         let service = DbscService::new("https://example.com".to_string());
-        let result = service.complete_registration("not-a-jwt");
+        let result = service.complete_registration("not-a-jwt", "some-nonce");
         assert!(result.is_err());
     }
 
