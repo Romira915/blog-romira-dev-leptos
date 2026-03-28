@@ -171,7 +171,15 @@ pub async fn auth_callback(
     }
 
     tracing::info!("User logged in: {}", user.email);
-    Redirect::to("/admin").into_response()
+
+    // JS redirect to reset Chrome's initiator from accounts.google.com to our domain.
+    // Server-side 303 redirect preserves the cross-site initiator, so we must use
+    // a client-side redirect here. The Secure-Session-Registration header is served
+    // by /auth/dbsc/registration (the next hop), which will have our domain as initiator.
+    axum::response::Html(
+        r#"<!DOCTYPE html><html><head><script>location.href='/auth/dbsc/registration';</script></head><body></body></html>"#,
+    )
+    .into_response()
 }
 
 /// Logout - clear session
@@ -205,16 +213,29 @@ fn is_admin_email(email: &str) -> bool {
 ///
 /// - `/api/admin/` → 401 Unauthorized if not authenticated, 403 Forbidden if not admin
 /// - `/admin` or `/admin/` → redirect to `/auth/google` if not authenticated, 403 if not admin
+///
+/// Also initiates DBSC registration for authenticated users without a DBSC session
+/// by adding `Secure-Session-Registration` header to the response.
 pub async fn require_admin_auth(
     session: Session,
     request: Request,
     next: Next,
 ) -> axum::response::Response {
-    let path = request.uri().path();
+    let path = request.uri().path().to_string();
     let is_admin_path = path == "/admin" || path.starts_with("/admin/");
     let is_admin_api = path.starts_with("/api/admin/");
 
     if is_admin_path || is_admin_api {
+        // Extract cookies before request is consumed by next.run()
+        let request_cookies: Vec<String> = request
+            .headers()
+            .get_all("cookie")
+            .iter()
+            .filter_map(|v| v.to_str().ok())
+            .flat_map(|s| s.split(';'))
+            .map(|s| s.trim().to_string())
+            .collect();
+
         match get_current_user(&session).await {
             None => {
                 if is_admin_api {
@@ -227,6 +248,28 @@ pub async fn require_admin_auth(
                     tracing::warn!("Non-admin session detected, flushing: {}", user.email);
                     let _ = session.flush().await;
                     return StatusCode::FORBIDDEN.into_response();
+                }
+
+                // DBSC enforcement: require DBSC cookie for DBSC-registered sessions
+                {
+                    use crate::server::services::dbsc::{
+                        DBSC_COOKIE_NAME, DBSC_SESSION_ID_KEY, DbscService,
+                    };
+
+                    let has_dbsc_session: bool = session
+                        .get::<String>(DBSC_SESSION_ID_KEY)
+                        .await
+                        .unwrap_or(None)
+                        .is_some();
+                    let has_dbsc_cookie = request_cookies
+                        .iter()
+                        .any(|c| c.starts_with(&format!("{}=", DBSC_COOKIE_NAME)));
+                    if !DbscService::is_session_bound(has_dbsc_session, has_dbsc_cookie) {
+                        if is_admin_api {
+                            return StatusCode::UNAUTHORIZED.into_response();
+                        }
+                        return Redirect::to("/auth/google").into_response();
+                    }
                 }
             }
         }
@@ -244,6 +287,7 @@ pub async fn require_admin_auth(
                 "no-store, no-cache, must-revalidate, max-age=0, private",
             ),
         );
+
         return response;
     }
 

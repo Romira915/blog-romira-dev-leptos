@@ -14,6 +14,7 @@ setup:
     if ! cargo install --list | grep -q 'sqlx-cli v0.8.6'; then
         cargo install --force sqlx-cli --version=0.8.6 --no-default-features --features postgres,native-tls --locked
     fi
+    just generate-certs
 
 setup_leptosfmt:
     #!/bin/bash -eux
@@ -28,6 +29,10 @@ watch:
     RUST_BACKTRACE=1 cargo leptos watch --hot-reload &
     trap "kill %1; kill %2" EXIT
     wait
+
+# Generate TLS certificates for blog.romira.local (requires mkcert)
+generate-certs:
+    mkcert -cert-file nginx/certs/dev.blog.romira.dev.pem -key-file nginx/certs/dev.blog.romira.dev-key.pem dev.blog.romira.dev
 
 db-reset:
     docker compose down -v && docker compose up -d

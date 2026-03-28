@@ -2,6 +2,7 @@ pub mod admin_routes;
 pub mod auth;
 pub mod config;
 pub mod contexts;
+pub mod dbsc_routes;
 pub(crate) mod http;
 pub(crate) mod models;
 pub mod seo_routes;
