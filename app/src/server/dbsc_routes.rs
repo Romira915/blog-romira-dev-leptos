@@ -17,16 +17,16 @@ fn dump_request(
     headers: &HeaderMap,
     session_id: Option<&tower_sessions::session::Id>,
 ) {
-    tracing::info!("===== DBSC {} REQUEST DUMP =====", label);
+    tracing::debug!("===== DBSC {} REQUEST DUMP =====", label);
 
     // All headers
     for (name, value) in headers.iter() {
         let val = value.to_str().unwrap_or("<non-utf8>");
         // Truncate long values (JWTs)
         if val.len() > 100 {
-            tracing::info!("  header: {}={:.100}...(len={})", name, val, val.len());
+            tracing::debug!("  header: {}={:.100}...(len={})", name, val, val.len());
         } else {
-            tracing::info!("  header: {}={}", name, val);
+            tracing::debug!("  header: {}={}", name, val);
         }
     }
 
@@ -39,21 +39,21 @@ fn dump_request(
         .map(|s| s.trim().to_string())
         .collect();
     if cookies.is_empty() {
-        tracing::info!("  cookies: NONE");
+        tracing::debug!("  cookies: NONE");
     } else {
         for c in &cookies {
             // Truncate long cookie values
             if c.len() > 80 {
-                tracing::info!("  cookie: {:.80}...(len={})", c, c.len());
+                tracing::debug!("  cookie: {:.80}...(len={})", c, c.len());
             } else {
-                tracing::info!("  cookie: {}", c);
+                tracing::debug!("  cookie: {}", c);
             }
         }
     }
 
     // Session
-    tracing::info!("  session_id: {:?}", session_id);
-    tracing::info!("===== END {} DUMP =====", label);
+    tracing::debug!("  session_id: {:?}", session_id);
+    tracing::debug!("===== END {} DUMP =====", label);
 }
 
 /// DBSC Registration endpoint — `POST /auth/dbsc/start`
@@ -74,7 +74,7 @@ async fn dbsc_registration(
     {
         Some(jwt) => {
             let trimmed = jwt.trim_matches('"').to_string();
-            tracing::info!("DBSC registration: JWT extracted (len={})", trimmed.len());
+            tracing::debug!("DBSC registration: JWT extracted (len={})", trimmed.len());
             trimmed
         }
         None => {
@@ -92,7 +92,7 @@ async fn dbsc_registration(
         tracing::warn!("DBSC registration: no registration nonce in session → 400");
         return StatusCode::BAD_REQUEST.into_response();
     };
-    tracing::info!("DBSC registration: stored_nonce={}", stored_nonce);
+    tracing::debug!("DBSC registration: stored_nonce={}", stored_nonce);
 
     // 3. Service: JWT検証・nonce照合・セッションID生成・Cookie構築
     let completion = match app_state
@@ -130,19 +130,19 @@ async fn dbsc_registration(
     }
     // Remove registration nonce (one-time use)
     let _ = session.remove::<String>(DBSC_REGISTRATION_NONCE_KEY).await;
-    tracing::info!("DBSC registration: stored session_id and public_key in session");
+    tracing::debug!("DBSC registration: stored session_id and public_key in session");
 
     // 4. Build HTTP response
     let mut response_headers = HeaderMap::new();
     if let Ok(v) = HeaderValue::from_str(&completion.set_cookie_header) {
-        tracing::info!(
+        tracing::debug!(
             "DBSC registration: Set-Cookie (dbsc): {}",
             completion.set_cookie_header
         );
         response_headers.append(axum::http::header::SET_COOKIE, v);
     }
 
-    tracing::info!(
+    tracing::debug!(
         "DBSC registration: response session_config={}",
         completion.session_config
     );
@@ -167,7 +167,7 @@ async fn dbsc_refresh(
     let session_pubkey: Option<String> = session.get(DBSC_PUBLIC_KEY_KEY).await.unwrap_or(None);
     let session_nonces: Option<Vec<String>> =
         session.get(DBSC_CHALLENGE_NONCES_KEY).await.unwrap_or(None);
-    tracing::info!(
+    tracing::debug!(
         "DBSC refresh: session state: dbsc_session_id={:?}, has_public_key={}, nonces={:?}",
         session_dbsc_id,
         session_pubkey.is_some(),
@@ -180,7 +180,7 @@ async fn dbsc_refresh(
         .and_then(|v| v.to_str().ok())
         .map(|s| s.trim_matches('"').to_string());
 
-    tracing::info!("DBSC refresh: Sec-Secure-Session-Id={:?}", dbsc_session_id);
+    tracing::debug!("DBSC refresh: Sec-Secure-Session-Id={:?}", dbsc_session_id);
 
     let Some(dbsc_session_id) = dbsc_session_id else {
         tracing::warn!("DBSC refresh: Sec-Secure-Session-Id missing → 400");
@@ -192,7 +192,7 @@ async fn dbsc_refresh(
         .and_then(|v| v.to_str().ok())
         .map(|s| s.trim_matches('"').to_string());
 
-    tracing::info!(
+    tracing::debug!(
         "DBSC refresh: Secure-Session-Response present={}, len={:?}",
         jwt_proof.is_some(),
         jwt_proof.as_ref().map(|j| j.len())
@@ -201,14 +201,14 @@ async fn dbsc_refresh(
     // 2. Read session data (DBSC data is written directly to session during registration)
     let stored_session_id = session_dbsc_id;
 
-    tracing::info!(
+    tracing::debug!(
         "DBSC refresh: final stored_session_id={:?}, request_session_id={}",
         stored_session_id,
         dbsc_session_id
     );
 
     if let Some(jwt_proof) = jwt_proof {
-        tracing::info!("DBSC refresh: entering Phase 2 (proof verification)");
+        tracing::debug!("DBSC refresh: entering Phase 2 (proof verification)");
         return handle_refresh_phase2(
             &session,
             app_state.dbsc_service(),
@@ -219,7 +219,7 @@ async fn dbsc_refresh(
         .await;
     }
 
-    tracing::info!("DBSC refresh: entering Phase 1 (challenge issue)");
+    tracing::debug!("DBSC refresh: entering Phase 1 (challenge issue)");
     handle_refresh_phase1(&session, &dbsc_session_id, stored_session_id.as_deref()).await
 }
 
@@ -234,7 +234,7 @@ async fn handle_refresh_phase1(
         .unwrap_or(None)
         .unwrap_or_default();
 
-    tracing::info!(
+    tracing::debug!(
         "DBSC refresh phase1: current_nonces_count={}, dbsc_session_id={}, stored_session_id={:?}",
         current_nonces.len(),
         dbsc_session_id,
@@ -244,7 +244,7 @@ async fn handle_refresh_phase1(
     let challenge =
         match DbscService::issue_challenge(dbsc_session_id, stored_session_id, current_nonces) {
             Ok(result) => {
-                tracing::info!(
+                tracing::debug!(
                     "DBSC refresh phase1: challenge issued, header={}",
                     result.challenge_header
                 );
@@ -273,7 +273,7 @@ async fn handle_refresh_phase1(
         HeaderValue::from_static("same-origin"),
     );
 
-    tracing::info!("DBSC refresh phase1: returning 403 with challenge");
+    tracing::debug!("DBSC refresh phase1: returning 403 with challenge");
     (StatusCode::FORBIDDEN, response_headers).into_response()
 }
 
@@ -291,7 +291,7 @@ async fn handle_refresh_phase2(
         .unwrap_or(None)
         .unwrap_or_default();
 
-    tracing::info!(
+    tracing::debug!(
         "DBSC refresh phase2: has_public_key={}, nonces={:?}, stored_session_id={:?}, request_session_id={}, jwt_len={}",
         public_key_jwk.is_some(),
         nonces,
@@ -308,7 +308,7 @@ async fn handle_refresh_phase2(
         nonces,
     ) {
         Ok(result) => {
-            tracing::info!(
+            tracing::debug!(
                 "DBSC refresh phase2: SUCCESS, remaining_nonces={}",
                 result.updated_nonces.len()
             );
@@ -333,7 +333,7 @@ async fn handle_refresh_phase2(
 
     let mut response_headers = HeaderMap::new();
     if let Ok(v) = HeaderValue::from_str(&refresh.set_cookie_header) {
-        tracing::info!(
+        tracing::debug!(
             "DBSC refresh phase2: Set-Cookie: {}",
             refresh.set_cookie_header
         );
@@ -341,7 +341,7 @@ async fn handle_refresh_phase2(
     }
     // Include next challenge for Chrome to cache (skips Phase 1 on next Refresh)
     if let Ok(v) = HeaderValue::from_str(&refresh.challenge_header) {
-        tracing::info!(
+        tracing::debug!(
             "DBSC refresh phase2: Secure-Session-Challenge: {}",
             refresh.challenge_header
         );
@@ -352,7 +352,7 @@ async fn handle_refresh_phase2(
         HeaderValue::from_static("same-origin"),
     );
 
-    tracing::info!("DBSC refresh phase2: returning 200 OK");
+    tracing::debug!("DBSC refresh phase2: returning 200 OK");
     (StatusCode::OK, response_headers).into_response()
 }
 
@@ -376,7 +376,7 @@ async fn dbsc_registration_initiation(
         tracing::error!("Failed to store DBSC nonce: {}", e);
         return axum::response::Redirect::to("/admin").into_response();
     }
-    tracing::info!(
+    tracing::debug!(
         "DBSC registration initiation: nonce={}, 303 /admin",
         initiation.nonce
     );
