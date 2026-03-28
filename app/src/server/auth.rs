@@ -174,19 +174,14 @@ pub async fn auth_callback(
     tracing::info!("User logged in: {}", user.email);
 
     // DBSC: Add Secure-Session-Registration header to the login response.
-    // Nonce is delivered via SameSite=None cookie because Chrome's DBSC
-    // registration POST does not include SameSite=Lax session cookies.
+    // Nonce is HMAC-signed and included in the `authorization` parameter.
+    // Chrome copies it to the JWT `authorization` claim, so no cookie needed.
     let mut response = Redirect::to("/admin").into_response();
     let initiation = app_state.dbsc_service().initiate_registration();
     if let Ok(v) = axum::http::HeaderValue::from_str(&initiation.header_value) {
         response
             .headers_mut()
             .insert("Secure-Session-Registration", v);
-    }
-    if let Ok(v) = axum::http::HeaderValue::from_str(&initiation.nonce_cookie_header) {
-        response
-            .headers_mut()
-            .append(axum::http::header::SET_COOKIE, v);
     }
     response
 }

@@ -7,8 +7,7 @@ use tower_sessions::Session;
 
 use crate::server::contexts::AppState;
 use crate::server::services::dbsc::{
-    DBSC_CHALLENGE_NONCES_KEY, DBSC_NONCE_COOKIE_NAME, DBSC_PUBLIC_KEY_KEY, DBSC_SESSION_ID_KEY,
-    DbscService,
+    DBSC_CHALLENGE_NONCES_KEY, DBSC_PUBLIC_KEY_KEY, DBSC_SESSION_ID_KEY, DbscService,
 };
 
 /// Dump all DBSC-relevant request information for debugging.
@@ -75,6 +74,24 @@ async fn dbsc_registration(
         Some(jwt) => {
             let trimmed = jwt.trim_matches('"').to_string();
             tracing::info!("DBSC registration: JWT extracted (len={})", trimmed.len());
+            // Decode JWT header and payload for debugging (without signature verification)
+            let parts: Vec<&str> = trimmed.split('.').collect();
+            if parts.len() >= 2 {
+                use base64::Engine;
+                let engine = base64::engine::general_purpose::URL_SAFE_NO_PAD;
+                if let Ok(header_bytes) = engine.decode(parts[0]) {
+                    tracing::info!(
+                        "DBSC registration: JWT header={}",
+                        String::from_utf8_lossy(&header_bytes)
+                    );
+                }
+                if let Ok(payload_bytes) = engine.decode(parts[1]) {
+                    tracing::info!(
+                        "DBSC registration: JWT payload={}",
+                        String::from_utf8_lossy(&payload_bytes)
+                    );
+                }
+            }
             trimmed
         }
         None => {
@@ -83,28 +100,8 @@ async fn dbsc_registration(
         }
     };
 
-    // 2. Get nonce from __Secure-dbsc-nonce cookie (session cookie is NOT available)
-    let stored_nonce = headers
-        .get_all("cookie")
-        .iter()
-        .filter_map(|v| v.to_str().ok())
-        .flat_map(|s| s.split(';'))
-        .find_map(|c| {
-            c.trim()
-                .strip_prefix(&format!("{}=", DBSC_NONCE_COOKIE_NAME))
-                .map(|v| v.to_string())
-        });
-    let Some(stored_nonce) = stored_nonce else {
-        tracing::warn!("DBSC registration: __Secure-dbsc-nonce cookie missing → 400");
-        return StatusCode::BAD_REQUEST.into_response();
-    };
-    tracing::info!("DBSC registration: nonce from cookie={}", stored_nonce);
-
-    // 3. Service: JWT検証・nonce照合・セッションID生成・Cookie構築
-    let completion = match app_state
-        .dbsc_service()
-        .complete_registration(&jwt_proof, &stored_nonce)
-    {
+    // 2. Service: JWT検証（authorizationクレームからnonce検証）・セッションID生成・Cookie構築
+    let completion = match app_state.dbsc_service().complete_registration(&jwt_proof) {
         Ok(result) => {
             tracing::info!(
                 "DBSC registration: SUCCESS, session_id={}",
@@ -132,9 +129,6 @@ async fn dbsc_registration(
             "DBSC registration: Set-Cookie (pending): len={}",
             completion.pending_cookie_header.len()
         );
-        response_headers.append(axum::http::header::SET_COOKIE, v);
-    }
-    if let Ok(v) = HeaderValue::from_str(&completion.delete_nonce_cookie_header) {
         response_headers.append(axum::http::header::SET_COOKIE, v);
     }
 
