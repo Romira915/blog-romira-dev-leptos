@@ -43,6 +43,7 @@ pub struct GcsSigningService {
 
 impl GcsSigningService {
     /// サービスアカウントキーJSONから新しいGcsSigningServiceを作成
+    #[instrument(skip(service_account_key_json))]
     pub fn from_service_account_key(
         bucket: String,
         service_account_key_json: &str,

@@ -1,3 +1,5 @@
+use tracing::instrument;
+
 use crate::error::CmsError;
 
 /// 記事タイトル（公開時は必須）
@@ -5,6 +7,7 @@ use crate::error::CmsError;
 pub struct PublishedArticleTitle(String);
 
 impl PublishedArticleTitle {
+    #[instrument]
     pub fn new(value: String) -> Result<Self, CmsError> {
         const MAX_LENGTH: usize = 200;
 

@@ -4,6 +4,7 @@ use axum::response::IntoResponse;
 use axum::routing::{get, post};
 use axum::{Json, Router};
 use tower_sessions::Session;
+use tracing::instrument;
 
 use crate::server::contexts::AppState;
 use crate::server::services::dbsc::{
@@ -11,6 +12,7 @@ use crate::server::services::dbsc::{
     DBSC_SESSION_ID_KEY, DbscService,
 };
 
+#[instrument(skip_all)]
 /// Dump all DBSC-relevant request information for debugging.
 fn dump_request(
     label: &str,
@@ -60,6 +62,7 @@ fn dump_request(
 ///
 /// Chrome sends the JWT proof in the `Secure-Session-Response` header (not in the body).
 /// Session cookie IS available thanks to JS redirect resetting Chrome's initiator.
+#[instrument(skip_all)]
 async fn dbsc_registration(
     State(app_state): State<AppState>,
     session: Session,
@@ -155,6 +158,7 @@ async fn dbsc_registration(
 /// Two-phase challenge-response:
 /// - Phase 1 (no `Secure-Session-Response`): Issue challenge with 403
 /// - Phase 2 (with `Secure-Session-Response`): Verify proof and update cookie
+#[instrument(skip_all)]
 async fn dbsc_refresh(
     State(app_state): State<AppState>,
     session: Session,
@@ -223,6 +227,7 @@ async fn dbsc_refresh(
     handle_refresh_phase1(&session, &dbsc_session_id, stored_session_id.as_deref()).await
 }
 
+#[instrument(skip(session))]
 async fn handle_refresh_phase1(
     session: &Session,
     dbsc_session_id: &str,
@@ -277,6 +282,7 @@ async fn handle_refresh_phase1(
     (StatusCode::FORBIDDEN, response_headers).into_response()
 }
 
+#[instrument(skip(session, dbsc_service, jwt_proof))]
 async fn handle_refresh_phase2(
     session: &Session,
     dbsc_service: &DbscService,
@@ -362,6 +368,7 @@ async fn handle_refresh_phase2(
 /// This endpoint is reached via JS redirect from auth_callback, which resets
 /// Chrome's initiator from accounts.google.com to our domain.
 /// As a result, the DBSC Registration POST includes SameSite=Lax session cookies.
+#[instrument(skip_all)]
 async fn dbsc_registration_initiation(
     State(app_state): State<AppState>,
     session: Session,

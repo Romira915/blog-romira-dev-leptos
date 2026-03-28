@@ -6,11 +6,14 @@ use axum::routing::get;
 use blog_romira_dev_cms::PublishedArticleService;
 use chrono::Utc;
 
+use tracing::instrument;
+
 use crate::constants::ORIGIN;
 
 use super::contexts::AppState;
 
 /// robots.txt を返すハンドラ
+#[instrument]
 async fn robots_txt() -> impl IntoResponse {
     let body = format!(
         "User-agent: *\n\
@@ -26,6 +29,7 @@ async fn robots_txt() -> impl IntoResponse {
 }
 
 /// sitemap.xml を動的生成するハンドラ
+#[instrument(skip_all)]
 async fn sitemap_xml(
     State(published_article_service): State<PublishedArticleService>,
 ) -> impl IntoResponse {
@@ -84,6 +88,7 @@ async fn sitemap_xml(
 }
 
 /// SEO関連ルートを作成
+#[instrument]
 pub fn seo_routes() -> Router<AppState> {
     Router::new()
         .route("/robots.txt", get(robots_txt))

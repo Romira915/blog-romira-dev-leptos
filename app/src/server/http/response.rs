@@ -4,8 +4,10 @@ use blog_romira_dev_cms::CmsError;
 use leptos::prelude::ServerFnError;
 use leptos_axum::ResponseOptions;
 use reqwest::StatusCode;
+use tracing::instrument;
 
 /// CmsErrorをStatusCodeにマッピング
+#[instrument]
 pub fn status_code_from_cms_error(error: &CmsError) -> StatusCode {
     match error {
         CmsError::ValidationError(_) => StatusCode::BAD_REQUEST,
@@ -15,11 +17,13 @@ pub fn status_code_from_cms_error(error: &CmsError) -> StatusCode {
 }
 
 /// CmsErrorをServerFnErrorに変換し、適切なステータスコードを設定
+#[instrument(skip(response))]
 pub fn cms_error_to_response(response: &ResponseOptions, error: CmsError) -> ServerFnError {
     response.set_status(status_code_from_cms_error(&error));
     ServerFnError::new(error.to_string())
 }
 
+#[instrument(skip(response))]
 pub(crate) fn set_top_page_cache_control(response: &ResponseOptions) {
     response.insert_header(
         CACHE_CONTROL,
@@ -37,6 +41,7 @@ pub(crate) fn set_top_page_cache_control(response: &ResponseOptions) {
     );
 }
 
+#[instrument(skip(response))]
 pub(crate) fn set_article_page_cache_control(response: &ResponseOptions, slug: &str) {
     response.insert_header(
         CACHE_CONTROL,
@@ -54,6 +59,7 @@ pub(crate) fn set_article_page_cache_control(response: &ResponseOptions, slug: &
     }
 }
 
+#[instrument(skip(response))]
 pub(crate) fn set_preview_article_page_cache_control(response: &ResponseOptions) {
     response.insert_header(
         CACHE_CONTROL,
