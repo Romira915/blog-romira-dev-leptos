@@ -15,6 +15,8 @@ use oauth2::{
 use serde::Deserialize;
 use tower_sessions::Session;
 
+use tracing::instrument;
+
 use crate::common::handlers::auth::AuthUser;
 use crate::server::config::SERVER_CONFIG;
 use crate::server::contexts::AppState;
@@ -53,6 +55,7 @@ struct GoogleUserInfo {
 }
 
 /// Create OAuth2 client
+#[instrument]
 fn create_oauth_client() -> GoogleOAuthClient {
     let redirect_url = format!("{}/auth/callback", SERVER_CONFIG.app_url);
 
@@ -66,6 +69,7 @@ fn create_oauth_client() -> GoogleOAuthClient {
 }
 
 /// Start OAuth flow - redirect to Google
+#[instrument(skip_all)]
 pub async fn auth_google(session: Session) -> impl IntoResponse {
     let client = create_oauth_client();
 
@@ -88,6 +92,7 @@ pub async fn auth_google(session: Session) -> impl IntoResponse {
 }
 
 /// OAuth callback - exchange code for token and get user info
+#[instrument(skip_all)]
 pub async fn auth_callback(
     session: Session,
     Query(query): Query<AuthCallbackQuery>,
@@ -183,23 +188,27 @@ pub async fn auth_callback(
 }
 
 /// Logout - clear session
+#[instrument(skip_all)]
 pub async fn auth_logout(session: Session) -> impl IntoResponse {
     let _ = session.flush().await;
     Redirect::to("/")
 }
 
 /// Get current user from session (internal)
+#[instrument(skip_all)]
 pub async fn get_current_user(session: &Session) -> Option<AuthUser> {
     session.get(SESSION_USER_KEY).await.unwrap_or(None)
 }
 
 /// Check if user is authenticated (internal)
 #[allow(dead_code)]
+#[instrument(skip_all)]
 pub async fn is_authenticated(session: &Session) -> bool {
     get_current_user(session).await.is_some()
 }
 
 /// Check if the given email is in the ADMIN_EMAILS allowlist.
+#[instrument]
 fn is_admin_email(email: &str) -> bool {
     use super::config::SERVER_CONFIG;
 
@@ -216,6 +225,7 @@ fn is_admin_email(email: &str) -> bool {
 ///
 /// Also initiates DBSC registration for authenticated users without a DBSC session
 /// by adding `Secure-Session-Registration` header to the response.
+#[instrument(skip_all)]
 pub async fn require_admin_auth(
     session: Session,
     request: Request,
@@ -295,6 +305,7 @@ pub async fn require_admin_auth(
 }
 
 /// Create auth routes
+#[instrument]
 pub fn auth_routes() -> Router<AppState> {
     Router::new()
         .route("/auth/google", get(auth_google))

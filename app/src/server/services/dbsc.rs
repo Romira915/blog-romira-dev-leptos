@@ -1,5 +1,6 @@
 use jsonwebtoken::{Algorithm, DecodingKey, Header, Validation, decode};
 use serde::{Deserialize, Serialize};
+use tracing::instrument;
 
 pub(crate) const DBSC_SESSION_ID_KEY: &str = "dbsc_session_id";
 pub(crate) const DBSC_PUBLIC_KEY_KEY: &str = "dbsc_public_key";
@@ -92,6 +93,7 @@ pub(crate) struct DbscService {
 }
 
 impl DbscService {
+    #[instrument]
     pub(crate) fn new(origin: String) -> Self {
         let domain = origin
             .trim_start_matches("https://")
@@ -103,10 +105,12 @@ impl DbscService {
         Self { origin, domain }
     }
 
+    #[instrument]
     pub(crate) fn generate_nonce() -> String {
         uuid::Uuid::now_v7().to_string()
     }
 
+    #[instrument(skip(self))]
     pub(crate) fn build_registration_header(&self, nonce: &str) -> String {
         format!(
             r#"(ES256); path="/auth/dbsc/registration"; challenge="{}""#,
@@ -118,6 +122,7 @@ impl DbscService {
     /// Returns (jti_nonce, public_key_jwk_json) on success.
     ///
     /// Chrome puts the JWK in the JWT header (not the payload).
+    #[instrument(skip(self, jwt_str))]
     pub(crate) fn verify_registration_jwt(
         &self,
         jwt_str: &str,
@@ -150,6 +155,7 @@ impl DbscService {
 
     /// Verify a Refresh JWT proof.
     /// Returns the matched nonce on success.
+    #[instrument(skip(self, jwt_str, public_key_jwk))]
     pub(crate) fn verify_refresh_jwt(
         &self,
         jwt_str: &str,
@@ -180,6 +186,7 @@ impl DbscService {
         }
     }
 
+    #[instrument(skip(self))]
     pub(crate) fn build_session_config(&self, session_id: &str) -> serde_json::Value {
         serde_json::json!({
             "session_identifier": session_id,
@@ -200,14 +207,17 @@ impl DbscService {
         })
     }
 
+    #[instrument]
     pub(crate) fn build_challenge_header(nonce: &str, session_id: &str) -> String {
         format!(r#""{}";id="{}""#, nonce, session_id)
     }
 
+    #[instrument]
     pub(crate) fn generate_cookie_value() -> String {
         uuid::Uuid::now_v7().to_string()
     }
 
+    #[instrument]
     pub(crate) fn build_set_cookie_header(cookie_value: &str) -> String {
         format!(
             "{}={}; Secure; HttpOnly; SameSite=Lax; Max-Age={}; Path=/",
@@ -216,6 +226,7 @@ impl DbscService {
     }
 
     /// Add a nonce to the list, keeping at most MAX_RECENT_CHALLENGES entries.
+    #[instrument(skip(nonces))]
     pub(crate) fn push_challenge_nonce(nonces: &mut Vec<String>, nonce: String) {
         if nonces.len() >= MAX_RECENT_CHALLENGES {
             nonces.remove(0);
@@ -223,6 +234,7 @@ impl DbscService {
         nonces.push(nonce);
     }
 
+    #[instrument(skip(header))]
     fn validate_header(header: &Header) -> Result<(), DbscError> {
         if header.alg != Algorithm::ES256 {
             return Err(DbscError::InvalidJwt(format!(
@@ -240,6 +252,7 @@ impl DbscService {
     }
 
     /// Extract EC P-256 key components from a jsonwebtoken::jwk::Jwk (JWT header JWK).
+    #[instrument(skip(jwk))]
     fn ec_jwk_from_header_jwk(jwk: &jsonwebtoken::jwk::Jwk) -> Result<EcJwk, DbscError> {
         use jsonwebtoken::jwk::EllipticCurveKeyParameters;
         match &jwk.algorithm {
@@ -272,6 +285,7 @@ impl DbscService {
         }
     }
 
+    #[instrument(skip(jwk))]
     fn decoding_key_from_jwk(jwk: &EcJwk) -> Result<DecodingKey, DbscError> {
         if jwk.kty != "EC" || jwk.crv != "P-256" {
             return Err(DbscError::InvalidPublicKey(format!(
@@ -289,6 +303,7 @@ impl DbscService {
     /// DBSC登録を開始する（dbsc_registration_initiation用）
     /// nonceを生成し、登録ヘッダーを構築して返す。
     /// nonceはHandler側でセッションに保存する。
+    #[instrument(skip(self))]
     pub(crate) fn initiate_registration(&self) -> RegistrationInitiation {
         let nonce = Self::generate_nonce();
         let header_value = self.build_registration_header(&nonce);
@@ -300,6 +315,7 @@ impl DbscService {
 
     /// DBSC登録を完了する（dbsc_registration handler用）
     /// JWT検証・nonce照合・セッションID生成・Cookie構築を一括で行う。
+    #[instrument(skip(self, jwt))]
     pub(crate) fn complete_registration(
         &self,
         jwt: &str,
@@ -326,6 +342,7 @@ impl DbscService {
 
     /// チャレンジを発行する（refresh phase1用）
     /// セッションID照合後、新しいnonceを生成し、noncesリストを更新して返す。
+    #[instrument(skip(current_nonces))]
     pub(crate) fn issue_challenge(
         request_session_id: &str,
         stored_session_id: Option<&str>,
@@ -346,6 +363,7 @@ impl DbscService {
 
     /// リフレッシュを完了する（refresh phase2用）
     /// セッションID照合・公開鍵/nonces検証・JWT検証・nonce消費・新Cookie発行を一括で行う。
+    #[instrument(skip(self, jwt, public_key_jwk, nonces))]
     pub(crate) fn complete_refresh(
         &self,
         jwt: &str,
@@ -386,6 +404,7 @@ impl DbscService {
 
     /// DBSCセッションバインディングが有効かどうかを判定する（require_admin_auth用）
     /// DBSC登録済みセッションはDBSC Cookieが必須。未登録セッションは常にtrue。
+    #[instrument]
     pub(crate) fn is_session_bound(has_dbsc_session: bool, has_dbsc_cookie: bool) -> bool {
         if has_dbsc_session {
             has_dbsc_cookie

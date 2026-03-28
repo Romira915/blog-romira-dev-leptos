@@ -13,6 +13,7 @@ pub struct CategoryService {
 }
 
 impl CategoryService {
+    #[instrument(skip(pool))]
     pub fn new(pool: PgPool) -> Self {
         Self { pool }
     }

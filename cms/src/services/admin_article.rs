@@ -11,6 +11,7 @@ pub struct AdminArticleService {
 }
 
 impl AdminArticleService {
+    #[instrument(skip(pool))]
     pub fn new(pool: PgPool) -> Self {
         Self { pool }
     }

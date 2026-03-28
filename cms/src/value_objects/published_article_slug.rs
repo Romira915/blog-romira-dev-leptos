@@ -1,3 +1,5 @@
+use tracing::instrument;
+
 use crate::error::CmsError;
 
 /// 記事スラッグ（公開時は必須）
@@ -5,6 +7,7 @@ use crate::error::CmsError;
 pub struct PublishedArticleSlug(String);
 
 impl PublishedArticleSlug {
+    #[instrument]
     pub fn new(value: String) -> Result<Self, CmsError> {
         if value.is_empty() {
             return Err(CmsError::ValidationError("スラッグは必須です".to_string()));

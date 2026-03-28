@@ -20,6 +20,7 @@ pub struct GcsStorageService {
 }
 
 impl GcsStorageService {
+    #[instrument(skip_all)]
     pub fn new(signing_service: GcsSigningService, http_client: reqwest::Client) -> Self {
         Self {
             signing_service,

@@ -1,3 +1,5 @@
+use tracing::instrument;
+
 /// imgix CDN URL生成サービス
 #[derive(Clone, Debug)]
 pub struct ImgixService {
@@ -5,16 +7,19 @@ pub struct ImgixService {
 }
 
 impl ImgixService {
+    #[instrument]
     pub fn new(domain: String) -> Self {
         Self { domain }
     }
 
     /// GCSパスからimgix URLを生成
+    #[instrument(skip(self))]
     pub fn generate_url(&self, gcs_path: &str) -> String {
         format!("https://{}/{}", self.domain, gcs_path)
     }
 
     /// GCSパスからimgix URL（サイズ指定付き）を生成
+    #[instrument(skip(self))]
     pub fn generate_url_with_width(&self, gcs_path: &str, width: u32) -> String {
         format!(
             "https://{}/{}?w={}&auto=format",
@@ -23,6 +28,7 @@ impl ImgixService {
     }
 
     /// ドメインを取得
+    #[instrument(skip(self))]
     pub fn domain(&self) -> &str {
         self.domain.as_str()
     }

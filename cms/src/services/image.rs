@@ -22,6 +22,7 @@ pub struct ImageService {
 }
 
 impl ImageService {
+    #[instrument(skip(pool))]
     pub fn new(pool: PgPool, path_prefix: String) -> Self {
         Self { pool, path_prefix }
     }
@@ -39,6 +40,7 @@ impl ImageService {
     }
 
     /// MIMEタイプをバリデーション
+    #[instrument]
     pub fn validate_mime_type(mime_type: &str) -> Result<(), CmsError> {
         if !ALLOWED_MIME_TYPES.contains(&mime_type) {
             return Err(CmsError::ValidationError(format!(
@@ -50,6 +52,7 @@ impl ImageService {
     }
 
     /// ファイルサイズをバリデーション
+    #[instrument]
     pub fn validate_file_size(size_bytes: i64) -> Result<(), CmsError> {
         if size_bytes > MAX_FILE_SIZE {
             return Err(CmsError::ValidationError(format!(
@@ -67,6 +70,7 @@ impl ImageService {
     }
 
     /// ファイル名からGCSオブジェクトパスを生成（prefix + UUID v7 + 元のファイル名）
+    #[instrument(skip(self))]
     pub fn generate_gcs_path(&self, filename: &str) -> String {
         let uuid = Uuid::now_v7();
         format!("{}/images/{}/{}", self.path_prefix, uuid, filename)
