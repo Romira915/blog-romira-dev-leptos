@@ -194,11 +194,9 @@ async fn dbsc_refresh(
         jwt_proof.as_ref().map(|j| j.len())
     );
 
-    // 2. Read session data — if not present, try transferring from pending cookie
+    // 2. Read session data — always check pending cookie to pick up latest registration
     let mut stored_session_id = session_dbsc_id;
-
-    if stored_session_id.is_none() {
-        tracing::info!("DBSC refresh: no session data, attempting pending cookie transfer");
+    {
         use crate::server::services::dbsc::DBSC_PENDING_COOKIE_NAME;
 
         let pending_token = headers
@@ -212,16 +210,11 @@ async fn dbsc_refresh(
                     .map(|v| v.to_string())
             });
 
-        tracing::info!(
-            "DBSC refresh: __Secure-dbsc-pending cookie present={}",
-            pending_token.is_some()
-        );
-
         if let Some(Ok(pending)) =
             pending_token.map(|t| app_state.dbsc_service().verify_pending_token(&t))
         {
             tracing::info!(
-                "DBSC refresh: pending token verified, transferring session_id={}",
+                "DBSC refresh: transferring pending registration, session_id={}",
                 pending.session_id
             );
             let _ = session
@@ -231,8 +224,6 @@ async fn dbsc_refresh(
                 .insert(DBSC_PUBLIC_KEY_KEY, &pending.public_key_jwk)
                 .await;
             stored_session_id = Some(pending.session_id);
-        } else {
-            tracing::warn!("DBSC refresh: no pending cookie or verification failed");
         }
     }
 

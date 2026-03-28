@@ -308,43 +308,37 @@ pub async fn require_admin_auth(
                 DBSC_PENDING_COOKIE_NAME, DBSC_PUBLIC_KEY_KEY, DBSC_SESSION_ID_KEY, DbscService,
             };
 
-            let has_dbsc_session: bool = session
-                .get::<String>(DBSC_SESSION_ID_KEY)
-                .await
-                .unwrap_or(None)
-                .is_some();
-
-            if !has_dbsc_session {
-                let pending_cookie = request_cookies.iter().find_map(|c| {
-                    c.trim()
-                        .strip_prefix(&format!("{}=", DBSC_PENDING_COOKIE_NAME))
-                        .map(|v| v.to_string())
-                });
-                if let Some(token) = pending_cookie {
-                    match app_state.dbsc_service().verify_pending_token(&token) {
-                        Ok(pending) => {
-                            tracing::debug!(
-                                "DBSC: transferring pending registration to session, session_id={}",
-                                pending.session_id
-                            );
-                            let _ = session
-                                .insert(DBSC_SESSION_ID_KEY, &pending.session_id)
-                                .await;
-                            let _ = session
-                                .insert(DBSC_PUBLIC_KEY_KEY, &pending.public_key_jwk)
-                                .await;
-                            // Delete pending cookie
-                            if let Ok(v) = axum::http::HeaderValue::from_str(
-                                &DbscService::build_delete_pending_cookie_header(),
-                            ) {
-                                response
-                                    .headers_mut()
-                                    .append(axum::http::header::SET_COOKIE, v);
-                            }
+            // Always transfer pending cookie if present — overwrites stale session data
+            // (e.g. when re-registration occurs due to short Max-Age or re-login)
+            let pending_cookie = request_cookies.iter().find_map(|c| {
+                c.trim()
+                    .strip_prefix(&format!("{}=", DBSC_PENDING_COOKIE_NAME))
+                    .map(|v| v.to_string())
+            });
+            if let Some(token) = pending_cookie {
+                match app_state.dbsc_service().verify_pending_token(&token) {
+                    Ok(pending) => {
+                        tracing::info!(
+                            "DBSC: transferring pending registration to session, session_id={}",
+                            pending.session_id
+                        );
+                        let _ = session
+                            .insert(DBSC_SESSION_ID_KEY, &pending.session_id)
+                            .await;
+                        let _ = session
+                            .insert(DBSC_PUBLIC_KEY_KEY, &pending.public_key_jwk)
+                            .await;
+                        // Delete pending cookie
+                        if let Ok(v) = axum::http::HeaderValue::from_str(
+                            &DbscService::build_delete_pending_cookie_header(),
+                        ) {
+                            response
+                                .headers_mut()
+                                .append(axum::http::header::SET_COOKIE, v);
                         }
-                        Err(e) => {
-                            tracing::warn!("DBSC: invalid pending token: {}", e);
-                        }
+                    }
+                    Err(e) => {
+                        tracing::warn!("DBSC: invalid pending token: {}", e);
                     }
                 }
             }
