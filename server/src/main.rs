@@ -128,6 +128,8 @@ static HTTP_SERVER_REQUEST_DURATION: LazyLock<opentelemetry::metrics::Histogram<
 async fn http_observability(req: Request<axum::body::Body>, next: Next) -> Response {
     let start = Instant::now();
     let method = req.method().clone();
+    let url_path = req.uri().path().to_string();
+    let url_scheme = req.uri().scheme_str().unwrap_or("http").to_string();
     let route = req
         .extensions()
         .get::<MatchedPath>()
@@ -138,6 +140,8 @@ async fn http_observability(req: Request<axum::body::Body>, next: Next) -> Respo
         "request",
         http.request.method = %method,
         http.route = %route,
+        url.path = %url_path,
+        url.scheme = %url_scheme,
         http.response.status_code = tracing::field::Empty,
         otel.name = format!("{} {}", method, route),
         otel.kind = "server",
