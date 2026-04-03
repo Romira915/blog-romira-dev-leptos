@@ -85,7 +85,11 @@
     color: var(--sidebar-danger);
     text-decoration: none;
     font-size: 0.875rem;
-    
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+
     &:hover {
         text-decoration: underline;
     }

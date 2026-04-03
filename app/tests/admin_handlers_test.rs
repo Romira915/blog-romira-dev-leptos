@@ -1072,7 +1072,7 @@ async fn test_ログアウトするとルートにリダイレクトされるこ
     let cookie = login_and_get_cookie(&app).await;
 
     let request = Request::builder()
-        .method("GET")
+        .method("POST")
         .uri("/auth/logout")
         .header("cookie", &cookie)
         .body(Body::empty())
@@ -1103,7 +1103,7 @@ async fn test_ログアウト後に管理apiにアクセスすると401を返す
 
     // ログアウト
     let request = Request::builder()
-        .method("GET")
+        .method("POST")
         .uri("/auth/logout")
         .header("cookie", &cookie)
         .body(Body::empty())
