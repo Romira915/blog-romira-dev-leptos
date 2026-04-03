@@ -5,7 +5,7 @@ use axum::{
     extract::Request,
     middleware::Next,
     response::{IntoResponse, Redirect},
-    routing::get,
+    routing::{get, post},
 };
 use oauth2::{
     AuthUrl, AuthorizationCode, ClientId, ClientSecret, CsrfToken, EndpointNotSet, EndpointSet,
@@ -310,5 +310,5 @@ pub fn auth_routes() -> Router<AppState> {
     Router::new()
         .route("/auth/google", get(auth_google))
         .route("/auth/callback", get(auth_callback))
-        .route("/auth/logout", get(auth_logout))
+        .route("/auth/logout", post(auth_logout))
 }
