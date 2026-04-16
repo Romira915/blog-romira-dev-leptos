@@ -35,7 +35,7 @@ pub struct ArticlePageDto {
 /// 記事取得の結果
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ArticleResponse {
-    Found(ArticlePageDto),
+    Found(Box<ArticlePageDto>),
     Redirect(String),
     NotFound(()),
 }
