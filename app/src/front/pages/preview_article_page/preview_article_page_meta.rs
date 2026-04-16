@@ -25,7 +25,7 @@ pub(crate) fn PreviewArticlePageMeta(meta: ArticleMetaDto) -> impl IntoView {
         <Meta property="article:published_time" content=meta.published_at.get_untracked() />
         <Meta
             property="og:url"
-            content=format!("{}/articles/{}", ORIGIN, meta.id.get_untracked())
+            content=format!("{}/articles/{}", ORIGIN, meta.slug.get_untracked())
         />
         <Meta name="twitter:card" content="summary_large_image" />
         <Meta name="twitter:title" content=meta.title.get_untracked() />

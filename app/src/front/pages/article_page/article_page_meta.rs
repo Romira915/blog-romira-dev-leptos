@@ -11,7 +11,7 @@ pub(crate) fn ArticlePageMeta(meta: ArticleMetaDto) -> impl IntoView {
         .map(|k| k.get_untracked())
         .collect::<Vec<String>>()
         .join(", ");
-    let canonical_url = format!("{}/articles/{}", ORIGIN, meta.id.get_untracked());
+    let canonical_url = format!("{}/articles/{}", ORIGIN, meta.slug.get_untracked());
     let keywords_json = meta
         .keywords
         .iter()

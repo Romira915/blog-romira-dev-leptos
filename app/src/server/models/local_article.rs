@@ -80,6 +80,7 @@ impl From<PublishedArticleWithCategories> for ArticlePageDto {
         let first_published_at_rfc3339 = RwSignal::new(published_at_jst.to_rfc3339());
 
         let id = RwSignal::new(article.id.to_string());
+        let slug = RwSignal::new(article.slug.clone());
         let description = RwSignal::new(article.description.unwrap_or_default());
         let og_image_url = RwSignal::new(to_optimize_og_image_url(
             article
@@ -99,6 +100,7 @@ impl From<PublishedArticleWithCategories> for ArticlePageDto {
             },
             article_meta_dto: ArticleMetaDto {
                 id,
+                slug,
                 title,
                 description,
                 keywords: category,

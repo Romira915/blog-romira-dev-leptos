@@ -121,6 +121,7 @@ impl From<NewtArticle> for ArticlePageDto {
         );
         let first_published_at_rfc3339 = RwSignal::new(first_published_at_date_time.to_rfc3339());
         let id = RwSignal::new(value.id);
+        let slug = RwSignal::new(value.slug);
         let description = RwSignal::new(
             value
                 .meta
@@ -148,6 +149,7 @@ impl From<NewtArticle> for ArticlePageDto {
             },
             article_meta_dto: ArticleMetaDto {
                 id,
+                slug,
                 title,
                 description,
                 keywords: category,
