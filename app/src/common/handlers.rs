@@ -132,7 +132,9 @@ pub(crate) async fn get_article_handler(
     // 1. DB記事をslugで検索
     match published_article_service.fetch_by_slug(&id).await {
         Ok(Some(article)) => {
-            return Ok(ArticleResponse::Found(ArticlePageDto::from(article)));
+            return Ok(ArticleResponse::Found(Box::new(ArticlePageDto::from(
+                article,
+            ))));
         }
         Ok(None) => {
             // DB記事が見つからない場合、リダイレクトマッピングを確認

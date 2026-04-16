@@ -35,7 +35,7 @@ pub struct ArticlePageDto {
 /// 記事取得の結果
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ArticleResponse {
-    Found(ArticlePageDto),
+    Found(Box<ArticlePageDto>),
     Redirect(String),
     NotFound(()),
 }
@@ -53,6 +53,7 @@ pub struct ArticleDetailDto {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ArticleMetaDto {
     pub(crate) id: RwSignal<String>,
+    pub(crate) slug: RwSignal<String>,
     pub(crate) title: RwSignal<String>,
     pub(crate) description: RwSignal<String>,
     pub(crate) keywords: Vec<RwSignal<String>>,
