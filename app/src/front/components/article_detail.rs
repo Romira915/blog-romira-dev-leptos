@@ -27,13 +27,8 @@ pub(crate) fn ArticleDetail(article: ArticleDetailDto) -> impl IntoView {
                         .collect_view()}
                 </ul>
                 <p class=article_detail_style::article_meta_published_at>
-                    // FIXME: まじめにやる
                     <time datetime=article
-                        .first_published_at
-                        .read()
-                        .replace("年", "-")
-                        .replace("月", "-")
-                        .replace("日", "")>{article.first_published_at}</time>
+                        .first_published_at_iso>{article.first_published_at}</time>
                 </p>
             </div>
             <figure class=article_detail_style::article_cover>
