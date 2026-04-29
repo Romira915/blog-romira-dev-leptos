@@ -3,7 +3,7 @@ use crate::common::dto::{
 };
 use crate::common::imgix_url::{extract_base_url, generate_srcset, is_imgix_url};
 use crate::constants::{
-    COVER_IMAGE_WIDTHS, DATE_DISPLAY_FORMAT, HOUR, JST_TZ, THUMBNAIL_NO_IMAGE_URL,
+    COVER_IMAGE_WIDTHS, DATE_DISPLAY_FORMAT, DATE_ISO_FORMAT, HOUR, JST_TZ, THUMBNAIL_NO_IMAGE_URL,
 };
 use crate::server::utils::url::{
     to_optimize_cover_image_url, to_optimize_og_image_url, to_optimize_thumbnail_url,
@@ -119,6 +119,11 @@ impl From<NewtArticle> for ArticlePageDto {
                 .format(DATE_DISPLAY_FORMAT)
                 .to_string(),
         );
+        let first_published_at_iso = RwSignal::new(
+            first_published_at_date_time
+                .format(DATE_ISO_FORMAT)
+                .to_string(),
+        );
         let first_published_at_rfc3339 = RwSignal::new(first_published_at_date_time.to_rfc3339());
         let id = RwSignal::new(value.id);
         let slug = RwSignal::new(value.slug);
@@ -146,6 +151,7 @@ impl From<NewtArticle> for ArticlePageDto {
                 body,
                 category: category.clone(),
                 first_published_at,
+                first_published_at_iso,
             },
             article_meta_dto: ArticleMetaDto {
                 id,

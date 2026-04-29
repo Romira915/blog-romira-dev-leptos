@@ -6,7 +6,7 @@ use crate::common::dto::{
 use crate::common::imgix_url::{extract_base_url, generate_srcset, is_imgix_url};
 use crate::common::markdown::convert_markdown_to_html;
 use crate::constants::{
-    COVER_IMAGE_WIDTHS, DATE_DISPLAY_FORMAT, HOUR, JST_TZ, THUMBNAIL_NO_IMAGE_URL,
+    COVER_IMAGE_WIDTHS, DATE_DISPLAY_FORMAT, DATE_ISO_FORMAT, HOUR, JST_TZ, THUMBNAIL_NO_IMAGE_URL,
 };
 use crate::server::utils::url::{
     to_optimize_cover_image_url, to_optimize_og_image_url, to_optimize_thumbnail_url,
@@ -77,6 +77,8 @@ impl From<PublishedArticleWithCategories> for ArticlePageDto {
         let updated_at_rfc3339 = RwSignal::new(updated_at_jst.to_rfc3339());
         let first_published_at =
             RwSignal::new(published_at_jst.format(DATE_DISPLAY_FORMAT).to_string());
+        let first_published_at_iso =
+            RwSignal::new(published_at_jst.format(DATE_ISO_FORMAT).to_string());
         let first_published_at_rfc3339 = RwSignal::new(published_at_jst.to_rfc3339());
 
         let id = RwSignal::new(article.id.to_string());
@@ -97,6 +99,7 @@ impl From<PublishedArticleWithCategories> for ArticlePageDto {
                 body,
                 category: category.clone(),
                 first_published_at,
+                first_published_at_iso,
             },
             article_meta_dto: ArticleMetaDto {
                 id,

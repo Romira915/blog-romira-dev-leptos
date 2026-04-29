@@ -48,6 +48,7 @@ pub struct ArticleDetailDto {
     pub(crate) body: RwSignal<String>,
     pub(crate) category: Vec<RwSignal<String>>,
     pub(crate) first_published_at: RwSignal<String>,
+    pub(crate) first_published_at_iso: RwSignal<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
