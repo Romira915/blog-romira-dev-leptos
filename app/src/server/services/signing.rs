@@ -16,7 +16,6 @@ pub enum SigningError {
 }
 
 /// 署名付きURL生成サービスのトレイト
-#[allow(dead_code)]
 pub trait SigningService {
     async fn generate_upload_url(
         &self,
@@ -30,8 +29,6 @@ pub trait SigningService {
         object_path: &str,
         duration_secs: u64,
     ) -> Result<String, SigningError>;
-
-    fn bucket(&self) -> &str;
 }
 
 /// GCS署名付きURL生成サービス
@@ -140,10 +137,5 @@ impl SigningService for GcsSigningService {
         .await
         .map_err(|e| SigningError::SigningError(format!("Task join error: {}", e)))?
         .map_err(|e| SigningError::SigningError(e.to_string()))
-    }
-
-    /// バケット名を取得
-    fn bucket(&self) -> &str {
-        self.bucket.as_str()
     }
 }
