@@ -1,27 +1,13 @@
-use crate::common::dto::{
-    ArticleDetailDto, ArticleMetaDto, ArticlePageDto, ArticleSource, HomePageArticleDto,
-};
+use crate::common::dto::{ArticleDetailDto, ArticleMetaDto, ArticlePageDto};
 use crate::common::imgix_url::{extract_base_url, generate_srcset, is_imgix_url};
 use crate::constants::{
     COVER_IMAGE_WIDTHS, DATE_DISPLAY_FORMAT, DATE_ISO_FORMAT, HOUR, JST_TZ, THUMBNAIL_NO_IMAGE_URL,
 };
-use crate::server::utils::url::{
-    to_optimize_cover_image_url, to_optimize_og_image_url, to_optimize_thumbnail_url,
-};
+use crate::server::utils::url::{to_optimize_cover_image_url, to_optimize_og_image_url};
 use chrono::{DateTime, FixedOffset, Utc};
 use leptos::prelude::RwSignal;
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
-
-#[allow(dead_code)] // TODO: Newt終了後に削除
-#[derive(Serialize, Deserialize, Debug, Default, PartialEq)]
-#[serde(rename_all = "camelCase")]
-pub struct NewtArticleCollection {
-    pub(crate) skip: u32,
-    pub(crate) limit: u32,
-    pub(crate) total: u32,
-    pub(crate) items: Vec<NewtArticle>,
-}
 
 #[derive(Serialize, Deserialize, Debug, Default, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -37,42 +23,6 @@ pub(crate) struct NewtArticle {
     pub(crate) cover_image: Option<Image>,
     pub(crate) author: Option<AuthorInArticle>,
     pub(crate) categories: Option<Vec<Category>>,
-}
-
-impl From<NewtArticle> for HomePageArticleDto {
-    #[instrument]
-    fn from(value: NewtArticle) -> Self {
-        Self {
-            title: RwSignal::new(value.title),
-            thumbnail_url: RwSignal::new(to_optimize_thumbnail_url(
-                value.cover_image.as_ref().map_or_else(
-                    || THUMBNAIL_NO_IMAGE_URL,
-                    |cover_image| cover_image.src.as_str(),
-                ),
-            )),
-            src: RwSignal::new(format!("/articles/{}", value.id)),
-            category: value
-                .categories
-                .as_ref()
-                .map_or_else(Vec::new, |categories| {
-                    categories
-                        .iter()
-                        .map(|category| RwSignal::new(category.name.clone()))
-                        .collect()
-                }),
-            first_published_at: RwSignal::new(
-                value
-                    .sys
-                    .raw
-                    .first_published_at
-                    .unwrap_or(DateTime::from_timestamp(0, 0).unwrap())
-                    .with_timezone(&FixedOffset::east_opt(JST_TZ * HOUR).unwrap())
-                    .format(DATE_DISPLAY_FORMAT)
-                    .to_string(),
-            ),
-            article_source: ArticleSource::Newt,
-        }
-    }
 }
 
 impl From<NewtArticle> for ArticlePageDto {

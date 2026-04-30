@@ -4,7 +4,7 @@ use crate::common::dto::{
     ArticleDetailDto, ArticleMetaDto, ArticlePageDto, ArticleSource, HomePageArticleDto,
 };
 use crate::common::imgix_url::{extract_base_url, generate_srcset, is_imgix_url};
-use crate::common::markdown::convert_markdown_to_html;
+use crate::common::markdown::{convert_markdown_to_html, sanitize_html};
 use crate::constants::{
     COVER_IMAGE_WIDTHS, DATE_DISPLAY_FORMAT, DATE_ISO_FORMAT, HOUR, JST_TZ, THUMBNAIL_NO_IMAGE_URL,
 };
@@ -65,7 +65,9 @@ impl From<PublishedArticleWithCategories> for ArticlePageDto {
         } else {
             String::new()
         });
-        let body = RwSignal::new(convert_markdown_to_html(article.body.as_str()));
+        let body = RwSignal::new(sanitize_html(&convert_markdown_to_html(
+            article.body.as_str(),
+        )));
         let category: Vec<RwSignal<String>> = value
             .categories
             .iter()
