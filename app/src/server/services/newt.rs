@@ -1,6 +1,6 @@
 use crate::SERVER_CONFIG;
 use crate::error::NewtArticleServiceError;
-use crate::server::models::newt_article::{NewtArticle, NewtArticleCollection};
+use crate::server::models::newt_article::NewtArticle;
 use crate::server::models::newt_author::Author;
 use std::fmt::Debug;
 use std::sync::Arc;
@@ -25,44 +25,6 @@ impl NewtArticleService {
             newt_cdn_base_url: Arc::new(newt_cdn_base_url.to_string()),
             newt_base_url: Arc::new(newt_base_url.to_string()),
         }
-    }
-
-    #[allow(dead_code)] // TODO: Newt終了後に削除
-    #[instrument]
-    async fn fetch_articles(
-        &self,
-        is_preview: bool,
-    ) -> Result<NewtArticleCollection, NewtArticleServiceError> {
-        let (base_url, api_token) = if is_preview {
-            (&self.newt_base_url, &SERVER_CONFIG.newt_api_token)
-        } else {
-            (&self.newt_cdn_base_url, &SERVER_CONFIG.newt_cdn_api_token)
-        };
-
-        let response = self
-            .client
-            .get(format!("{base_url}/blog/article"))
-            .bearer_auth(api_token)
-            .send()
-            .await?;
-
-        if !response.status().is_success() {
-            return Err(NewtArticleServiceError::UnexpectedStatusCode(
-                response.status(),
-            ));
-        }
-
-        let articles: NewtArticleCollection = response.json().await?;
-
-        Ok(articles)
-    }
-
-    #[allow(dead_code)] // TODO: Newt終了後に削除
-    #[instrument]
-    pub(crate) async fn fetch_published_articles(
-        &self,
-    ) -> Result<NewtArticleCollection, NewtArticleServiceError> {
-        self.fetch_articles(false).await
     }
 
     #[instrument]
@@ -100,18 +62,6 @@ impl NewtArticleService {
         let article: NewtArticle = response.json().await?;
 
         Ok(Some(article))
-    }
-
-    #[allow(dead_code)] // TODO: Newt終了後に削除
-    #[instrument]
-    pub(crate) async fn fetch_published_article<T>(
-        &self,
-        article_id: T,
-    ) -> Result<Option<NewtArticle>, NewtArticleServiceError>
-    where
-        T: std::fmt::Display + Debug,
-    {
-        self.fetch_article(article_id, false).await
     }
 
     #[instrument]

@@ -28,10 +28,6 @@ pub(crate) enum QiitaArticleServiceError {
 
 #[derive(Error, Debug, Serialize, Deserialize)]
 pub enum GetArticlesError {
-    #[error("Failed to get articles from NewtArticleService: {0}")]
-    NewtArticleServiceGetArticles(String),
-    #[error("Failed to get author from NewtArticleService: {0}")]
-    NewtArticleServiceGetAuthor(String),
     #[error("Failed to get articles from WordPressArticleService: {0}")]
     WordPressArticleService(String),
     #[error("Failed to get articles from QiitaArticleService: {0}")]
