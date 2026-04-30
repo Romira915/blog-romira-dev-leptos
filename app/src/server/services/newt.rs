@@ -103,4 +103,3 @@ impl NewtArticleService {
         Ok(author)
     }
 }
-
