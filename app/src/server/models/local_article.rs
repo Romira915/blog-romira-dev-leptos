@@ -11,7 +11,7 @@ use crate::constants::{
 use crate::server::utils::url::{
     to_optimize_cover_image_url, to_optimize_og_image_url, to_optimize_thumbnail_url,
 };
-use blog_romira_dev_cms::PublishedArticleWithCategories;
+use blog_romira_dev_cms::{DraftArticleWithCategories, PublishedArticleWithCategories};
 use chrono::{FixedOffset, NaiveDateTime, TimeZone, Utc};
 use leptos::prelude::RwSignal;
 use tracing::instrument;
@@ -82,6 +82,73 @@ impl From<PublishedArticleWithCategories> for ArticlePageDto {
         let first_published_at_iso =
             RwSignal::new(published_at_jst.format(DATE_ISO_FORMAT).to_string());
         let first_published_at_rfc3339 = RwSignal::new(published_at_jst.to_rfc3339());
+
+        let id = RwSignal::new(article.id.to_string());
+        let slug = RwSignal::new(article.slug);
+        let description = RwSignal::new(article.description.unwrap_or_default());
+        let og_image_url = RwSignal::new(to_optimize_og_image_url(
+            article
+                .cover_image_url
+                .as_deref()
+                .unwrap_or(THUMBNAIL_NO_IMAGE_URL),
+        ));
+
+        Self {
+            article_detail_dto: ArticleDetailDto {
+                title,
+                cover_image_url,
+                cover_image_srcset,
+                body,
+                category: category.clone(),
+                first_published_at,
+                first_published_at_iso,
+            },
+            article_meta_dto: ArticleMetaDto {
+                id,
+                slug,
+                title,
+                description,
+                keywords: category,
+                og_image_url,
+                published_at: updated_at_rfc3339,
+                first_published_at: first_published_at_rfc3339,
+            },
+        }
+    }
+}
+
+impl From<DraftArticleWithCategories> for ArticlePageDto {
+    #[instrument(skip(value))]
+    fn from(value: DraftArticleWithCategories) -> Self {
+        let article = value.article;
+        let title = RwSignal::new(article.title);
+        let cover_image_raw = article
+            .cover_image_url
+            .as_deref()
+            .unwrap_or(THUMBNAIL_NO_IMAGE_URL);
+        let cover_image_url = RwSignal::new(to_optimize_cover_image_url(cover_image_raw));
+        let cover_image_srcset = RwSignal::new(if is_imgix_url(cover_image_raw) {
+            generate_srcset(extract_base_url(cover_image_raw), &COVER_IMAGE_WIDTHS)
+        } else {
+            String::new()
+        });
+        let body = RwSignal::new(sanitize_html(&convert_markdown_to_html(
+            article.body.as_str(),
+        )));
+        let category: Vec<RwSignal<String>> = value
+            .categories
+            .iter()
+            .map(|category| RwSignal::new(category.name.clone()))
+            .collect();
+
+        // プレビュー用なので現在時刻を仮の日付とする（あるいは保存された日時）
+        let updated_at_jst = to_jst(article.updated_at);
+        let updated_at_rfc3339 = RwSignal::new(updated_at_jst.to_rfc3339());
+        let first_published_at =
+            RwSignal::new(updated_at_jst.format(DATE_DISPLAY_FORMAT).to_string());
+        let first_published_at_iso =
+            RwSignal::new(updated_at_jst.format(DATE_ISO_FORMAT).to_string());
+        let first_published_at_rfc3339 = RwSignal::new(updated_at_jst.to_rfc3339());
 
         let id = RwSignal::new(article.id.to_string());
         let slug = RwSignal::new(article.slug);
