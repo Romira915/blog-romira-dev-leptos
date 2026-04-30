@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 mod article_editor_page;
 mod article_form;
 mod editor_header;
@@ -15,4 +13,8 @@ use markdown_preview::MarkdownPreview;
 
 use stylance::import_style;
 
-import_style!(pub(super) style, "article_editor.module.scss");
+import_style!(
+    #[allow(dead_code)]
+    pub(super) style,
+    "article_editor.module.scss"
+);

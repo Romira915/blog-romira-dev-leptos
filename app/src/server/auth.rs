@@ -200,13 +200,6 @@ pub async fn get_current_user(session: &Session) -> Option<AuthUser> {
     session.get(SESSION_USER_KEY).await.unwrap_or(None)
 }
 
-/// Check if user is authenticated (internal)
-#[allow(dead_code)]
-#[instrument(skip_all)]
-pub async fn is_authenticated(session: &Session) -> bool {
-    get_current_user(session).await.is_some()
-}
-
 /// Check if the given email is in the ADMIN_EMAILS allowlist.
 #[instrument]
 fn is_admin_email(email: &str) -> bool {

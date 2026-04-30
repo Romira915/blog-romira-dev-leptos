@@ -1,11 +1,17 @@
-#![allow(dead_code)]
-
 use crate::common::dto::ArticleDetailDto;
 use leptos::prelude::*;
 use stylance::import_style;
 
-import_style!(pub(crate) article_detail_style, "article_detail.module.scss");
-import_style!(pub(crate) article_body_style, "article_body.module.scss");
+import_style!(
+    #[allow(dead_code)]
+    pub(crate) article_detail_style,
+    "article_detail.module.scss"
+);
+import_style!(
+    #[allow(dead_code)]
+    pub(crate) article_body_style,
+    "article_body.module.scss"
+);
 
 #[component]
 pub(crate) fn ArticleDetail(article: ArticleDetailDto) -> impl IntoView {
