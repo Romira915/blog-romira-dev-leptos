@@ -172,35 +172,38 @@ pub(crate) async fn get_preview_article_handler(
     id: String,
 ) -> Result<Option<ArticlePageDto>, ServerFnError<GetArticleError>> {
     use crate::AppState;
+    use crate::common::dto::ArticlePageDto;
     use crate::server::http::response::set_preview_article_page_cache_control;
     use leptos_axum::ResponseOptions;
+    use uuid::Uuid;
 
     let app_state = expect_context::<AppState>();
-    let newt_article_service = app_state.newt_article_service;
+    let draft_article_service = app_state.draft_article_service;
     let response = expect_context::<ResponseOptions>();
 
     set_preview_article_page_cache_control(&response);
 
-    let article = newt_article_service.fetch_preview_article(&id).await;
-    let article = match article {
-        Ok(article) => article,
+    let uuid = match Uuid::parse_str(&id) {
+        Ok(uuid) => uuid,
+        Err(_) => return Ok(None),
+    };
+
+    let article = draft_article_service.fetch_by_id(uuid).await;
+    match article {
+        Ok(Some(article)) => Ok(Some(ArticlePageDto::from(article))),
+        Ok(None) => {
+            response.set_status(StatusCode::NOT_FOUND);
+            Ok(None)
+        }
         Err(err) => {
             response.set_status(StatusCode::INTERNAL_SERVER_ERROR);
             tracing::error!(
                 error = err.to_string(),
-                "Failed to get article from NewtArticleService",
+                "Failed to get article from DraftArticleService",
             );
-            return Err(ServerFnError::from(
-                GetArticleError::NewtArticleServiceGetArticle(
-                    "Failed to get article from NewtArticleService".to_string(),
-                ),
-            ));
+            Err(ServerFnError::from(GetArticleError::DatabaseError(
+                err.to_string(),
+            )))
         }
-    };
-
-    if article.is_none() {
-        response.set_status(StatusCode::NOT_FOUND);
     }
-
-    Ok(article.map(ArticlePageDto::from))
 }
