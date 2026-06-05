@@ -13,22 +13,22 @@ pub(crate) fn ArticleCard(article: HomePageArticleDto) -> impl IntoView {
     view! {
         <article class=article_card_style::article_card>
             <a
-                href=article.src.get()
-                aria-label=article.title.get()
+                href=article.src.clone()
+                aria-label=article.title.clone()
                 class=article_card_style::article_link
                 target=a_target
                 rel=a_ref
             >
                 <figure class=article_card_style::article_figure>
                     <img
-                        src=article.thumbnail_url.get()
+                        src=article.thumbnail_url.clone()
                         width=228
                         height=128
-                        alt=format!("Thumbnail of {}", article.title.get())
+                        alt=format!("Thumbnail of {}", article.title)
                         class=article_card_style::article_thumbnail
                     />
                     <figcaption class=article_card_style::article_info>
-                        <h2 class=article_card_style::article_title>{article.title.get()}</h2>
+                        <h2 class=article_card_style::article_title>{article.title.clone()}</h2>
                         <ul class=article_card_style::article_category_list>
                             {article
                                 .category
@@ -36,14 +36,14 @@ pub(crate) fn ArticleCard(article: HomePageArticleDto) -> impl IntoView {
                                 .map(|category| {
                                     view! {
                                         <li class=article_card_style::article_category>
-                                            {category.get()}
+                                            {category.clone()}
                                         </li>
                                     }
                                 })
                                 .collect_view()}
                         </ul>
                         <p class=article_card_style::article_published_at>
-                            {article.first_published_at.get()}
+                            {article.first_published_at.clone()}
                         </p>
                     </figcaption>
                 </figure>

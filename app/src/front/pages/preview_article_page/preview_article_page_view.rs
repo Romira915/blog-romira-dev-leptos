@@ -1,4 +1,4 @@
-use crate::common::handlers::get_preview_article_handler;
+use crate::common::handlers::{ArticleInput, get_preview_article_handler};
 use crate::common::response::set_article_page_cache_control;
 use crate::front::components::article_detail::ArticleDetail;
 use crate::front::components::header::Header;
@@ -17,7 +17,7 @@ pub(crate) fn PreviewArticlePage() -> impl IntoView {
     set_article_page_cache_control(&id());
 
     let article = Resource::new(id, move |id| async move {
-        get_preview_article_handler(id).await
+        get_preview_article_handler(ArticleInput { id }).await
     });
 
     view! {

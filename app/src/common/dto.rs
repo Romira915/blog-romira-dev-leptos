@@ -1,13 +1,12 @@
-use leptos::prelude::RwSignal;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HomePageArticleDto {
-    pub(crate) title: RwSignal<String>,
-    pub(crate) thumbnail_url: RwSignal<String>,
-    pub(crate) src: RwSignal<String>,
-    pub(crate) category: Vec<RwSignal<String>>,
-    pub(crate) first_published_at: RwSignal<String>,
+    pub(crate) title: String,
+    pub(crate) thumbnail_url: String,
+    pub(crate) src: String,
+    pub(crate) category: Vec<String>,
+    pub(crate) first_published_at: String,
     pub(crate) article_source: ArticleSource,
 }
 
@@ -20,9 +19,9 @@ pub(crate) enum ArticleSource {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HomePageAuthorDto {
-    pub(crate) name: RwSignal<String>,
-    pub(crate) avatar_url: RwSignal<String>,
-    pub(crate) description: RwSignal<String>,
+    pub(crate) name: String,
+    pub(crate) avatar_url: String,
+    pub(crate) description: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -41,23 +40,23 @@ pub enum ArticleResponse {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ArticleDetailDto {
-    pub(crate) title: RwSignal<String>,
-    pub(crate) cover_image_url: RwSignal<String>,
-    pub(crate) cover_image_srcset: RwSignal<String>,
-    pub(crate) body: RwSignal<String>,
-    pub(crate) category: Vec<RwSignal<String>>,
-    pub(crate) first_published_at: RwSignal<String>,
-    pub(crate) first_published_at_iso: RwSignal<String>,
+    pub(crate) title: String,
+    pub(crate) cover_image_url: String,
+    pub(crate) cover_image_srcset: String,
+    pub(crate) body: String,
+    pub(crate) category: Vec<String>,
+    pub(crate) first_published_at: String,
+    pub(crate) first_published_at_iso: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ArticleMetaDto {
-    pub(crate) id: RwSignal<String>,
-    pub(crate) slug: RwSignal<String>,
-    pub(crate) title: RwSignal<String>,
-    pub(crate) description: RwSignal<String>,
-    pub(crate) keywords: Vec<RwSignal<String>>,
-    pub(crate) og_image_url: RwSignal<String>,
-    pub(crate) published_at: RwSignal<String>,
-    pub(crate) first_published_at: RwSignal<String>,
+    pub(crate) id: String,
+    pub(crate) slug: String,
+    pub(crate) title: String,
+    pub(crate) description: String,
+    pub(crate) keywords: Vec<String>,
+    pub(crate) og_image_url: String,
+    pub(crate) published_at: String,
+    pub(crate) first_published_at: String,
 }

@@ -1,6 +1,5 @@
 use crate::common::dto::HomePageAuthorDto;
 use crate::server::models::newt_article::{Image, Sys};
-use leptos::prelude::RwSignal;
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
 
@@ -20,15 +19,12 @@ impl From<Author> for HomePageAuthorDto {
     #[instrument]
     fn from(value: Author) -> Self {
         Self {
-            name: RwSignal::new(value.full_name),
+            name: value.full_name,
             avatar_url: value
                 .profile_image
-                .map(|image| RwSignal::new(image.src))
+                .map(|image| image.src)
                 .unwrap_or_default(),
-            description: value
-                .biography
-                .map(|biography| RwSignal::new(biography))
-                .unwrap_or_default(),
+            description: value.biography.unwrap_or_default(),
         }
     }
 }
