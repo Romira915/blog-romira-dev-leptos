@@ -1,7 +1,6 @@
 use crate::common::dto::{ArticleSource, HomePageArticleDto};
 use crate::constants::{DATE_DISPLAY_FORMAT, HOUR, JST_TZ};
 use chrono::{DateTime, FixedOffset, Utc};
-use leptos::prelude::RwSignal;
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
 
@@ -37,21 +36,15 @@ impl From<QiitaArticle> for HomePageArticleDto {
     #[instrument]
     fn from(value: QiitaArticle) -> Self {
         Self {
-            title: RwSignal::new(value.title),
-            thumbnail_url: RwSignal::new(value.og_image_url),
-            src: RwSignal::new(value.url),
-            category: value
-                .tags
-                .iter()
-                .map(|tag| RwSignal::new(tag.name.clone()))
-                .collect(),
-            first_published_at: RwSignal::new(
-                value
-                    .created_at
-                    .with_timezone(&FixedOffset::east_opt(JST_TZ * HOUR).unwrap())
-                    .format(DATE_DISPLAY_FORMAT)
-                    .to_string(),
-            ),
+            title: value.title,
+            thumbnail_url: value.og_image_url,
+            src: value.url,
+            category: value.tags.iter().map(|tag| tag.name.clone()).collect(),
+            first_published_at: value
+                .created_at
+                .with_timezone(&FixedOffset::east_opt(JST_TZ * HOUR).unwrap())
+                .format(DATE_DISPLAY_FORMAT)
+                .to_string(),
             article_source: ArticleSource::Qiita,
         }
     }

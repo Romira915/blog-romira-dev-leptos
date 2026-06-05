@@ -71,8 +71,6 @@ impl GcsSigningService {
 impl SigningService for GcsSigningService {
     /// アップロード用の署名付きURLを生成 (PUT)
     ///
-    /// NOTE: google-cloud-storageのSignedUrlBuilderが内部で非Send型を使用するため、
-    /// spawn_blockingでラップしてLeptos server functionとの互換性を確保
     #[instrument(skip(self))]
     async fn generate_upload_url(
         &self,
@@ -90,25 +88,17 @@ impl SigningService for GcsSigningService {
         let content_type = content_type.to_string();
         let signer = Arc::clone(signer);
 
-        // spawn_blockingで非Send問題を回避
-        tokio::task::spawn_blocking(move || {
-            tokio::runtime::Handle::current().block_on(async {
-                SignedUrlBuilder::for_object(&bucket_resource, &object_path)
-                    .with_method(http::Method::PUT)
-                    .with_expiration(Duration::from_secs(duration_secs))
-                    .with_header("content-type", &content_type)
-                    .sign_with(&signer)
-                    .await
-            })
-        })
-        .await
-        .map_err(|e| SigningError::SigningError(format!("Task join error: {}", e)))?
-        .map_err(|e| SigningError::SigningError(e.to_string()))
+        SignedUrlBuilder::for_object(&bucket_resource, &object_path)
+            .with_method(http::Method::PUT)
+            .with_expiration(Duration::from_secs(duration_secs))
+            .with_header("content-type", &content_type)
+            .sign_with(&signer)
+            .await
+            .map_err(|e| SigningError::SigningError(e.to_string()))
     }
 
     /// 削除用の署名付きURLを生成 (DELETE)
     ///
-    /// NOTE: generate_upload_urlと同様、spawn_blockingでラップ
     #[instrument(skip(self))]
     async fn generate_delete_url(
         &self,
@@ -124,18 +114,11 @@ impl SigningService for GcsSigningService {
         let object_path = object_path.to_string();
         let signer = Arc::clone(signer);
 
-        // spawn_blockingで非Send問題を回避
-        tokio::task::spawn_blocking(move || {
-            tokio::runtime::Handle::current().block_on(async {
-                SignedUrlBuilder::for_object(&bucket_resource, &object_path)
-                    .with_method(http::Method::DELETE)
-                    .with_expiration(Duration::from_secs(duration_secs))
-                    .sign_with(&signer)
-                    .await
-            })
-        })
-        .await
-        .map_err(|e| SigningError::SigningError(format!("Task join error: {}", e)))?
-        .map_err(|e| SigningError::SigningError(e.to_string()))
+        SignedUrlBuilder::for_object(&bucket_resource, &object_path)
+            .with_method(http::Method::DELETE)
+            .with_expiration(Duration::from_secs(duration_secs))
+            .sign_with(&signer)
+            .await
+            .map_err(|e| SigningError::SigningError(e.to_string()))
     }
 }

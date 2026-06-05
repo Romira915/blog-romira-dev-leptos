@@ -8,8 +8,14 @@ use leptos::prelude::*;
 use leptos::prelude::{ServerFnError, expect_context};
 use leptos::server_fn::codec::GetUrl;
 use reqwest::StatusCode;
+use serde::{Deserialize, Serialize};
 use std::cmp::Reverse;
 use tracing::instrument;
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub(crate) struct ArticleInput {
+    pub(crate) id: String,
+}
 
 #[instrument]
 #[server(input = GetUrl, endpoint = "get_articles_handler")]
@@ -74,7 +80,7 @@ pub(crate) async fn get_articles_handler()
         }
     }
 
-    articles.sort_unstable_by_key(|a| Reverse(a.first_published_at.get()));
+    articles.sort_unstable_by_key(|a| Reverse(a.first_published_at.clone()));
 
     Ok(articles)
 }
@@ -114,7 +120,7 @@ pub(crate) async fn get_author_handler() -> Result<HomePageAuthorDto, ServerFnEr
 #[instrument]
 #[server(input = GetUrl, endpoint = "get_article_handler")]
 pub(crate) async fn get_article_handler(
-    id: String,
+    input: ArticleInput,
 ) -> Result<ArticleResponse, ServerFnError<GetArticleError>> {
     use crate::AppState;
     use crate::common::dto::ArticleResponse;
@@ -125,6 +131,7 @@ pub(crate) async fn get_article_handler(
     let app_state = expect_context::<AppState>();
     let published_article_service = app_state.published_article_service;
     let response = expect_context::<ResponseOptions>();
+    let id = input.id;
 
     // キャッシュコントロールを設定
     set_article_page_cache_control(&id);
@@ -169,7 +176,7 @@ pub(crate) async fn get_article_handler(
 #[instrument]
 #[server(input = GetUrl, endpoint = "get_preview_article_handler")]
 pub(crate) async fn get_preview_article_handler(
-    id: String,
+    input: ArticleInput,
 ) -> Result<Option<ArticlePageDto>, ServerFnError<GetArticleError>> {
     use crate::AppState;
     use crate::common::dto::ArticlePageDto;
@@ -180,6 +187,7 @@ pub(crate) async fn get_preview_article_handler(
     let app_state = expect_context::<AppState>();
     let draft_article_service = app_state.draft_article_service;
     let response = expect_context::<ResponseOptions>();
+    let id = input.id;
 
     set_preview_article_page_cache_control(&response);
 

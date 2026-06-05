@@ -3,7 +3,9 @@ use url::Url;
 
 #[instrument]
 pub(crate) fn to_optimize_thumbnail_url(url: &str) -> String {
-    let mut url = Url::parse(url).expect("Failed to parse URL");
+    let Ok(mut url) = Url::parse(url) else {
+        return url.to_string();
+    };
     url.query_pairs_mut()
         .append_pair("fit", "crop")
         .append_pair("w", "940")
@@ -16,7 +18,9 @@ pub(crate) fn to_optimize_thumbnail_url(url: &str) -> String {
 
 #[instrument]
 pub(crate) fn to_optimize_cover_image_url(url: &str) -> String {
-    let mut url = Url::parse(url).expect("Failed to parse URL");
+    let Ok(mut url) = Url::parse(url) else {
+        return url.to_string();
+    };
     url.query_pairs_mut()
         .append_pair("fit", "crop")
         .append_pair("w", "1920")
@@ -29,7 +33,9 @@ pub(crate) fn to_optimize_cover_image_url(url: &str) -> String {
 
 #[instrument]
 pub(crate) fn to_optimize_og_image_url(url: &str) -> String {
-    let mut url = Url::parse(url).expect("Failed to parse URL");
+    let Ok(mut url) = Url::parse(url) else {
+        return url.to_string();
+    };
     url.query_pairs_mut()
         .append_pair("fit", "crop")
         .append_pair("w", "1200")

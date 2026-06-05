@@ -84,10 +84,10 @@ Copy `.env.example` to `.env` for development. Required variables:
 ## Toolchain
 
 Uses **Rust nightly** (specified in `rust-toolchain.toml`). Key tools:
-- `cargo-leptos` v0.2.27 - Build orchestration
-- `leptosfmt` v0.1.32 - Leptos component formatter
-- `stylance-cli` v0.5.4 - CSS module compiler
-- `wasm-bindgen-cli` v0.2.100 - WASM bindings
+- `cargo-leptos` v0.3.2 - Build orchestration
+- `leptosfmt` v0.1.33 - Leptos component formatter
+- `stylance-cli` v0.7.4 - CSS module compiler
+- `wasm-bindgen-cli` v0.2.106 - WASM bindings
 
 ## Value Object Guidelines
 

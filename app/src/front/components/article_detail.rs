@@ -15,9 +15,11 @@ import_style!(
 
 #[component]
 pub(crate) fn ArticleDetail(article: ArticleDetailDto) -> impl IntoView {
+    let title = article.title.clone();
+
     view! {
         <article class=article_detail_style::article_detail_style>
-            <h1 class=article_detail_style::article_title>{article.title}</h1>
+            <h1 class=article_detail_style::article_title>{article.title.clone()}</h1>
             <div class=article_detail_style::article_meta>
                 <ul class=article_detail_style::article_meta_category_list>
                     {article
@@ -26,7 +28,7 @@ pub(crate) fn ArticleDetail(article: ArticleDetailDto) -> impl IntoView {
                         .map(|category| {
                             view! {
                                 <li class=article_detail_style::article_meta_category>
-                                    {move || category.get()}
+                                    {category}
                                 </li>
                             }
                         })
@@ -45,7 +47,7 @@ pub(crate) fn ArticleDetail(article: ArticleDetailDto) -> impl IntoView {
                     width=745
                     height=419
                     loading="lazy"
-                    alt=format!("Cover image of {}", article.title.read())
+                    alt=format!("Cover image of {}", title)
                     class=article_detail_style::article_cover_image
                 />
             </figure>

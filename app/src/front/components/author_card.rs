@@ -15,16 +15,16 @@ pub(crate) fn AuthorCard(
         <section class=author_card_style::author_card>
             <div class=author_card_style::author_info>
                 <img
-                    src=author.avatar_url.get()
-                    alt=format!("{}'s avatar", author.name.get())
+                    src=author.avatar_url.clone()
+                    alt=format!("{}'s avatar", author.name)
                     width=100
                     height=100
                     class=author_card_style::author_avatar
                     loading="lazy"
                 />
                 <div class=author_card_style::author_description_container>
-                    <h2 class=author_card_style::author_name>{author.name.get()}</h2>
-                    <p class=author_card_style::author_description>{author.description.get()}</p>
+                    <h2 class=author_card_style::author_name>{author.name.clone()}</h2>
+                    <p class=author_card_style::author_description>{author.description}</p>
                 </div>
                 <div class=author_card_style::author_sns>
                     <a
