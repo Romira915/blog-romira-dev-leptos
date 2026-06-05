@@ -43,7 +43,7 @@ jobs:
       - name: Install build tools
         uses: taiki-e/install-action@v2
         with:
-          tool: cargo-leptos@0.3.2,stylance-cli@0.7.4,wasm-bindgen-cli@0.2.106,sqlx-cli@0.8.6
+          tool: cargo-leptos@0.3.2,stylance-cli@0.7.4,wasm-bindgen-cli@0.2.122,sqlx-cli@0.8.6
 
       - name: Build
         env:
