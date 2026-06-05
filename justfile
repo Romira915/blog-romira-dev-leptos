@@ -1,8 +1,8 @@
 setup:
     #!/bin/bash -eux
     rustup target add wasm32-unknown-unknown
-    if ! cargo install --list | grep -q 'wasm-bindgen-cli v0.2.106'; then
-        cargo install --force wasm-bindgen-cli --version=0.2.106 --locked
+    if ! cargo install --list | grep -q 'wasm-bindgen-cli v0.2.122'; then
+        cargo install --force wasm-bindgen-cli --version=0.2.122 --locked
     fi
     if ! cargo install --list | grep -q 'cargo-leptos v0.3.2'; then
         cargo install --force cargo-leptos --version=0.3.2 --locked
