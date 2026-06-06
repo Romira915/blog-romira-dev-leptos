@@ -50,8 +50,8 @@ google-cloud-auth = "1.12"
 
 # OAuth / Session
 oauth2 = "5"
-tower-sessions = "0.15"
-tower-sessions-redis-store = { git = "https://github.com/maxcountryman/tower-sessions-stores", rev = "69e025f97b8b6ca54618e000375cb1aaa852209a" }
+tower-sessions = "0.14"
+tower-sessions-redis-store = "0.16"
 fred = "10.1"
 
 # DBSC (Device Bound Session Credentials)
