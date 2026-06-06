@@ -50,7 +50,7 @@ tower-sessions-redis-store = { git = "https://github.com/maxcountryman/tower-ses
 fred = "10"
 
 # DBSC (Device Bound Session Credentials)
-jsonwebtoken = "9"
+jsonwebtoken = "10"
 base64 = "0.22"
 
 [profile.release]
