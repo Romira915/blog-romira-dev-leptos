@@ -59,7 +59,7 @@ jobs:
           cp target/release/hash.txt target/aarch64-unknown-linux-gnu/release/hash.txt
 
       - name: Upload blog-romira-dev-server
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: blog-romira-dev-server
           path: |
@@ -67,7 +67,7 @@ jobs:
             target/aarch64-unknown-linux-gnu/release/hash.txt
 
       - name: Upload site
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: site
           path: target/site
