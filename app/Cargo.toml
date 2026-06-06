@@ -14,7 +14,7 @@ dotenv = { workspace = true, optional = true }
 envy = { workspace = true, optional = true }
 leptos = { workspace = true }
 leptos-use = { workspace = true }
-codee = { version = "0.3", features = ["json_serde"] }
+codee = { workspace = true, features = ["json_serde"] }
 leptos_axum = { workspace = true, optional = true }
 leptos_meta = { workspace = true }
 leptos_router = { workspace = true }
@@ -38,7 +38,7 @@ url = { workspace = true, optional = true }
 comrak = { workspace = true }
 ammonia = { workspace = true, optional = true }
 gloo-net = { workspace = true, optional = true }
-web-sys = { version = "0.3", optional = true, features = [
+web-sys = { workspace = true, optional = true, features = [
     "Clipboard",
     "File",
     "FileList",
@@ -54,15 +54,15 @@ web-sys = { version = "0.3", optional = true, features = [
     "Response",
     "Window",
 ] }
-js-sys = { version = "0.3", optional = true }
+js-sys = { workspace = true, optional = true }
 wasm-bindgen = { workspace = true, optional = true }
-wasm-bindgen-futures = { version = "0.4", optional = true }
+wasm-bindgen-futures = { workspace = true, optional = true }
 
 [dev-dependencies]
 mockito = { workspace = true }
 tower = { workspace = true, features = ["util"] }
 http = { workspace = true }
-http-body-util = "0.1"
+http-body-util = { workspace = true }
 blog-romira-dev-app = { path = ".", features = ["test-utils"] }
 
 [features]
