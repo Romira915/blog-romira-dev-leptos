@@ -82,13 +82,13 @@ jobs:
       - uses: actions/checkout@v6
 
       - name: Download blog-romira-dev-server
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: blog-romira-dev-server
           path: /tmp/blog-romira-dev-server/
 
       - name: Download site
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: site
           path: /tmp/site/
@@ -148,7 +148,7 @@ jobs:
       SITE_DOWNLOAD_PATH: /tmp/site/
     steps:
       - name: Download site
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: site
           path: ${{ env.SITE_DOWNLOAD_PATH }}
