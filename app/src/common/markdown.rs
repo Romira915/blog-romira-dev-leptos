@@ -7,7 +7,7 @@ pub fn convert_markdown_to_html(markdown: &str) -> String {
     options.extension.table = true;
     options.extension.autolink = true;
     options.extension.tasklist = true;
-    options.extension.header_ids = None;
+    options.extension.header_id_prefix = None;
     options.render.r#unsafe = true;
 
     markdown_to_html(markdown, &options)
