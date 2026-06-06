@@ -120,3 +120,26 @@ jobs:
 
       - name: Test
         run: just test-nextest
+
+  wasm-build:
+    runs-on: ubuntu-24.04
+    env:
+      SQLX_OFFLINE: true
+      ASSETS_ROOT: https://cdn.blog.romira.dev
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Free disk space
+        uses: ./.github/actions/free-disk-space
+
+      - name: Cache Rust
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: "ci"
+          cache-targets: true
+
+      - name: Install wasm target
+        run: rustup target add wasm32-unknown-unknown
+
+      - name: Build front wasm
+        run: cargo build -p blog-romira-dev-front --target wasm32-unknown-unknown --profile wasm-release
