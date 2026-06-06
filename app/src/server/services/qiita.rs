@@ -44,7 +44,7 @@ impl QiitaArticleService {
         for article in articles.iter_mut() {
             article.og_image_url = get_og_image_url(&self.client, &article.url)
                 .await?
-                .map_or(article.user.profile_image_url.clone(), |url| url);
+                .unwrap_or(article.user.profile_image_url.clone());
         }
 
         Ok(articles)
