@@ -29,7 +29,7 @@ jobs:
           shared-key: "build"
           cache-targets: true
 
-      - uses: extractions/setup-just@v3
+      - uses: extractions/setup-just@v4
         with:
           just-version: 1.39.0
 
