@@ -484,6 +484,35 @@ mod tests {
     }
 
     #[test]
+    fn verify_registration_jwtでes256署名を検証すること() {
+        const PRIVATE_KEY: &[u8] = b"-----BEGIN PRIVATE KEY-----\nMIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgAAAAAAAAAAAAAAAA\nAAAAAAAAAAAAAAAAAAAAAAAAAAGhRANCAARrF9Hy4SxCR/i85uVjpEDydwN9gS3r\nM6D0oTlF2JjClk/jQuL+Gn+bjufrSnwPnhYrzjNXazFezsu2QGg3v1H1\n-----END PRIVATE KEY-----\n";
+        let jwk = serde_json::from_value(serde_json::json!({
+            "kty": "EC",
+            "crv": "P-256",
+            "x": "axfR8uEsQkf4vOblY6RA8ncDfYEt6zOg9KE5RdiYwpY",
+            "y": "T-NC4v4af5uO5-tKfA-eFivOM1drMV7Oy7ZAaDe_UfU"
+        }))
+        .unwrap();
+        let mut header = Header::new(Algorithm::ES256);
+        header.typ = Some("dbsc+jwt".to_string());
+        header.jwk = Some(jwk);
+        let jwt = jsonwebtoken::encode(
+            &header,
+            &serde_json::json!({ "jti": "registration-nonce" }),
+            &jsonwebtoken::EncodingKey::from_ec_pem(PRIVATE_KEY).unwrap(),
+        )
+        .unwrap();
+
+        let service = DbscService::new("https://example.com".to_string());
+        let (nonce, public_key_jwk) = service.verify_registration_jwt(&jwt).unwrap();
+        assert_eq!(nonce, "registration-nonce");
+        assert_eq!(
+            serde_json::from_str::<EcJwk>(&public_key_jwk).unwrap().crv,
+            "P-256"
+        );
+    }
+
+    #[test]
     fn verify_refresh_jwtでnonce不一致をリジェクトすること() {
         let service = DbscService::new("https://example.com".to_string());
         // Invalid JWT will fail before nonce check, but we test the flow
