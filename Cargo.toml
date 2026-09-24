@@ -55,7 +55,7 @@ tower-sessions-redis-store = "0.16"
 fred = "10.1"
 
 # DBSC (Device Bound Session Credentials)
-jsonwebtoken = "10.4"
+jsonwebtoken = { version = "10.4", features = ["aws_lc_rs"] }
 base64 = "0.22.1"
 
 [profile.release]
