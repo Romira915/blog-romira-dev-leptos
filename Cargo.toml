@@ -50,7 +50,7 @@ google-cloud-auth = "1.12"
 
 # OAuth / Session
 oauth2 = "5"
-tower-sessions = "0.14"
+tower-sessions = "0.15"
 tower-sessions-redis-store = "0.16"
 fred = "10.1"
 
